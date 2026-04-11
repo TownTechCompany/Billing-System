@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — BillPOS{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<main class="chat-main w-100 dash-root">
+
+    <!-- Header -->
+    <div class="dash-header">
+        <div>
+            <h1>Dashboard</h1>
+            <div class="sub"><span class="sub-dot"></span> Overview of your store performance</div>
+        </div>
+        <div class="dash-date-filter">
+            <input type="date" id="startDate" class="date-input" value="{{ start_date or '' }}">
+            <span style="color:var(--slate-400);font-size:0.8rem;">to</span>
+            <input type="date" id="endDate" class="date-input" value="{{ end_date or '' }}">
+            <button class="btn-add-item" onclick="applyDateFilter()">
+                <i class="fa-solid fa-filter"></i> Filter
+            </button>
+            <button class="toolbar-icon-btn" onclick="clearFilter()" title="Clear filter">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card sc-blue">
+            <div class="stat-icon blue"><i class="fa-solid fa-receipt"></i></div>
+            <div>
+                <div class="stat-val">{{ total_orders }}</div>
+                <div class="stat-label">Total Orders</div>
+            </div>
+        </div>
+        <div class="stat-card sc-emerald">
+            <div class="stat-icon emerald"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+            <div>
+                <div class="stat-val">₹{{ "%.0f"|format(total_revenue) }}</div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
+        </div>
+        <div class="stat-card sc-purple">
+            <div class="stat-icon purple"><i class="fa-solid fa-box-open"></i></div>
+            <div>
+                <div class="stat-val">{{ total_products }}</div>
+                <div class="stat-label">Products</div>
+            </div>
+        </div>
+        <div class="stat-card sc-amber">
+            <div class="stat-icon amber"><i class="fa-solid fa-chart-line"></i></div>
+            <div>
+                <div class="stat-val">₹{{ "%.0f"|format(total_revenue / total_orders if total_orders else 0) }}</div>
+                <div class="stat-label">Avg. Order Value</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="dash-content-row">
+        <!-- Chart -->
+        <div class="dash-card chart-card">
+            <div class="dash-card-header">
+                <span class="dash-card-title"><i class="fa-solid fa-chart-area"></i> Revenue (Last 7 Days)</span>
+            </div>
+            <div class="chart-wrap">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="dash-card recent-card">
+            <div class="dash-card-header">
+                <span class="dash-card-title"><i class="fa-solid fa-clock-rotate-left"></i> Recent Orders</span>
+                <a href="/orders" class="view-all-link">View all <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="recent-list">
+                {% for order in recent_orders %}
+                <div class="recent-row">
+                    <div class="recent-icon"><i class="fa-solid fa-bag-shopping"></i></div>
+                    <div class="recent-info">
+                        <div class="recent-num">{{ order.order_number }}</div>
+                        <div class="recent-date">{{ order.date_created.strftime('%d %b %Y, %I:%M %p') }}</div>
+                    </div>
+                    <div class="recent-right">
+                        <div class="recent-amt">₹{{ "%.0f"|format(order.total_amount) }}</div>
+                        <span class="status-pill status-{{ order.payment_method.lower() }}">{{ order.payment_method }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div style="padding:40px;text-align:center;color:var(--slate-400);font-size:0.83rem;">No orders yet</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</main>
+<div class="toast-stack" id="toastStack"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', path='js/dashboard.js') }}"></script>
+{% endblock %}

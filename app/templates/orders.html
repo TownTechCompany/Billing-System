@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Orders — BillPOS{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/orders.css') }}">
+{% endblock %}
+
+{% block content %}
+<main class="chat-main w-100 orders-root">
+
+    <div class="orders-header">
+        <div class="orders-header-left">
+            <h1>Orders</h1>
+            <div class="sub"><span class="sub-dot"></span><span id="countBadge">—</span> orders</div>
+        </div>
+    </div>
+
+    <div class="orders-toolbar">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Search order number...">
+        </div>
+        <select id="filterPayment" class="toolbar-filter-select">
+            <option value="">All Payment Methods</option>
+            <option value="cash">Cash</option>
+            <option value="card">Card</option>
+            <option value="upi">UPI</option>
+        </select>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+            <button class="toolbar-icon-btn" title="Refresh" onclick="loadOrders()">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table id="ordersTable" class="table w-100 mb-0">
+            <thead><tr>
+                <th>Order #</th>
+                <th>Date & Time</th>
+                <th>Items</th>
+                <th>Payment</th>
+                <th>Total</th>
+                <th style="text-align:right;">Actions</th>
+            </tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+</main>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Order?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.85rem;color:var(--slate-500);margin:0;" id="deleteDesc"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn-danger-modal" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='js/orders.js') }}"></script>
+{% endblock %}

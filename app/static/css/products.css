@@ -1,0 +1,44 @@
+.products-root {
+    padding: 1.75rem 2rem 1.5rem; height: 100vh; overflow-y: auto; overflow-x: hidden;
+    display: flex; flex-direction: column; font-family: 'DM Sans', sans-serif;
+}
+.products-root::-webkit-scrollbar { width: 5px; }
+.products-root::-webkit-scrollbar-thumb { background: var(--slate-200); border-radius: 10px; }
+
+.products-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 1.75rem; gap: 1rem; flex-wrap: wrap;
+    animation: fadeSlideIn .45s var(--ease-out) both;
+}
+.products-header-left h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.65rem; font-weight: 800; color: var(--slate-900);
+    margin: 0 0 5px; letter-spacing: -0.6px;
+}
+.products-header-left .sub { font-size: 0.8rem; color: var(--slate-400); font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.sub-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); flex-shrink: 0; }
+
+.products-toolbar {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+    animation: fadeSlideIn .45s var(--ease-out) .15s both;
+}
+
+#productsTable { width: 100% !important; margin: 0 !important; border-collapse: separate; border-spacing: 0; font-family: 'DM Sans', sans-serif; }
+#productsTable thead tr { background: linear-gradient(135deg, #f8fafc 0%, #f0f4ff 100%); }
+#productsTable thead th { padding: 13px 16px !important; font-size: 0.68rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: .7px !important; color: var(--slate-400) !important; border-bottom: 1px solid var(--slate-150) !important; white-space: nowrap; }
+#productsTable tbody tr { transition: all .18s var(--ease-out); border-bottom: 1px solid rgba(241,245,249,.8); }
+#productsTable tbody tr:last-child { border-bottom: none; }
+#productsTable tbody tr:hover { background: linear-gradient(135deg, #f8fafc 0%, #f0f4ff 100%) !important; }
+#productsTable tbody td { padding: 11px 16px !important; vertical-align: middle; border: none !important; font-size: 0.82rem; }
+
+.product-name { font-weight: 700; color: var(--slate-900); font-size: 0.84rem; }
+.price-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
+    font-size: 0.88rem; color: var(--slate-800);
+}
+.category-pill {
+    display: inline-flex; padding: 3px 10px; border-radius: 20px;
+    background: var(--brand-50); color: var(--brand-600);
+    font-size: 0.7rem; font-weight: 700;
+}

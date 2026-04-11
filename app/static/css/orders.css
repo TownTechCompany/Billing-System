@@ -1,0 +1,25 @@
+.orders-root {
+    padding: 1.75rem 2rem 1.5rem; height: 100vh; overflow-y: auto; overflow-x: hidden;
+    display: flex; flex-direction: column; font-family: 'DM Sans', sans-serif;
+}
+.orders-root::-webkit-scrollbar { width: 5px; }
+.orders-root::-webkit-scrollbar-thumb { background: var(--slate-200); border-radius: 10px; }
+.orders-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.75rem; gap: 1rem; animation: fadeSlideIn .45s var(--ease-out) both; }
+.orders-header-left h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.65rem; font-weight: 800; color: var(--slate-900); margin: 0 0 5px; letter-spacing: -0.6px; }
+.orders-header-left .sub { font-size: 0.8rem; color: var(--slate-400); font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.sub-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); flex-shrink: 0; }
+.orders-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; animation: fadeSlideIn .45s var(--ease-out) .15s both; }
+
+#ordersTable { width: 100% !important; margin: 0 !important; border-collapse: separate; border-spacing: 0; font-family: 'DM Sans', sans-serif; }
+#ordersTable thead tr { background: linear-gradient(135deg, #f8fafc 0%, #f0f4ff 100%); }
+#ordersTable thead th { padding: 13px 16px !important; font-size: 0.68rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: .7px !important; color: var(--slate-400) !important; border-bottom: 1px solid var(--slate-150) !important; white-space: nowrap; }
+#ordersTable tbody tr { transition: all .18s var(--ease-out); border-bottom: 1px solid rgba(241,245,249,.8); }
+#ordersTable tbody tr:last-child { border-bottom: none; }
+#ordersTable tbody tr:hover { background: linear-gradient(135deg, #f8fafc 0%, #f0f4ff 100%) !important; }
+#ordersTable tbody td { padding: 13px 16px !important; vertical-align: middle; border: none !important; font-size: 0.82rem; }
+
+.order-num { font-weight: 800; color: var(--brand-600); font-size: 0.84rem; font-family: 'Plus Jakarta Sans', sans-serif; }
+.order-date { font-weight: 600; color: var(--slate-700); font-size: 0.82rem; }
+.order-time { font-size: 0.7rem; color: var(--slate-400); margin-top: 2px; }
+.items-badge { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--slate-100); color: var(--slate-600); font-size: 0.72rem; font-weight: 700; }
+.total-val { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 0.9rem; color: var(--slate-900); }

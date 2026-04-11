@@ -1,0 +1,21 @@
+from typing import Optional, List
+from pydantic import BaseModel
+
+class ProductCreate(BaseModel):
+    name: str
+    category: str
+    price: float
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    price: Optional[float] = None
+
+class OrderItemIn(BaseModel):
+    product_id: int
+    quantity: int
+    price: float
+
+class OrderCreate(BaseModel):
+    items: List[OrderItemIn]
+    payment_method: Optional[str] = "Cash"

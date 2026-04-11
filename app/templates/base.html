@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BillPOS{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+<div class="app-shell">
+
+    <aside class="main-sidebar">
+        <div class="sidebar-header">
+            <a href="/" class="sidebar-brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-cash-register"></i>
+                </div>
+                <span class="brand-text">BillPOS</span>
+            </a>
+        </div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-nav">
+            <div class="sidebar-section-label">Main</div>
+            <a href="/" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/pos" class="nav-item {% if active_page == 'pos' %}active{% endif %}">
+                <i class="fa-solid fa-display"></i>
+                <span>Point of Sale</span>
+            </a>
+            <div class="sidebar-section-label">Management</div>
+            <a href="/products" class="nav-item {% if active_page == 'products' %}active{% endif %}">
+                <i class="fa-solid fa-box-open"></i>
+                <span>Products</span>
+            </a>
+            <a href="/orders" class="nav-item {% if active_page == 'orders' %}active{% endif %}">
+                <i class="fa-solid fa-receipt"></i>
+                <span>Orders</span>
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <div class="user-profile-card">
+                <div class="user-avatar-lg">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">Admin</span>
+                    <span class="user-plan">BillPOS Pro</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    {% block content %}{% endblock %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ url_for('static', path='js/script.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
