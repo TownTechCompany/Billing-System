@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.models.models import Product
+from app.models.models import Product, Order, OrderItem, ShopSettings
 from app.services.order_service import OrderService
 
 router = APIRouter()
@@ -46,5 +46,22 @@ async def products_page(request: Request):
     return templates.TemplateResponse("products.html", {"request": request, "active_page": "products"})
 
 @router.get("/orders", response_class=HTMLResponse)
-async def orders_page(request: Request):
-    return templates.TemplateResponse("orders.html", {"request": request, "active_page": "orders"})
+async def orders_page(request: Request, db: Session = Depends(get_db)):
+    all_orders = db.query(Order).order_by(Order.date_created.desc()).all()
+    return templates.TemplateResponse(
+        "orders.html",
+        {"request": request, "orders": all_orders, "active_page": "orders"},
+    )
+
+@router.get("/settings", response_class=HTMLResponse)
+async def settings_page(request: Request, db: Session = Depends(get_db)):
+    settings = db.query(ShopSettings).first()
+    if not settings:
+        settings = ShopSettings()
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+    return templates.TemplateResponse(
+        "settings.html",
+        {"request": request, "settings": settings, "active_page": "settings"},
+    )

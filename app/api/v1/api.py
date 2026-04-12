@@ -1,10 +1,11 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import pages, products, orders
+from app.api.v1.endpoints import pages, products, orders, settings
 
 router = APIRouter()
 router.include_router(pages.router)
 router.include_router(products.router)
 router.include_router(orders.router)
+router.include_router(settings.router)
 
 # analytics lives under /api/orders/analytics — already registered above
 # but we also expose it at /api/analytics for the dashboard JS
