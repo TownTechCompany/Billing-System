@@ -14,6 +14,10 @@ router = APIRouter()
 APP_ROOT = Path(__file__).resolve().parents[3]
 templates = Jinja2Templates(directory=str(APP_ROOT / "templates"))
 
+@router.get("/", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request, start_date: str = None, end_date: str = None, db: Session = Depends(get_db)):
     try:
@@ -66,7 +70,12 @@ async def orders_page(request: Request):
     except Exception as e:
         log_writer_.log_exception("Pages", "orders_page", e)
         raise HTTPException(500, "Error loading orders page")
+    
+@router.get("/employees", response_class=HTMLResponse)
+async def employees_page(request: Request):
+    try:
+        return templates.TemplateResponse("employee.html", {"request": request, "active_page": "employees"})
+    except Exception as e:
+        log_writer_.log_exception("Pages", "employees_page", e)
+        raise HTTPException(500, "Error loading employees page")
 
-@router.get("/", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
