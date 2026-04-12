@@ -1,74 +1,317 @@
 {% extends "base.html" %}
-{% block title %}Orders — BillPOS{% endblock %}
-
-{% block head %}
+{% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/orders.css') }}">
 {% endblock %}
 
 {% block content %}
-<main class="chat-main w-100 orders-root">
+<div class="orders-root">
 
-    <div class="orders-header">
-        <div class="orders-header-left">
-            <h1>Orders</h1>
-            <div class="sub"><span class="sub-dot"></span><span id="countBadge">—</span> orders</div>
-        </div>
+  <!-- ── Header ── -->
+  <div class="orders-header">
+    <div class="orders-header-left">
+      <h1>Order Management</h1>
+      <div class="sub">
+        <span class="sub-dot"></span>
+        <span id="liveTime"></span>
+        &nbsp;·&nbsp;
+        <span id="headerOrderCount">0 orders today</span>
+      </div>
     </div>
-
-    <div class="orders-toolbar">
-        <div class="search-box">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="searchInput" placeholder="Search order number...">
-        </div>
-        <select id="filterPayment" class="toolbar-filter-select">
-            <option value="">All Payment Methods</option>
-            <option value="cash">Cash</option>
-            <option value="card">Card</option>
-            <option value="upi">UPI</option>
-        </select>
-        <div style="margin-left:auto;display:flex;gap:8px;">
-            <button class="toolbar-icon-btn" title="Refresh" onclick="loadOrders()">
-                <i class="fa-solid fa-arrows-rotate"></i>
-            </button>
-        </div>
+    <div class="orders-header-right">
+      <button class="hdr-btn hdr-btn-ghost" onclick="exportOrders()">
+        <i class="fa-solid fa-arrow-down-to-line"></i>
+        <span>Export</span>
+      </button>
+      <button class="hdr-btn hdr-btn-primary" onclick="window.location.href='/pos'">
+        <i class="fa-solid fa-plus"></i>
+        <span>New Order</span>
+      </button>
     </div>
+  </div>
 
-    <div class="table-container">
-        <table id="ordersTable" class="table w-100 mb-0">
-            <thead><tr>
-                <th>Order #</th>
-                <th>Date & Time</th>
-                <th>Items</th>
-                <th>Payment</th>
-                <th>Total</th>
-                <th style="text-align:right;">Actions</th>
-            </tr></thead>
-            <tbody></tbody>
-        </table>
+  <!-- ── Stats Row ── -->
+  <div class="stats-row">
+    <div class="stat-card sc-blue">
+      <div class="stat-icon blue"><i class="fa-solid fa-receipt"></i></div>
+      <div>
+        <div class="stat-val" id="statOpen">0</div>
+        <div class="stat-label">Open Orders</div>
+      </div>
     </div>
+    <div class="stat-card sc-emerald">
+      <div class="stat-icon emerald"><i class="fa-solid fa-circle-check"></i></div>
+      <div>
+        <div class="stat-val" id="statPaid">0</div>
+        <div class="stat-label">Paid Today</div>
+      </div>
+    </div>
+    <div class="stat-card sc-purple">
+      <div class="stat-icon purple"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+      <div>
+        <div class="stat-val" id="statRevenue">₹0</div>
+        <div class="stat-label">Revenue Today</div>
+      </div>
+    </div>
+    <div class="stat-card sc-amber">
+      <div class="stat-icon amber"><i class="fa-solid fa-chart-simple"></i></div>
+      <div>
+        <div class="stat-val" id="statAvg">₹0</div>
+        <div class="stat-label">Avg. Order Value</div>
+      </div>
+    </div>
+  </div>
 
-</main>
+  <!-- ── Toolbar ── -->
+  <div class="orders-toolbar">
+    <!-- View toggle -->
+    <div class="view-toggle">
+      <button class="vtoggle active" id="vBtn-list" onclick="switchView('list')" title="List view">
+        <i class="fa-solid fa-list-ul"></i>
+      </button>
+      <button class="vtoggle" id="vBtn-table" onclick="switchView('table')" title="Floor map">
+        <i class="fa-solid fa-table-cells-large"></i>
+      </button>
+    </div>
+    <!-- Status chips -->
+    <div class="chip-group" id="statusChips">
+      <button class="chip active" data-filter="all">All</button>
+      <button class="chip" data-filter="open">
+        <span class="chip-dot chip-dot-amber"></span>Open
+      </button>
+      <button class="chip" data-filter="paid">
+        <span class="chip-dot chip-dot-green"></span>Paid
+      </button>
+      <button class="chip" data-filter="void">
+        <span class="chip-dot chip-dot-red"></span>Void
+      </button>
+    </div>
+    <!-- Spacer -->
+    <div style="flex:1"></div>
+    <!-- Date range -->
+    <div class="toolbar-input-wrap">
+      <i class="fa-regular fa-calendar toolbar-input-icon"></i>
+      <input type="text" id="orderDateRange" class="toolbar-input" placeholder="Date range">
+    </div>
+    <!-- Search -->
+    <div class="toolbar-input-wrap">
+      <i class="fa-solid fa-magnifying-glass toolbar-input-icon"></i>
+      <input type="text" id="orderSearch" class="toolbar-input" placeholder="Search orders…" style="width:160px">
+    </div>
+  </div>
 
-<!-- Delete Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Delete Order?</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p style="font-size:0.85rem;color:var(--slate-500);margin:0;" id="deleteDesc"></p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn-danger-modal" id="confirmDeleteBtn">Delete</button>
-            </div>
+  <!-- ── Floor Map View ── -->
+  <div id="tableView" style="display:none">
+    <div class="floor-card">
+      <div class="floor-header">
+        <div class="floor-title"><i class="fa-solid fa-store me-2"></i>Floor Map</div>
+        <div class="floor-legend">
+          <span class="leg-item"><span class="leg-dot" style="background:#10b981"></span>Free</span>
+          <span class="leg-item"><span class="leg-dot" style="background:#f59e0b"></span>Occupied</span>
+          <span class="leg-item"><span class="leg-dot" style="background:#f43f5e"></span>Bill Ready</span>
         </div>
+      </div>
+      <div class="table-grid" id="tableGrid"></div>
     </div>
+  </div>
+
+  <!-- ── List View ── -->
+  <div id="listView" class="table-container">
+    <table id="ordersTable" class="w-100">
+      <thead>
+        <tr>
+          <th style="width:16px"></th>
+          <th>Order</th>
+          <th>Date & Time</th>
+          <th class="hide-sm">Table / Type</th>
+          <th class="hide-sm">Customer</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Method</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="ordersBody">
+        <!-- filled by JS -->
+      </tbody>
+    </table>
+    <!-- empty state -->
+    <div id="emptyState" class="empty-state" style="display:none">
+      <div class="empty-icon"><i class="fa-regular fa-receipt"></i></div>
+      <div class="empty-title">No orders found</div>
+      <div class="empty-sub">Try changing the filter or date range</div>
+    </div>
+    <!-- pagination -->
+    <div class="table-footer">
+      <div id="paginInfo" class="pagin-info">—</div>
+      <div class="pagin-btns" id="paginBtns"></div>
+    </div>
+  </div>
+
+</div><!-- /orders-root -->
+
+
+<!-- ════════════════════════════════════════
+     DETAIL / EDIT SLIDE PANEL
+════════════════════════════════════════ -->
+<div class="panel-backdrop" id="panelBackdrop" onclick="closePanel()"></div>
+<div class="detail-panel" id="detailPanel">
+
+  <!-- Panel header -->
+  <div class="dp-header">
+    <div class="dp-header-left">
+      <div class="dp-order-num" id="dpOrderNum">—</div>
+      <div class="dp-badges">
+        <span class="dp-status-badge" id="dpStatus">—</span>
+        <span class="dp-type-badge" id="dpType">—</span>
+      </div>
+    </div>
+    <button class="dp-close" onclick="closePanel()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <!-- Meta row -->
+  <div class="dp-meta">
+    <span class="dp-meta-item"><i class="fa-regular fa-clock"></i><span id="dpTime">—</span></span>
+    <span class="dp-meta-item"><i class="fa-regular fa-user"></i><span id="dpCustomer">Walk-in</span></span>
+    <span class="dp-meta-item"><i class="fa-solid fa-credit-card"></i><span id="dpMethod">—</span></span>
+  </div>
+
+  <!-- Add product search (open orders only) -->
+  <div id="addItemSection" class="dp-add-section" style="display:none">
+    <div class="dp-add-label">Add item to order</div>
+    <div class="dp-search-wrap">
+      <i class="fa-solid fa-magnifying-glass dp-search-icon"></i>
+      <input type="text" id="addItemSearch" class="dp-search-input" placeholder="Search products…" autocomplete="off">
+    </div>
+    <div id="addItemResults" class="dp-search-results"></div>
+  </div>
+
+  <!-- Cart items -->
+  <div class="dp-items-header">
+    <span>Item</span>
+    <span>Qty</span>
+    <span class="text-end">Amount</span>
+  </div>
+  <div class="dp-items" id="dpItemsContainer">
+    <!-- filled by JS -->
+  </div>
+
+  <!-- Discount row (open orders only) -->
+  <div id="discountRow" class="dp-discount" style="display:none">
+    <label class="dp-discount-label">Discount</label>
+    <div class="dp-discount-inputs">
+      <input type="number" id="discountVal" class="dp-discount-input" placeholder="0" min="0" oninput="recalcPanel()">
+      <select id="discountType" class="dp-discount-select" onchange="recalcPanel()">
+        <option value="flat">₹ Flat</option>
+        <option value="pct">% Off</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Totals -->
+  <div class="dp-totals">
+    <div class="dp-total-row"><span>Subtotal</span><span id="dpSubtotal">₹0.00</span></div>
+    <div class="dp-total-row"><span>Tax (5%)</span><span id="dpTax">₹0.00</span></div>
+    <div class="dp-total-row dp-discount-row" id="dpDiscountRow">
+      <span>Discount</span><span id="dpDiscount" class="text-emerald">—</span>
+    </div>
+    <div class="dp-total-row dp-total-final">
+      <span>Total</span><span id="dpTotal">₹0.00</span>
+    </div>
+  </div>
+
+  <!-- Notes (open orders) -->
+  <div id="notesSection" class="dp-notes-section" style="display:none">
+    <textarea id="orderNotes" class="dp-notes-input" placeholder="Order notes, special instructions…" rows="2"></textarea>
+  </div>
+
+  <!-- Actions -->
+  <div class="dp-actions" id="dpActions">
+    <!-- filled by JS -->
+  </div>
 </div>
 
+
+<!-- ════ VOID PIN MODAL ════ -->
+<div class="modal fade" id="voidPinModal" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fa-solid fa-shield-halved me-2 text-rose"></i>Admin Authorisation</div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center" style="padding:28px 24px">
+        <p style="font-size:.83rem;color:var(--slate-400);margin-bottom:16px">Enter admin PIN to void this order.</p>
+        <div class="pin-dots" id="pinDots">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="pin-pad" id="pinPad"></div>
+        <div id="pinError" class="pin-error" style="display:none">
+          <i class="fa-solid fa-circle-exclamation"></i> Incorrect PIN. Try again.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ CHECKOUT MODAL ════ -->
+<div class="modal fade" id="checkoutModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fa-solid fa-cash-register me-2"></i>Checkout Order</div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="checkout-summary" id="checkoutSummary"></div>
+        <label class="form-label mt-3">Payment Method</label>
+        <div class="pay-method-grid">
+          <button class="pay-method-btn active" data-method="Cash">
+            <i class="fa-solid fa-money-bill-wave"></i><span>Cash</span>
+          </button>
+          <button class="pay-method-btn" data-method="Card">
+            <i class="fa-solid fa-credit-card"></i><span>Card</span>
+          </button>
+          <button class="pay-method-btn" data-method="UPI">
+            <i class="fa-brands fa-google-pay"></i><span>UPI</span>
+          </button>
+          <button class="pay-method-btn" data-method="Khata">
+            <i class="fa-solid fa-book"></i><span>Khata</span>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-modal-primary" onclick="confirmCheckout()">
+          <i class="fa-solid fa-check me-1"></i>Confirm Payment
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ DELETE MODAL ════ -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center" style="padding:32px 24px">
+        <div class="del-icon"><i class="fa-regular fa-trash-can"></i></div>
+        <div class="del-title">Delete Order?</div>
+        <div class="del-desc" id="deleteDesc"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel w-100" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-danger-modal w-100" id="confirmDeleteBtn">Delete Permanently</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast stack -->
 <div class="toast-stack" id="toastStack"></div>
+
 {% endblock %}
 
 {% block scripts %}

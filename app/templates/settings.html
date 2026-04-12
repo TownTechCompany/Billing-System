@@ -1,0 +1,1014 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+/* ── Settings page ── */
+.settings-nav {
+  position: sticky; top: -28px;
+  display: flex; gap: 6px; overflow-x: auto;
+  padding: 16px 0 14px; scrollbar-width: none; z-index: 10;
+  background: var(--main-bg);
+  margin: -28px -32px 0;
+  padding-left: 32px; padding-right: 32px;
+  border-bottom: 1px solid var(--slate-100);
+  box-shadow: 0 2px 8px rgba(15,23,42,.04);
+}
+.settings-nav::-webkit-scrollbar { display: none; }
+.snav-btn {
+  padding: 8px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 600;
+  border: 1.5px solid var(--slate-200); background: var(--white);
+  color: var(--slate-500); white-space: nowrap; cursor: pointer;
+  transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;
+}
+.snav-btn:hover { border-color: var(--brand-400); color: var(--brand-600); background: var(--brand-50); }
+.snav-btn.active {
+  background: var(--grad-brand); border-color: transparent;
+  color: #fff; box-shadow: var(--shadow-brand);
+}
+
+.settings-section { display: none; animation: fadeSlideIn .3s var(--ease-out); }
+.settings-section.active { display: block; }
+
+.setting-card {
+  background: var(--white); border-radius: var(--radius-md);
+  border: 1px solid rgba(226,232,240,.8); padding: 22px 24px; margin-bottom: 16px;
+  box-shadow: var(--shadow-xs);
+}
+
+.setting-card h6 {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--slate-400);
+  margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--slate-100);
+  display: flex; align-items: center; gap: 7px;
+}
+
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 0; border-bottom: 1px solid var(--slate-100); gap: 16px;
+}
+.setting-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+.setting-label { font-size: 13.5px; font-weight: 500; color: var(--slate-700); }
+.setting-desc  { font-size: 11.5px; color: var(--slate-400); margin-top: 2px; }
+
+/* Toggle switch */
+.toggle-switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; background: var(--slate-200); border-radius: 24px;
+  cursor: pointer; transition: 0.25s;
+}
+.toggle-slider:before {
+  content:''; position: absolute; height: 18px; width: 18px;
+  left: 3px; bottom: 3px; background: #fff; border-radius: 50%;
+  transition: 0.25s; box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--brand-500); }
+.toggle-switch input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+/* Color swatches */
+.color-swatch-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.color-swatch {
+  width: 36px; height: 36px; border-radius: 10px; cursor: pointer;
+  border: 3px solid transparent; transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
+}
+.color-swatch:hover { transform: scale(1.15); box-shadow: var(--shadow-md); }
+.color-swatch.selected { border-color: #fff; box-shadow: 0 0 0 3px var(--slate-800), var(--shadow-md); }
+
+/* Font preview */
+.font-option {
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  border: 2px solid var(--slate-200); cursor: pointer; transition: all 0.15s; font-size: 15px;
+}
+.font-option:hover { border-color: var(--brand-400); }
+.font-option.selected { border-color: var(--brand-500); background: var(--brand-50); }
+
+/* Image upload area */
+.upload-area {
+  border: 2px dashed var(--brand-200); border-radius: var(--radius-md);
+  padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s;
+  background: var(--brand-50);
+}
+.upload-area:hover { border-color: var(--brand-400); background: var(--brand-100); }
+.upload-area img { max-height: 80px; object-fit: contain; margin-bottom: 8px; }
+
+/* Payment rows */
+.payment-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--slate-100); margin-bottom: 8px;
+  transition: background .15s;
+}
+.payment-row:hover { background: var(--slate-50); }
+.payment-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+/* Staff cards */
+.staff-card {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  border-radius: var(--radius-sm); border: 1px solid var(--slate-100); margin-bottom: 8px;
+  transition: background .15s;
+}
+.staff-card:hover { background: var(--slate-50); }
+.staff-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--brand-100); color: var(--brand-600);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+
+/* Unsaved dot */
+.unsaved-dot { width: 8px; height: 8px; border-radius: 50%; background: #e74c3c; animation: pulse-dot 1.5s infinite; flex-shrink: 0; }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* Preview pill */
+.preview-pill {
+  font-size: 10px; padding: 2px 7px; border-radius: 10px;
+  background: var(--brand-100); color: var(--brand-600); font-weight: 600; margin-left: 6px;
+}
+
+/* Section page header */
+.settings-page-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 0 16px; flex-wrap: wrap; gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .setting-card { padding: 14px 16px; }
+  .setting-row { flex-wrap: wrap; }
+  .settings-nav { margin: -28px -16px 0; padding-left: 16px; padding-right: 16px; }
+}
+</style>
+
+<div class="settings-body">
+<!-- Header -->
+<div class="settings-page-header">
+  <div>
+    <h1 class="mb-0 fw-bold" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.6rem;letter-spacing:-0.4px;color:var(--slate-900)">Shop Settings</h1>
+    <p class="mb-0" style="font-size:13px;color:var(--slate-400);margin-top:3px">Customize your BillPOS system</p>
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    <span id="unsavedIndicator" style="display:none" class="d-flex align-items-center gap-2" style="font-size:12px">
+      <span class="unsaved-dot"></span>
+      <span style="font-size:12px;color:var(--rose);font-weight:600">Unsaved changes</span>
+    </span>
+    <button class="btn btn-sm" style="border:1px solid var(--slate-200);color:var(--slate-600);background:var(--white);font-size:13px;padding:7px 14px;border-radius:8px;" onclick="resetSettings()">
+      <i class="fas fa-rotate-left me-1"></i> Reset
+    </button>
+    <button class="btn btn-sm btn-add-item" onclick="saveAllSettings()">
+      <i class="fas fa-floppy-disk"></i> Save All
+    </button>
+  </div>
+</div>
+
+<!-- Section navigation -->
+<div class="settings-nav">
+  <button class="snav-btn active" data-section="branding"   onclick="showSection('branding')"><i class="fas fa-store"></i>Branding</button>
+  <button class="snav-btn" data-section="appearance"        onclick="showSection('appearance')"><i class="fas fa-palette"></i>Appearance</button>
+  <button class="snav-btn" data-section="tax"               onclick="showSection('tax')"><i class="fas fa-percent"></i>Tax &amp; GST</button>
+  <button class="snav-btn" data-section="payments"          onclick="showSection('payments')"><i class="fas fa-credit-card"></i>Payments</button>
+  <button class="snav-btn" data-section="receipt"           onclick="showSection('receipt')"><i class="fas fa-receipt"></i>Receipt</button>
+  <button class="snav-btn" data-section="staff"             onclick="showSection('staff')"><i class="fas fa-users"></i>Staff</button>
+  <button class="snav-btn" data-section="tables"            onclick="showSection('tables')"><i class="fas fa-chair"></i>Tables</button>
+  <button class="snav-btn" data-section="general"           onclick="showSection('general')"><i class="fas fa-sliders"></i>General</button>
+  <button class="snav-btn" data-section="data"              onclick="showSection('data')"><i class="fas fa-database"></i>Data</button>
+</div>
+
+<div style="margin-top:20px"></div>
+
+<div class="row g-3">
+<div class="col-lg-8">
+
+<!-- ════════════════ BRANDING ════════════════ -->
+<div id="sec-branding" class="settings-section active">
+
+  <div class="setting-card">
+    <h6><i class="fas fa-store me-2"></i>Shop Identity</h6>
+
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <label class="form-label fw-bold" style="font-size:13px">Shop Name</label>
+        <input type="text" class="form-control" id="shopName" value="My Shop" oninput="markUnsaved(); livePreviewName(this.value)">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold" style="font-size:13px">Tagline</label>
+        <input type="text" class="form-control" id="shopTagline" placeholder="Fresh & Fast" oninput="markUnsaved()">
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-12">
+        <label class="form-label fw-bold" style="font-size:13px">Address (shown on receipt)</label>
+        <textarea class="form-control" id="shopAddress" rows="2" placeholder="123 Main Street, City, PIN" oninput="markUnsaved()"></textarea>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label fw-bold" style="font-size:13px">Phone</label>
+        <input type="text" class="form-control" id="shopPhone" placeholder="+91 98765 43210" oninput="markUnsaved()">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold" style="font-size:13px">Email</label>
+        <input type="email" class="form-control" id="shopEmail" placeholder="shop@example.com" oninput="markUnsaved()">
+      </div>
+    </div>
+  </div>
+
+  <div class="setting-card">
+    <h6><i class="fas fa-image me-2"></i>Logo & Images</h6>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label fw-bold" style="font-size:13px">Shop Logo <span class="preview-pill">shown on receipt & sidebar</span></label>
+        <div class="upload-area" onclick="document.getElementById('logoInput').click()">
+          <img id="logoPreview" src="/static/uploads/logo.png" onerror="this.style.display='none'" style="display:block;margin:0 auto">
+          <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+          <div class="text-muted" style="font-size:12px">Click to upload logo (PNG/SVG)<br>Recommended: 300×100px</div>
+        </div>
+        <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="previewImage(this,'logoPreview')">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold" style="font-size:13px">Login Background <span class="preview-pill">login screen only</span></label>
+        <div class="upload-area" onclick="document.getElementById('bgInput').click()">
+          <img id="bgPreview" src="" style="display:none;max-height:80px;margin:0 auto 8px">
+          <i class="fas fa-image fa-2x text-muted mb-2"></i>
+          <div class="text-muted" style="font-size:12px">Click to upload background<br>Recommended: 1920×1080px</div>
+        </div>
+        <input type="file" id="bgInput" accept="image/*" style="display:none" onchange="previewImage(this,'bgPreview')">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ APPEARANCE ════════════════ -->
+<div id="sec-appearance" class="settings-section">
+
+  <div class="setting-card">
+    <h6><i class="fas fa-palette me-2"></i>Theme Color <span class="preview-pill">applied instantly</span></h6>
+    <div class="color-swatch-grid mb-3">
+      <div class="color-swatch selected" style="background:#3498db" data-color="#3498db" onclick="applyColor('#3498db',this)" title="Ocean Blue"></div>
+      <div class="color-swatch" style="background:#2ecc71" data-color="#2ecc71" onclick="applyColor('#2ecc71',this)" title="Emerald"></div>
+      <div class="color-swatch" style="background:#9b59b6" data-color="#9b59b6" onclick="applyColor('#9b59b6',this)" title="Amethyst"></div>
+      <div class="color-swatch" style="background:#e74c3c" data-color="#e74c3c" onclick="applyColor('#e74c3c',this)" title="Red"></div>
+      <div class="color-swatch" style="background:#e67e22" data-color="#e67e22" onclick="applyColor('#e67e22',this)" title="Orange"></div>
+      <div class="color-swatch" style="background:#1abc9c" data-color="#1abc9c" onclick="applyColor('#1abc9c',this)" title="Teal"></div>
+      <div class="color-swatch" style="background:#e91e63" data-color="#e91e63" onclick="applyColor('#e91e63',this)" title="Pink"></div>
+      <div class="color-swatch" style="background:#607d8b" data-color="#607d8b" onclick="applyColor('#607d8b',this)" title="Slate"></div>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <label class="form-label mb-0 fw-bold" style="font-size:13px">Custom color</label>
+      <input type="color" class="form-control form-control-color" id="customColor" value="#3498db" style="width:48px;height:38px;padding:2px" oninput="applyColor(this.value,null)">
+      <input type="text" class="form-control" id="customColorHex" placeholder="#3498db" style="width:120px;font-family:monospace" oninput="applyColorFromHex(this.value)">
+    </div>
+  </div>
+
+  <div class="setting-card">
+    <h6><i class="fas fa-font me-2"></i>Typography</h6>
+    <label class="form-label fw-bold mb-2" style="font-size:13px">Font Family</label>
+    <div class="row g-2 mb-3">
+      <div class="col-6 col-md-3">
+        <div class="font-option selected" style="font-family:'Outfit',sans-serif" data-font="'Outfit',sans-serif" onclick="selectFont(this)">
+          Outfit<br><small style="font-size:11px;opacity:.6">Modern</small>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="font-option" style="font-family:'Poppins',sans-serif" data-font="'Poppins',sans-serif" onclick="selectFont(this)">
+          Poppins<br><small style="font-size:11px;opacity:.6">Friendly</small>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="font-option" style="font-family:'Roboto',sans-serif" data-font="'Roboto',sans-serif" onclick="selectFont(this)">
+          Roboto<br><small style="font-size:11px;opacity:.6">Clean</small>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="font-option" style="font-family:'DM Sans',sans-serif" data-font="'DM Sans',sans-serif" onclick="selectFont(this)">
+          DM Sans<br><small style="font-size:11px;opacity:.6">Compact</small>
+        </div>
+      </div>
+    </div>
+
+    <label class="form-label fw-bold" style="font-size:13px">Base Font Size</label>
+    <div class="d-flex align-items-center gap-3">
+      <input type="range" class="form-range flex-grow-1" min="12" max="20" step="1" value="16" id="fontSizeRange" oninput="applyFontSize(this.value)">
+      <span class="fw-bold" id="fontSizeLabel" style="min-width:36px">16px</span>
+    </div>
+  </div>
+
+  <div class="setting-card">
+    <h6><i class="fas fa-moon me-2"></i>Display Mode</h6>
+    <div class="row g-2">
+      <div class="col-4">
+        <div class="font-option text-center" id="modeLight" onclick="setMode('light')">
+          <i class="fas fa-sun fa-lg mb-1 d-block text-warning"></i>Light
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="font-option text-center selected" id="modeDark" onclick="setMode('dark')">
+          <i class="fas fa-moon fa-lg mb-1 d-block text-primary"></i>Dark
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="font-option text-center" id="modeAuto" onclick="setMode('auto')">
+          <i class="fas fa-circle-half-stroke fa-lg mb-1 d-block text-secondary"></i>Auto
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="setting-card">
+    <h6><i class="fas fa-sidebar me-2"></i>Sidebar</h6>
+    <div class="setting-row">
+      <div><div class="setting-label">Compact sidebar</div><div class="setting-desc">Icons only (expand on hover)</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="compactSidebar" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Show shop name in sidebar</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="showShopNameSidebar" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ TAX & GST ════════════════ -->
+<div id="sec-tax" class="settings-section">
+
+  <div class="setting-card">
+    <h6><i class="fas fa-percent me-2"></i>GST Configuration</h6>
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <label class="form-label fw-bold" style="font-size:13px">GSTIN Number</label>
+        <input type="text" class="form-control" id="gstin" placeholder="22AAAAA0000A1Z5" maxlength="15" style="font-family:monospace;text-transform:uppercase" oninput="markUnsaved()">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold" style="font-size:13px">CGST %</label>
+        <input type="number" class="form-control" id="cgst" value="2.5" step="0.5" min="0" max="14" oninput="markUnsaved()">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold" style="font-size:13px">SGST %</label>
+        <input type="number" class="form-control" id="sgst" value="2.5" step="0.5" min="0" max="14" oninput="markUnsaved()">
+      </div>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Prices are tax-inclusive</div><div class="setting-desc">If on, tax is extracted from price (not added on top)</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="taxInclusive" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Show GST breakdown on receipt</div><div class="setting-desc">Display CGST & SGST separately</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="showGstReceipt" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Round off total</div><div class="setting-desc">Round to nearest ₹1</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="roundTotal" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <div class="setting-card">
+    <h6><i class="fas fa-tag me-2"></i>Discount Settings</h6>
+    <div class="setting-row">
+      <div><div class="setting-label">Allow discounts on orders</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="allowDiscount" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Discount requires admin PIN</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="discountPin" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="row g-3 mt-1">
+      <div class="col-md-4">
+        <label class="form-label fw-bold" style="font-size:13px">Max discount %</label>
+        <input type="number" class="form-control" id="maxDiscount" value="20" min="0" max="100" oninput="markUnsaved()">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ PAYMENTS ════════════════ -->
+<div id="sec-payments" class="settings-section">
+
+  <div class="setting-card">
+    <h6><i class="fas fa-credit-card me-2"></i>Payment Methods</h6>
+
+    <div class="payment-row">
+      <div class="d-flex align-items-center gap-3">
+        <div class="payment-icon" style="background:rgba(40,167,69,0.1);color:#28a745"><i class="fas fa-money-bill-wave"></i></div>
+        <div><div class="fw-bold" style="font-size:14px">Cash</div><div class="text-muted" style="font-size:12px">Physical currency</div></div>
+      </div>
+      <label class="toggle-switch"><input type="checkbox" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+
+    <div class="payment-row">
+      <div class="d-flex align-items-center gap-3">
+        <div class="payment-icon" style="background:rgba(52,152,219,0.1);color:#3498db"><i class="fas fa-credit-card"></i></div>
+        <div><div class="fw-bold" style="font-size:14px">Card</div><div class="text-muted" style="font-size:12px">Debit / Credit card</div></div>
+      </div>
+      <label class="toggle-switch"><input type="checkbox" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+
+    <div class="payment-row">
+      <div class="d-flex align-items-center gap-3">
+        <div class="payment-icon" style="background:rgba(155,89,182,0.1);color:#9b59b6"><i class="fab fa-google-pay"></i></div>
+        <div><div class="fw-bold" style="font-size:14px">GPay / UPI</div><div class="text-muted" style="font-size:12px">QR scan payment</div></div>
+      </div>
+      <label class="toggle-switch"><input type="checkbox" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+
+    <div class="payment-row">
+      <div class="d-flex align-items-center gap-3">
+        <div class="payment-icon" style="background:rgba(230,126,34,0.1);color:#e67e22"><i class="fas fa-mobile-alt"></i></div>
+        <div><div class="fw-bold" style="font-size:14px">PhonePe / Paytm</div><div class="text-muted" style="font-size:12px">Wallet / UPI app</div></div>
+      </div>
+      <label class="toggle-switch"><input type="checkbox" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+
+    <div class="payment-row">
+      <div class="d-flex align-items-center gap-3">
+        <div class="payment-icon" style="background:rgba(52,152,219,0.1);color:#3498db"><i class="fas fa-file-invoice"></i></div>
+        <div><div class="fw-bold" style="font-size:14px">Credit (Khata)</div><div class="text-muted" style="font-size:12px">Put on tab / credit</div></div>
+      </div>
+      <label class="toggle-switch"><input type="checkbox" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <div class="setting-card">
+    <h6><i class="fas fa-qrcode me-2"></i>UPI QR Code</h6>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label fw-bold" style="font-size:13px">UPI ID</label>
+        <input type="text" class="form-control" id="upiId" placeholder="shopname@upi" oninput="markUnsaved()">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold" style="font-size:13px">UPI QR Image <small class="text-muted">(shown at checkout)</small></label>
+        <div class="upload-area" onclick="document.getElementById('qrInput').click()" style="padding:12px">
+          <img id="qrPreview" src="" style="display:none;max-height:80px;margin:0 auto 4px">
+          <i class="fas fa-qrcode fa-lg text-muted"></i>
+          <div class="text-muted mt-1" style="font-size:11px">Upload QR image</div>
+        </div>
+        <input type="file" id="qrInput" accept="image/*" style="display:none" onchange="previewImage(this,'qrPreview')">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ RECEIPT ════════════════ -->
+<div id="sec-receipt" class="settings-section">
+
+  <div class="setting-card">
+    <h6><i class="fas fa-receipt me-2"></i>Receipt Content</h6>
+    <div class="setting-row">
+      <div><div class="setting-label">Show logo on receipt</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="receiptLogo" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Show GSTIN on receipt</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="receiptGstin" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Show item HSN codes</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="receiptHsn" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Show cashier name</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="receiptCashier" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Auto-print on checkout</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="autoPrint" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="mt-3">
+      <label class="form-label fw-bold" style="font-size:13px">Thank-you message</label>
+      <input type="text" class="form-control" id="thankYouMsg" value="Thank you for visiting! Come again." oninput="markUnsaved()">
+    </div>
+    <div class="mt-2">
+      <label class="form-label fw-bold" style="font-size:13px">Receipt footer (T&C, website, etc.)</label>
+      <textarea class="form-control" id="receiptFooter" rows="2" placeholder="www.myshop.com | No exchange without bill" oninput="markUnsaved()"></textarea>
+    </div>
+  </div>
+
+  <div class="setting-card">
+    <h6><i class="fas fa-print me-2"></i>Printer</h6>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label fw-bold" style="font-size:13px">Paper Width</label>
+        <select class="form-select" id="paperWidth" onchange="markUnsaved()">
+          <option value="58">58mm (small)</option>
+          <option value="80" selected>80mm (standard)</option>
+          <option value="a4">A4</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold" style="font-size:13px">Copies per sale</label>
+        <select class="form-select" id="printCopies" onchange="markUnsaved()">
+          <option value="1" selected>1 copy</option>
+          <option value="2">2 copies</option>
+          <option value="3">3 copies</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ STAFF ════════════════ -->
+<div id="sec-staff" class="settings-section">
+
+  <div class="setting-card">
+    <h6><i class="fas fa-users me-2"></i>Staff Members</h6>
+    <div id="staffList">
+      <!-- Dynamic staff list -->
+      <div class="staff-card">
+        <div class="staff-avatar">A</div>
+        <div class="flex-grow-1">
+          <div class="fw-bold" style="font-size:14px">Admin</div>
+          <div class="text-muted" style="font-size:12px">Owner · All permissions</div>
+        </div>
+        <span class="badge bg-primary bg-opacity-10 text-primary">Admin</span>
+      </div>
+    </div>
+    <button class="btn btn-outline-primary btn-sm mt-2" onclick="addStaff()">
+      <i class="fas fa-plus me-1"></i> Add Staff Member
+    </button>
+  </div>
+
+  <div class="setting-card">
+    <h6><i class="fas fa-lock me-2"></i>Security</h6>
+    <div class="setting-row">
+      <div><div class="setting-label">Require PIN at login</div><div class="setting-desc">Staff must enter 4-digit PIN</div></div>
+      <label class="toggle-switch"><input type="checkbox" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Void order requires admin PIN</div></div>
+      <label class="toggle-switch"><input type="checkbox" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Discount requires admin PIN</div></div>
+      <label class="toggle-switch"><input type="checkbox" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="row g-3 mt-1">
+      <div class="col-md-4">
+        <label class="form-label fw-bold" style="font-size:13px">Change Admin PIN</label>
+        <input type="password" class="form-control" id="adminPin" maxlength="4" placeholder="4-digit PIN" oninput="markUnsaved()">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold" style="font-size:13px">Session timeout (min)</label>
+        <select class="form-select" id="sessionTimeout" onchange="markUnsaved()">
+          <option value="0">Never</option>
+          <option value="15">15 minutes</option>
+          <option value="30" selected>30 minutes</option>
+          <option value="60">1 hour</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ TABLES ════════════════ -->
+<div id="sec-tables" class="settings-section">
+
+  <div class="setting-card">
+    <h6><i class="fas fa-chair me-2"></i>Table Management</h6>
+    <div class="setting-row">
+      <div><div class="setting-label">Enable table management</div><div class="setting-desc">Assign orders to specific tables</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="enableTables" checked onchange="markUnsaved(); toggleTableSettings(this.checked)"><span class="toggle-slider"></span></label>
+    </div>
+    <div id="tableSettingsBody">
+      <div class="row g-3 mt-1">
+        <div class="col-md-4">
+          <label class="form-label fw-bold" style="font-size:13px">Number of tables</label>
+          <input type="number" class="form-control" id="tableCount" value="10" min="1" max="100" oninput="markUnsaved()">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-bold" style="font-size:13px">Table prefix</label>
+          <input type="text" class="form-control" id="tablePrefix" value="T" placeholder="T, Table, Tbl" oninput="markUnsaved()">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-bold" style="font-size:13px">Default seats</label>
+          <input type="number" class="form-control" id="defaultSeats" value="4" min="1" max="20" oninput="markUnsaved()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="setting-card">
+    <h6><i class="fas fa-layer-group me-2"></i>Zones / Sections</h6>
+    <div class="setting-row">
+      <div><div class="setting-label">Enable zones</div><div class="setting-desc">Indoor, Outdoor, Bar, etc.</div></div>
+      <label class="toggle-switch"><input type="checkbox" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ GENERAL ════════════════ -->
+<div id="sec-general" class="settings-section">
+
+  <div class="setting-card">
+    <h6><i class="fas fa-sliders me-2"></i>Regional</h6>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label fw-bold" style="font-size:13px">Currency Symbol</label>
+        <select class="form-select" id="currencySymbol" onchange="markUnsaved()">
+          <option value="₹" selected>₹ Indian Rupee</option>
+          <option value="$">$ US Dollar</option>
+          <option value="€">€ Euro</option>
+          <option value="£">£ British Pound</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold" style="font-size:13px">Date Format</label>
+        <select class="form-select" id="dateFormat" onchange="markUnsaved()">
+          <option value="DD/MM/YYYY" selected>DD/MM/YYYY</option>
+          <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+          <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold" style="font-size:13px">Time Format</label>
+        <select class="form-select" id="timeFormat" onchange="markUnsaved()">
+          <option value="12h" selected>12-hour (AM/PM)</option>
+          <option value="24h">24-hour</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="setting-card">
+    <h6><i class="fas fa-bell me-2"></i>Notifications</h6>
+    <div class="setting-row">
+      <div><div class="setting-label">Sound on successful sale</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="saleSound" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Low stock alert</div><div class="setting-desc">Notify when product stock is low</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="lowStockAlert" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Daily summary</div><div class="setting-desc">Show end-of-day revenue summary</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="dailySummary" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ DATA ════════════════ -->
+<div id="sec-data" class="settings-section">
+
+  <div class="setting-card">
+    <h6><i class="fas fa-download me-2"></i>Export Data</h6>
+    <div class="d-flex flex-wrap gap-2">
+      <button class="btn btn-outline-primary" onclick="exportData('orders_csv')">
+        <i class="fas fa-file-csv me-1"></i> Orders CSV
+      </button>
+      <button class="btn btn-outline-primary" onclick="exportData('products_csv')">
+        <i class="fas fa-box me-1"></i> Products CSV
+      </button>
+      <button class="btn btn-outline-primary" onclick="exportData('full_backup')">
+        <i class="fas fa-database me-1"></i> Full DB Backup
+      </button>
+    </div>
+  </div>
+
+  <div class="setting-card">
+    <h6><i class="fas fa-trash me-2"></i>Data Management</h6>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Delete orders older than</div>
+        <div class="setting-desc">Permanently removes old order records</div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <select class="form-select form-select-sm" style="width:120px">
+          <option>30 days</option>
+          <option>90 days</option>
+          <option>1 year</option>
+        </select>
+        <button class="btn btn-sm btn-outline-danger" onclick="confirmClearOrders()">Clear</button>
+      </div>
+    </div>
+    <div class="mt-3 p-3 rounded border border-danger border-opacity-25" style="background:rgba(220,53,69,0.04)">
+      <div class="fw-bold text-danger mb-1" style="font-size:13px"><i class="fas fa-triangle-exclamation me-1"></i>Danger Zone</div>
+      <div class="text-muted mb-2" style="font-size:12px">These actions are permanent and cannot be undone.</div>
+      <button class="btn btn-outline-danger btn-sm" onclick="factoryReset()">Reset All App Data</button>
+    </div>
+  </div>
+
+  <div class="setting-card">
+    <h6><i class="fas fa-info-circle me-2"></i>App Info</h6>
+    <div class="d-flex justify-content-between py-1 border-bottom" style="font-size:13px">
+      <span class="text-muted">Version</span><span class="fw-bold">SmartPOS v1.0.0</span>
+    </div>
+    <div class="d-flex justify-content-between py-1" style="font-size:13px">
+      <span class="text-muted">Built with</span><span>FastAPI + SQLite</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- col-lg-8 -->
+
+<!-- ════════════════ LIVE PREVIEW ════════════════ -->
+<div class="col-lg-4 d-none d-lg-block">
+  <div style="position:sticky;top:60px">
+    <div class="setting-card">
+      <h6><i class="fas fa-eye me-2"></i>Live Preview</h6>
+      <!-- Mini POS receipt preview -->
+      <div id="livePreview" style="background:#fff;border-radius:8px;padding:16px;font-family:monospace;font-size:12px;border:1px dashed rgba(0,0,0,0.1);color:#333">
+        <div class="text-center mb-2" style="font-weight:700;font-size:14px" id="previewShopName">MY SHOP</div>
+        <div class="text-center mb-1" style="font-size:10px;opacity:.6" id="previewAddress">123 Main Street</div>
+        <div class="text-center mb-2" style="font-size:10px;opacity:.6" id="previewGstin">GSTIN: —</div>
+        <hr style="border-style:dashed;margin:6px 0">
+        <div style="display:flex;justify-content:space-between"><span>Chicken Burger x2</span><span>₹500</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Cola x1</span><span>₹60</span></div>
+        <hr style="border-style:dashed;margin:6px 0">
+        <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>₹560</span></div>
+        <div style="display:flex;justify-content:space-between"><span>CGST 2.5%</span><span>₹14</span></div>
+        <div style="display:flex;justify-content:space-between"><span>SGST 2.5%</span><span>₹14</span></div>
+        <hr style="border-style:dashed;margin:6px 0">
+        <div style="display:flex;justify-content:space-between;font-weight:700"><span>TOTAL</span><span>₹588</span></div>
+        <div class="text-center mt-2" style="font-size:10px;opacity:.6" id="previewThankYou">Thank you for visiting!</div>
+      </div>
+    </div>
+    <!-- Color preview -->
+    <div class="setting-card mt-0">
+      <h6><i class="fas fa-swatchbook me-2"></i>Color Preview</h6>
+      <div id="colorPreviewBar" style="height:6px;border-radius:4px;background:var(--primary-color);margin-bottom:10px"></div>
+      <button class="btn btn-primary w-100 btn-sm">Sample Button</button>
+      <div class="mt-2 d-flex gap-2">
+        <span class="badge" id="colorPreviewBadge" style="background:rgba(52,152,219,0.15);color:#1a6fa3">Sample Badge</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- row -->
+</div><!-- /.settings-body -->
+
+<!-- Add Staff Modal -->
+<div class="modal fade" id="addStaffModal" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h6 class="modal-title fw-bold">Add Staff Member</h6>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <label class="form-label fw-bold" style="font-size:13px">Name</label>
+          <input type="text" class="form-control" id="newStaffName" placeholder="Staff name">
+        </div>
+        <div class="mb-2">
+          <label class="form-label fw-bold" style="font-size:13px">Role</label>
+          <select class="form-select" id="newStaffRole">
+            <option value="cashier">Cashier</option>
+            <option value="manager">Manager</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label fw-bold" style="font-size:13px">PIN (4 digits)</label>
+          <input type="password" class="form-control" id="newStaffPin" maxlength="4" placeholder="••••">
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button class="btn btn-primary w-100" onclick="saveStaff()">Add Staff</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ══════════════════════════════════════════
+// SECTION NAV
+// ══════════════════════════════════════════
+function showSection(name) {
+  document.querySelectorAll('.settings-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.snav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+name)?.classList.add('active');
+  document.querySelector(`.snav-btn[data-section="${name}"]`)?.classList.add('active');
+}
+
+// ══════════════════════════════════════════
+// UNSAVED INDICATOR
+// ══════════════════════════════════════════
+function markUnsaved() {
+  document.getElementById('unsavedIndicator').style.display = 'flex';
+}
+
+// ══════════════════════════════════════════
+// LIVE COLOR
+// ══════════════════════════════════════════
+function applyColor(hex, swatchEl) {
+  document.documentElement.style.setProperty('--primary-color', hex);
+  document.getElementById('customColor').value = hex;
+  document.getElementById('customColorHex').value = hex;
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+  if (swatchEl) swatchEl.classList.add('selected');
+  markUnsaved();
+}
+function applyColorFromHex(v) {
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) applyColor(v, null);
+}
+
+// ══════════════════════════════════════════
+// FONT
+// ══════════════════════════════════════════
+function selectFont(el) {
+  document.querySelectorAll('.font-option').forEach(f=>f.classList.remove('selected'));
+  el.classList.add('selected');
+  document.body.style.fontFamily = el.dataset.font;
+  markUnsaved();
+}
+function applyFontSize(val) {
+  document.getElementById('fontSizeLabel').textContent = val+'px';
+  document.documentElement.style.fontSize = val+'px';
+  markUnsaved();
+}
+
+// ══════════════════════════════════════════
+// MODE
+// ══════════════════════════════════════════
+function setMode(mode) {
+  ['modeLight','modeDark','modeAuto'].forEach(id=>document.getElementById(id)?.classList.remove('selected'));
+  document.getElementById('mode'+mode.charAt(0).toUpperCase()+mode.slice(1))?.classList.add('selected');
+  if (mode==='auto') {
+    const sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light';
+    document.documentElement.setAttribute('data-bs-theme', sys);
+  } else {
+    document.documentElement.setAttribute('data-bs-theme', mode);
+    localStorage.setItem('theme', mode);
+  }
+  markUnsaved();
+}
+
+// ══════════════════════════════════════════
+// IMAGE PREVIEW
+// ══════════════════════════════════════════
+function previewImage(input, previewId) {
+  const preview = document.getElementById(previewId);
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => { preview.src = e.target.result; preview.style.display='block'; };
+  reader.readAsDataURL(file);
+  markUnsaved();
+}
+
+// ══════════════════════════════════════════
+// LIVE RECEIPT PREVIEW
+// ══════════════════════════════════════════
+function livePreviewName(v) {
+  document.getElementById('previewShopName').textContent = (v||'MY SHOP').toUpperCase();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('shopAddress')?.addEventListener('input', e=>document.getElementById('previewAddress').textContent=e.target.value||'123 Main Street');
+  document.getElementById('gstin')?.addEventListener('input', e=>document.getElementById('previewGstin').textContent=e.target.value?`GSTIN: ${e.target.value}`:'GSTIN: —');
+  document.getElementById('thankYouMsg')?.addEventListener('input', e=>document.getElementById('previewThankYou').textContent=e.target.value||'Thank you for visiting!');
+});
+
+// ══════════════════════════════════════════
+// TABLES TOGGLE
+// ══════════════════════════════════════════
+function toggleTableSettings(on) {
+  document.getElementById('tableSettingsBody').style.opacity = on ? '1' : '0.4';
+  document.getElementById('tableSettingsBody').style.pointerEvents = on ? '' : 'none';
+}
+
+// ══════════════════════════════════════════
+// STAFF
+// ══════════════════════════════════════════
+function addStaff() {
+  document.getElementById('newStaffName').value='';
+  document.getElementById('newStaffPin').value='';
+  new bootstrap.Modal(document.getElementById('addStaffModal')).show();
+}
+function saveStaff() {
+  const name = document.getElementById('newStaffName').value.trim();
+  const role = document.getElementById('newStaffRole').value;
+  if (!name) return;
+  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('staffList').insertAdjacentHTML('beforeend', `
+    <div class="staff-card">
+      <div class="staff-avatar">${initials}</div>
+      <div class="flex-grow-1">
+        <div class="fw-bold" style="font-size:14px">${name}</div>
+        <div class="text-muted" style="font-size:12px">${role.charAt(0).toUpperCase()+role.slice(1)}</div>
+      </div>
+      <span class="badge bg-secondary bg-opacity-10 text-secondary">${role}</span>
+      <button class="btn btn-sm btn-outline-danger" onclick="this.closest('.staff-card').remove();markUnsaved()"><i class="fas fa-trash"></i></button>
+    </div>
+  `);
+  bootstrap.Modal.getInstance(document.getElementById('addStaffModal')).hide();
+  markUnsaved();
+}
+
+// ══════════════════════════════════════════
+// SAVE / RESET / EXPORT
+// ══════════════════════════════════════════
+function gv(id) { return document.getElementById(id)?.value ?? ''; }
+function gc(id) { return document.getElementById(id)?.checked ? 1 : 0; }
+
+function saveAllSettings() {
+  const settings = {
+    shopName:       gv('shopName'),
+    shopTagline:    gv('shopTagline'),
+    shopAddress:    gv('shopAddress'),
+    shopPhone:      gv('shopPhone'),
+    shopEmail:      gv('shopEmail'),
+    gstin:          gv('gstin'),
+    cgst:           parseFloat(gv('cgst')) || 2.5,
+    sgst:           parseFloat(gv('sgst')) || 2.5,
+    taxInclusive:   gc('taxInclusive'),
+    roundTotal:     gc('roundTotal'),
+    upiId:          gv('upiId'),
+    primaryColor:   gv('customColor'),
+    currency:       gv('currencySymbol'),
+    dateFormat:     gv('dateFormat'),
+    thankYouMsg:    gv('thankYouMsg'),
+    receiptFooter:  gv('receiptFooter'),
+    paperWidth:     gv('paperWidth'),
+    adminPin:       gv('adminPin'),
+    enableTables:   gc('enableTables'),
+    tableCount:     parseInt(gv('tableCount')) || 10,
+    allowDiscount:  gc('allowDiscount'),
+    maxDiscount:    parseFloat(gv('maxDiscount')) || 20,
+  };
+
+  localStorage.setItem('posSettings', JSON.stringify(settings));
+
+  fetch('/api/settings', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(settings)
+  }).then(r => r.ok ? r.json() : Promise.reject())
+  .then(() => {
+    document.getElementById('unsavedIndicator').style.display='none';
+    Swal.fire({ icon:'success', title:'Settings Saved!', confirmButtonColor:'var(--brand-500)', timer:1500, timerProgressBar:true, toast:true, position:'bottom-end', showConfirmButton:false });
+  }).catch(() => {
+    document.getElementById('unsavedIndicator').style.display='none';
+    Swal.fire({ icon:'warning', title:'Saved Locally', text:'Backend unreachable. Settings saved to browser.', confirmButtonColor:'var(--brand-500)', timer:2500 });
+  });
+}
+
+function resetSettings() {
+  Swal.fire({ title:'Reset Settings?', text:'Restore all defaults?', icon:'warning', showCancelButton:true, confirmButtonColor:'#e74c3c', cancelButtonText:'Cancel' })
+    .then(r => { if(r.isConfirmed){ localStorage.removeItem('posSettings'); location.reload(); }});
+}
+
+function exportData(type) {
+  Swal.fire({ icon:'info', title:'Exporting…', text:`Preparing ${type} download.`, confirmButtonColor:'var(--brand-500)', timer:1500 });
+}
+
+function confirmClearOrders() {
+  Swal.fire({ title:'Clear old orders?', text:'This is permanent and cannot be undone.', icon:'warning', showCancelButton:true, confirmButtonColor:'#d63031' });
+}
+
+function factoryReset() {
+  Swal.fire({ title:'Reset ALL data?', text:'This will erase everything!', icon:'error', input:'password', inputPlaceholder:'Enter admin PIN', showCancelButton:true, confirmButtonColor:'#d63031' })
+    .then(r => { if(r.isConfirmed && r.value==='1234'){ Swal.fire({icon:'success',title:'Reset done',confirmButtonColor:'var(--brand-500)'}); }});
+}
+
+// ══════════════════════════════════════════
+// LOAD SETTINGS FROM DB ON PAGE LOAD
+// ══════════════════════════════════════════
+function setVal(id, v) { const el = document.getElementById(id); if(el && v !== undefined && v !== null) el.value = v; }
+function setChk(id, v) { const el = document.getElementById(id); if(el) el.checked = !!v; }
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Live preview listeners
+  document.getElementById('shopAddress')?.addEventListener('input', e => document.getElementById('previewAddress').textContent = e.target.value || '123 Main Street');
+  document.getElementById('gstin')?.addEventListener('input', e => document.getElementById('previewGstin').textContent = e.target.value ? `GSTIN: ${e.target.value}` : 'GSTIN: —');
+  document.getElementById('thankYouMsg')?.addEventListener('input', e => document.getElementById('previewThankYou').textContent = e.target.value || 'Thank you for visiting!');
+
+  // Fetch settings from backend
+  fetch('/api/settings')
+    .then(r => r.json())
+    .then(s => {
+      setVal('shopName',       s.shop_name);         livePreviewName(s.shop_name || 'MY SHOP');
+      setVal('shopTagline',    s.shop_tagline);
+      setVal('shopAddress',    s.shop_address);      document.getElementById('previewAddress').textContent = s.shop_address || '123 Main Street';
+      setVal('shopPhone',      s.shop_phone);
+      setVal('shopEmail',      s.shop_email);
+      setVal('gstin',          s.gstin);             document.getElementById('previewGstin').textContent = s.gstin ? `GSTIN: ${s.gstin}` : 'GSTIN: —';
+      setVal('cgst',           s.cgst);
+      setVal('sgst',           s.sgst);
+      setChk('taxInclusive',   s.tax_inclusive);
+      setChk('roundTotal',     s.round_total);
+      setVal('upiId',          s.upi_id);
+      setVal('currencySymbol', s.currency);
+      setVal('dateFormat',     s.date_format);
+      setVal('thankYouMsg',    s.thank_you_msg);     document.getElementById('previewThankYou').textContent = s.thank_you_msg || 'Thank you for visiting!';
+      setVal('receiptFooter',  s.receipt_footer);
+      setVal('paperWidth',     s.paper_width);
+      setChk('enableTables',   s.enable_tables);
+      setVal('tableCount',     s.table_count);
+      setChk('allowDiscount',  s.allow_discount);
+      setVal('maxDiscount',    s.max_discount);
+      if (s.primary_color) applyColor(s.primary_color, null);
+    })
+    .catch(() => {
+      // Fallback to localStorage
+      const saved = JSON.parse(localStorage.getItem('posSettings') || '{}');
+      if (saved.shopName)    setVal('shopName', saved.shopName);
+      if (saved.primaryColor) applyColor(saved.primaryColor, null);
+      if (saved.thankYouMsg) setVal('thankYouMsg', saved.thankYouMsg);
+    });
+});
+</script>
+{% endblock %}

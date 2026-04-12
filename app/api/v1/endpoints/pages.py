@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.models.models import Product
+from app.models.models import Product, Order, OrderItem, ShopSettings
 from app.services.order_service import OrderService
 from app.ttutils.logwritter import LogWriter
 log_writer_ = LogWriter()
