@@ -1,58 +1,68 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.schemas import UserLogin, AuthResponse
 from app.services.auth_service import AuthService
-from app.common import log_exception
+from app.ttutils.logwritter import LogWriter
+from fastapi import Request
+log_writer_ = LogWriter()
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
 
 @router.post("/login")
-async def login(credentials: UserLogin, db: Session = Depends(get_db)):
-    """User login endpoint - authenticate user with bcrypt password"""
+async def login(
+    credentials: UserLogin,
+    request: Request,
+    db: Session = Depends(get_db)
+):
     try:
         auth_service = AuthService(db)
         
-        # Authenticate user (password verified with bcrypt)
-        customer = auth_service.authenticate_user(credentials.email, credentials.password)
-        if not customer:
+        employee = auth_service.authenticate_user(
+            credentials.email,
+            credentials.password
+        )
+        
+        if not employee:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
             )
         
-        # Get customer data
-        customer_data = auth_service.get_customer_data(customer.id)
-        
+        employee_data = auth_service.get_employee_data(employee.id)
+
+        request.session["id"] = employee.id
+        request.session["email"] = employee.email
+        request.session["full_name"] = employee_data["first_name"] + " " + employee_data["last_name"]
+
         return {
             "message": "Login successful",
             "user": AuthResponse(
-                id=customer_data["id"],
-                first_name=customer_data["first_name"],
-                last_name=customer_data["last_name"],
-                email=customer_data["email"],
-                customer_type=customer_data["customer_type"],
-                full_name=customer_data["full_name"]
+                id=employee_data["id"],
+                first_name=employee_data["first_name"],
+                last_name=employee_data["last_name"],
+                email=employee_data["email"],
+                customer_type=employee_data["customer_type"],
+                full_name=employee_data["full_name"]
             )
         }
+
     except HTTPException:
         raise
     except Exception as e:
-        log_exception(e, endpoint="/api/auth/login")
+        log_writer_.log_exception("Auth", "login", e)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail="An error occurred during login"
         )
 
-
 @router.post("/logout")
-async def logout():
-    """User logout endpoint"""
+async def logout(request: Request):
     try:
-        return {"message": "Logout successful"}
+        request.session.clear() 
     except Exception as e:
-        log_exception(e, endpoint="/api/auth/logout")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred during logout"
-        )
+        log_writer_.log_exception("Auth", "logout", e)
+        raise HTTPException(status_code=500,detail="An error occurred during logout")
+    
+    return RedirectResponse(url="/", status_code=303)

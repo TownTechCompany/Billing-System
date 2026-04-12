@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.models import Product
 from app.services.order_service import OrderService
-from app.common import log_exception
+from app.ttutils.logwritter import LogWriter
+log_writer_ = LogWriter()
 
 router = APIRouter()
 APP_ROOT = Path(__file__).resolve().parents[3]
@@ -34,7 +35,7 @@ async def dashboard(request: Request, start_date: str = None, end_date: str = No
             **metrics,
         })
     except Exception as e:
-        log_exception(e, endpoint="/dashboard")
+        log_writer_.log_exception("Pages", "dashboard", e)
         raise HTTPException(500, "Error loading dashboard")
 
 @router.get("/pos", response_class=HTMLResponse)
@@ -47,7 +48,7 @@ async def pos(request: Request, db: Session = Depends(get_db)):
             "products": products, "categories": categories,
         })
     except Exception as e:
-        log_exception(e, endpoint="/pos")
+        log_writer_.log_exception("Pages", "pos", e)
         raise HTTPException(500, "Error loading POS")
 
 @router.get("/products", response_class=HTMLResponse)
@@ -55,7 +56,7 @@ async def products_page(request: Request):
     try:
         return templates.TemplateResponse("products.html", {"request": request, "active_page": "products"})
     except Exception as e:
-        log_exception(e, endpoint="/products")
+        log_writer_.log_exception("Pages", "products_page", e)
         raise HTTPException(500, "Error loading products page")
 
 @router.get("/orders", response_class=HTMLResponse)
@@ -63,7 +64,7 @@ async def orders_page(request: Request):
     try:
         return templates.TemplateResponse("orders.html", {"request": request, "active_page": "orders"})
     except Exception as e:
-        log_exception(e, endpoint="/orders")
+        log_writer_.log_exception("Pages", "orders_page", e)
         raise HTTPException(500, "Error loading orders page")
 
 @router.get("/", response_class=HTMLResponse)

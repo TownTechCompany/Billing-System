@@ -190,11 +190,13 @@
     // Load remembered email on page load
     const rememberMe = $('#rememberMe');
     const email = $('#email');
+    const password = $('#password');
     const savedEmail = CookieManager.get('remembered_email');
     
     if (savedEmail) {
       email.val(savedEmail);
       rememberMe.prop('checked', true);
+      password.val(CookieManager.get('remembered_password'));
     }
 
     // Handle login form submission with AJAX
@@ -213,7 +215,6 @@
       }
       
       // Show loading alert
-      townTechAlert.loading('Authenticating...');
       loginBtn.prop('disabled', true);
       
       // AJAX request
@@ -236,12 +237,14 @@
           // Handle "Remember Me"
           if (rememberMeVal) {
             CookieManager.set('remembered_email', emailVal, 30);
+            CookieManager.set('remembered_password', passwordVal, 30);
           } else {
             CookieManager.delete('remembered_email');
+            CookieManager.delete('remembered_password');
           }
           
           // Show success alert
-          townTechAlert.successTopRight(
+          townTechAlert.success(
             'Login Successful',
             `Welcome back, ${response.user.first_name}!`,
             2000

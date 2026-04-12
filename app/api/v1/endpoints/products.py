@@ -6,7 +6,8 @@ from werkzeug.utils import secure_filename
 from app.db.session import get_db
 from app.services.product_service import ProductService
 from app.core.config import settings
-from app.common import log_exception
+from app.ttutils.logwritter import LogWriter
+log_writer_ = LogWriter()
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
@@ -18,7 +19,7 @@ def list_products(db: Session = Depends(get_db)):
         svc = ProductService(db)
         return [p.to_dict() for p in svc.list_all()]
     except Exception as e:
-        log_exception(e, endpoint="/api/products (list)")
+        log_writer_.log_exception("Products", "list_products", e)
         raise HTTPException(500, "Error fetching products")
 
 @router.post("", status_code=201)
@@ -37,7 +38,7 @@ async def create_product(
         p = ProductService(db).create(name, category, price, image_path)
         return JSONResponse({"message": "Product added!", "product": p.to_dict()}, status_code=201)
     except Exception as e:
-        log_exception(e, endpoint="/api/products (create)")
+        log_writer_.log_exception("Products", "create_product", e)
         raise HTTPException(500, "Error creating product")
 
 @router.put("/{product_id}")
@@ -69,7 +70,7 @@ async def update_product(product_id: int, request: Request, db: Session = Depend
     except HTTPException:
         raise
     except Exception as e:
-        log_exception(e, endpoint="/api/products/{product_id} (update)")
+        log_writer_.log_exception("Products", "update_product", e)
         raise HTTPException(500, "Error updating product")
 
 @router.delete("/{product_id}")
@@ -81,5 +82,5 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        log_exception(e, endpoint="/api/products/{product_id} (delete)")
+        log_writer_.log_exception("Products", "delete_product", e)
         raise HTTPException(500, "Error deleting product")

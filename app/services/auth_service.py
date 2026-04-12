@@ -1,31 +1,37 @@
 from sqlalchemy.orm import Session
-from app.models.models import Customer
+from app.ttutils.common import decrypt_data
+from app.models.models import Employee
 
 class AuthService:
     def __init__(self, db: Session):
         self.db = db
     
-    def authenticate_user(self, email: str, password: str) -> Customer:
+    def authenticate_user(self, email: str, password: str) -> Employee:
         """Authenticate user with email (simple verification)"""
-        customer = self.db.query(Customer).filter(Customer.email == email).first()
+        employee = self.db.query(Employee).filter(Employee.email == email).first()
         
-        if not customer or not customer.is_active:
+        if not employee or not employee.is_active:
             return None
         
-        return customer
-    
-    def get_customer_data(self, customer_id: int) -> dict:
-        """Get customer data for response"""
-        customer = self.db.query(Customer).filter(Customer.id == customer_id).first()
+        decrypted_password = decrypt_data(employee.password)
         
-        if not customer:
+        if decrypted_password != password:
+            return None
+        
+        return employee
+    
+    def get_employee_data(self, employee_id: int) -> dict:
+        """Get employee data for response"""
+        employee = self.db.query(Employee).filter(Employee.id == employee_id).first()
+        
+        if not employee:
             return None
         
         return {
-            "id": customer.id,
-            "first_name": customer.first_name,
-            "last_name": customer.last_name,
-            "email": customer.email,
-            "customer_type": customer.customer_type,
-            "full_name": f"{customer.first_name} {customer.last_name}"
+            "id": employee.id,
+            "first_name": employee.first_name,
+            "last_name": employee.last_name,
+            "email": employee.email,
+            "customer_type": employee.customer_type,
+            "full_name": f"{employee.first_name} {employee.last_name}"
         }

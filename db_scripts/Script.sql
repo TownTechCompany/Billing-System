@@ -3,7 +3,7 @@
 -- Type: Owner
 -- Password: owner123
 
-INSERT INTO customer (first_name, last_name, email, customer_type, password, is_active, created_at, created_on, updated_at, updated_on)
+INSERT INTO employee (first_name, last_name, email, customer_type, password, is_active, created_at, created_on, updated_at, updated_on)
 VALUES (
     'Riyas',
     'Khan',

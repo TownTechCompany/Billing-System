@@ -3,8 +3,8 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.session import Base
 
-class Customer(Base):
-    __tablename__ = "customer"
+class Employee(Base):
+    __tablename__ = "employee"
     id       = Column(Integer, primary_key=True, index=True)
     first_name = Column(String(50), unique=True, nullable=False, index=True)
     last_name = Column(String(50), unique=True, nullable=False, index=True)
