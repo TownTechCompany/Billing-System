@@ -18,7 +18,7 @@
 
     <aside class="main-sidebar">
         <div class="sidebar-header">
-            <a href="/" class="sidebar-brand">
+            <a href="/dashboard" class="sidebar-brand">
                 <div class="brand-icon">
                     <i class="fa-solid fa-cash-register"></i>
                 </div>
@@ -28,7 +28,7 @@
         <div class="sidebar-divider"></div>
         <div class="sidebar-nav">
             <div class="sidebar-section-label">Main</div>
-            <a href="/" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+            <a href="/dashboard" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
                 <i class="fa-solid fa-gauge-high"></i>
                 <span>Dashboard</span>
             </a>
@@ -45,9 +45,9 @@
                 <i class="fa-solid fa-receipt"></i>
                 <span>Orders</span>
             </a>
-            <a href="{{ url_for('settings_page') }}" class="nav-item {% if active_page == 'settings' %}active{% endif %}">
-                <i class="fas fa-gear"></i>
-                <span>Settings</span>
+            <a href="/api/auth/logout" class="nav-item">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
             </a>
         </div>
         <div class="sidebar-footer">

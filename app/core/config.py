@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     debug: bool = True
     database_url: str = Field(default="sqlite:///app/db/billing.db", validation_alias="DATABASE_URL")
     upload_folder: str = "app/static/uploads"
+    secret_key: str = Field(default="your-secret-key-change-in-production", validation_alias="SECRET_KEY")
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
 settings = Settings()
