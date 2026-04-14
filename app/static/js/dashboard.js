@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadChart() {
     try {
-        const r = await fetch('/api/analytics');
+        const r = await fetch('/analytics');
         const d = await r.json();
         const ctx = document.getElementById('revenueChart').getContext('2d');
         new Chart(ctx, {

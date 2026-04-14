@@ -28,7 +28,7 @@ async def login(credentials: UserLogin, request: Request, db: Session = Depends(
             email=employee_data["email"],
             customer_type=employee_data["customer_type"],
             full_name=employee_data["full_name"]
-        ),
+        ).dict(),
         message="Login successful"
     )
 
@@ -36,4 +36,4 @@ async def login(credentials: UserLogin, request: Request, db: Session = Depends(
 async def logout(request: Request):
     """User logout"""
     request.session.clear() 
-    return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)

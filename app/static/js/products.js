@@ -27,7 +27,7 @@ function initDT() {
 
 async function loadProducts() {
     try {
-        const r = await fetch('/api/products');
+        const r = await fetch('/products');
         allProducts = await r.json();
         renderTable(allProducts);
         populateCategories(allProducts);
@@ -130,7 +130,7 @@ async function saveProduct() {
 
     try {
         const isEdit = !!id;
-        const res = await fetch(isEdit ? `/api/products/${id}` : '/api/products', { method: isEdit ? 'PUT' : 'POST', body: fd });
+        const res = await fetch(isEdit ? ` /products/${id}` : '/products', { method: isEdit ? 'PUT' : 'POST', body: fd });
         if (!res.ok) throw new Error();
         bootstrap.Modal.getInstance(document.getElementById('productModal'))?.hide();
         showToast(isEdit ? 'Product updated ✓' : 'Product created ✓', 'success');
@@ -149,7 +149,7 @@ async function execDelete() {
     bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
     if (!pendingDelete) return;
     try {
-        const res = await fetch(`/api/products/${pendingDelete}`, { method: 'DELETE' });
+        const res = await fetch(` /products/${pendingDelete}`, { method: 'DELETE' });
         if (!res.ok) throw new Error();
         showToast('Product deleted ✓', 'success');
         await loadProducts();

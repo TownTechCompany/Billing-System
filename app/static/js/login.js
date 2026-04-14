@@ -75,7 +75,7 @@
       
       // AJAX request
       $.ajax({
-        url: '/api/auth/login',
+        url: '/auth/login',
         type: 'POST',
         contentType: 'application/json',
         dataType: 'json',
@@ -102,7 +102,7 @@
           // Show success alert
           townTechAlert.successCenter(
             'Login Successful',
-            `Welcome back, ${response.user.first_name}!`,
+            `Welcome back, ${response.data.first_name}!`,
             2000
           );
           
@@ -135,7 +135,7 @@
   // Logout function
   function logout() {
     $.ajax({
-      url: '/api/auth/logout',
+      url: '/auth/logout',
       type: 'POST',
       contentType: 'application/json',
       success: function() {

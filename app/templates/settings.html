@@ -932,7 +932,7 @@ function saveAllSettings() {
 
   localStorage.setItem('posSettings', JSON.stringify(settings));
 
-  fetch('/api/settings', {
+  fetch('/settings', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify(settings)
@@ -977,7 +977,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('thankYouMsg')?.addEventListener('input', e => document.getElementById('previewThankYou').textContent = e.target.value || 'Thank you for visiting!');
 
   // Fetch settings from backend
-  fetch('/api/settings')
+  fetch('/settings')
     .then(r => r.json())
     .then(s => {
       setVal('shopName',       s.shop_name);         livePreviewName(s.shop_name || 'MY SHOP');

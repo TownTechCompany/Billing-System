@@ -48,7 +48,7 @@ function startClock() {
 // ── Load Orders ────────────────────────────────────────────────────────────
 async function loadOrders() {
     try {
-        const res = await fetch('/api/orders');
+        const res = await fetch('/orders');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         allOrders = await res.json();
         calcStats();
@@ -62,7 +62,7 @@ async function loadOrders() {
 // ── Load Products ──────────────────────────────────────────────────────────
 async function loadProducts() {
     try {
-        const res = await fetch('/api/products');
+        const res = await fetch('/products');
         allProducts = await res.json();
     } catch {
         /* non-fatal */
@@ -316,7 +316,7 @@ async function openPanel(orderId) {
 
     // Always fetch full data (includes all items)
     try {
-        const res = await fetch(`/api/orders/${orderId}`);
+        const res = await fetch(` /orders/${orderId}`);
         if (!res.ok) throw new Error();
         currentOrderData = await res.json();
         renderPanel(currentOrderData);
@@ -512,7 +512,7 @@ async function saveEdits() {
     };
 
     try {
-        const res = await fetch(`/api/orders/${currentOrderId}`, {
+        const res = await fetch(` /orders/${currentOrderId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -566,7 +566,7 @@ async function confirmCheckout() {
     if (!currentOrderId) return;
     await saveEdits();   // persist any item edits first
     try {
-        const res = await fetch(`/api/orders/${currentOrderId}/checkout`, {
+        const res = await fetch(` /orders/${currentOrderId}/checkout`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ payment_method: checkoutPayMethod })
@@ -584,12 +584,12 @@ async function confirmCheckout() {
 // ── KOT / Print ────────────────────────────────────────────────────────────
 function printKOT() {
     showToast('Kitchen ticket sent to printer 🍳', 'info');
-    // Extend: POST to /api/orders/{id}/kot when kitchen printer route exists
+    // Extend: POST to  /orders/{id}/kot when kitchen printer route exists
 }
 
 function printOrder(id) {
     showToast('Printing receipt…', 'info');
-    // Extend: POST to /api/orders/{id}/print
+    // Extend: POST to  /orders/{id}/print
 }
 
 // ── Void ───────────────────────────────────────────────────────────────────
@@ -638,7 +638,7 @@ async function checkPin() {
     }
     bootstrap.Modal.getInstance(document.getElementById('voidPinModal'))?.hide();
     try {
-        const res = await fetch(`/api/orders/${pendingVoidId}/void`, { method: 'PATCH' });
+        const res = await fetch(` /orders/${pendingVoidId}/void`, { method: 'PATCH' });
         if (!res.ok) throw new Error();
         showToast('Order voided', 'info');
         closePanel();
@@ -662,7 +662,7 @@ async function execDelete() {
     bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
     if (!pendingDeleteId) return;
     try {
-        const res = await fetch(`/api/orders/${pendingDeleteId}`, { method: 'DELETE' });
+        const res = await fetch(` /orders/${pendingDeleteId}`, { method: 'DELETE' });
         if (!res.ok) throw new Error();
         showToast(`Order ${pendingDeleteNum} deleted`, 'success');
         closePanel();
