@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-
 from app.api.routers.pages import router as page_router
+
 from app.api.routers.auth import router as auth_router
 from app.api.routers.employees import router as employee_router
 from app.api.routers.orders import router as order_router
