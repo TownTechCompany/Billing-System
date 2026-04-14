@@ -35,40 +35,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── Clock ──────────────────────────────────────────────────────────────────
 function startClock() {
-    const el = document.getElementById('liveTime');
-    if (!el) return;
+    const el = $('#liveTime');
+    if (!el.length) return;
     const tick = () => {
         const now = new Date();
-        el.textContent = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        el.text(now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     };
     tick();
     setInterval(tick, 1000);
 }
 
 // ── Load Orders ────────────────────────────────────────────────────────────
-async function loadOrders() {
-    try {
-        const res = await fetch('/orders/get-orders');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        allOrders = json.data || [];
-        calcStats();
-        applyFilters();
-    } catch (e) {
-        showToast('Failed to load orders', 'error');
-        console.error(e);
-    }
+function loadOrders() {
+    $.ajax({
+        url: '/orders/get-orders',
+        type: 'GET',
+        dataType: 'json',
+        success: function(json) {
+            allOrders = json.data || [];
+            calcStats();
+            applyFilters();
+        },
+        error: function(xhr, status, e) {
+            showToast('Failed to load orders', 'error');
+            console.error(e);
+        }
+    });
 }
 
 // ── Load Products ──────────────────────────────────────────────────────────
-async function loadProducts() {
-    try {
-        const res = await fetch('/products/get-products');
-        const json = await res.json();
-        allProducts = json.data || [];
-    } catch {
-        /* non-fatal */
-    }
+function loadProducts() {
+    $.ajax({
+        url: '/products/get-products',
+        type: 'GET',
+        dataType: 'json',
+        success: function(json) {
+            allProducts = json.data || [];
+        },
+        error: function() {
+            /* non-fatal */
+        }
+    });
 }
 
 // ── Stats ──────────────────────────────────────────────────────────────────
@@ -76,11 +83,12 @@ function calcStats() {
     const today = new Date().toDateString();
     let open = 0, paid = 0, rev = 0;
 
-    allOrders.forEach(o => {
+    for (let i = 0; i < allOrders.length; i++) {
+        const o = allOrders[i];
         const oDate = new Date(o.date_created).toDateString();
         if (o.status === 'open') open++;
         if (o.status === 'paid' && oDate === today) { paid++; rev += o.total_amount; }
-    });
+    }
 
     const todayOrders = allOrders.filter(o => new Date(o.date_created).toDateString() === today);
     const avg = todayOrders.length ? (todayOrders.reduce((s, o) => s + o.total_amount, 0) / todayOrders.length) : 0;
@@ -94,20 +102,22 @@ function calcStats() {
 
 // ── Filter chips ───────────────────────────────────────────────────────────
 function initChips() {
-    document.querySelectorAll('#statusChips .chip').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('#statusChips .chip').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            activeFilter = btn.dataset.filter;
+    const chips = $('#statusChips .chip');
+    for (let i = 0; i < chips.length; i++) {
+        const btn = $(chips[i]);
+        btn.on('click', () => {
+            chips.removeClass('active');
+            btn.addClass('active');
+            activeFilter = btn.data('filter');
             currentPage = 1;
             applyFilters();
         });
-    });
+    }
 }
 
 // ── Search ─────────────────────────────────────────────────────────────────
 function initSearch() {
-    document.getElementById('orderSearch').addEventListener('input', () => {
+    $('#orderSearch').on('input', () => {
         currentPage = 1;
         applyFilters();
     });
@@ -132,7 +142,7 @@ function initDatePicker() {
 
 // ── Apply all filters ──────────────────────────────────────────────────────
 function applyFilters(dateFrom, dateTo) {
-    const q = document.getElementById('orderSearch').value.toLowerCase().trim();
+    const q = $('#orderSearch').val().toLowerCase().trim();
 
     filteredOrders = allOrders.filter(o => {
         // status
@@ -157,22 +167,22 @@ function applyFilters(dateFrom, dateTo) {
 
 // ── Render table ───────────────────────────────────────────────────────────
 function renderTable() {
-    const tbody = document.getElementById('ordersBody');
-    const empty = document.getElementById('emptyState');
+    const tbody = $('#ordersBody');
+    const empty = $('#emptyState');
 
     const total = filteredOrders.length;
     const start = (currentPage - 1) * PAGE_SIZE;
     const page  = filteredOrders.slice(start, start + PAGE_SIZE);
 
     if (total === 0) {
-        tbody.innerHTML = '';
-        empty.style.display = 'flex';
+        tbody.empty();
+        empty.css('display', 'flex');
         renderPagination(0);
         return;
     }
-    empty.style.display = 'none';
+    empty.hide();
 
-    tbody.innerHTML = page.map(o => {
+    tbody.html(page.map(o => {
         const status  = o.status || 'paid';
         const dotCls  = `row-dot row-dot-${status}`;
         const pillCls = `status-pill sp-${status}`;
@@ -208,7 +218,7 @@ function renderTable() {
                 </div>
             </td>
         </tr>`;
-    }).join('');
+    }).join(''));
 
     renderPagination(total);
 }
@@ -221,34 +231,35 @@ function renderPagination(total) {
 
     setText('paginInfo', total > 0 ? `Showing ${start}–${end} of ${total} orders` : '0 orders');
 
-    const btns = document.getElementById('paginBtns');
-    btns.innerHTML = '';
+    const btns = $('#paginBtns');
+    btns.empty();
 
     if (totalPages <= 1) return;
 
     const prev = makeEl('button', 'pagin-btn', '<i class="fa-solid fa-chevron-left"></i>');
     prev.disabled = currentPage === 1;
     prev.onclick = () => { currentPage--; renderTable(); };
-    btns.appendChild(prev);
+    btns.append(prev);
 
     // Show max 5 page numbers
     const pages = buildPageRange(currentPage, totalPages);
-    pages.forEach(p => {
+    for (let i = 0; i < pages.length; i++) {
+        const p = pages[i];
         if (p === '…') {
             const sp = makeEl('span', '', '…');
             sp.style.cssText = 'padding:0 4px;color:var(--slate-400);font-size:.77rem;display:flex;align-items:center';
-            btns.appendChild(sp);
+            btns.append(sp);
         } else {
             const btn = makeEl('button', `pagin-btn${p === currentPage ? ' active' : ''}`, String(p));
             btn.onclick = () => { currentPage = p; renderTable(); };
-            btns.appendChild(btn);
+            btns.append(btn);
         }
-    });
+    }
 
     const next = makeEl('button', 'pagin-btn', '<i class="fa-solid fa-chevron-right"></i>');
     next.disabled = currentPage === totalPages;
     next.onclick = () => { currentPage++; renderTable(); };
-    btns.appendChild(next);
+    btns.append(next);
 }
 
 function buildPageRange(cur, total) {
@@ -261,10 +272,10 @@ function buildPageRange(cur, total) {
 // ── View toggle ────────────────────────────────────────────────────────────
 function switchView(v) {
     currentView = v;
-    document.getElementById('listView').style.display  = v === 'list'  ? 'flex' : 'none';
-    document.getElementById('tableView').style.display = v === 'table' ? ''     : 'none';
-    document.getElementById('vBtn-list').classList.toggle('active',  v === 'list');
-    document.getElementById('vBtn-table').classList.toggle('active', v === 'table');
+    $('#listView').css('display', v === 'list'  ? 'flex' : 'none');
+    $('#tableView').css('display', v === 'table' ? ''     : 'none');
+    $('#vBtn-list').toggleClass('active',  v === 'list');
+    $('#vBtn-table').toggleClass('active', v === 'table');
     if (v === 'table') renderFloorMap();
 }
 
@@ -278,9 +289,9 @@ function renderFloorMap() {
 
     // Get max table number from orders or default 12
     const maxTable = Math.max(12, ...allOrders.filter(o => o.table_number).map(o => o.table_number));
-    const grid = document.getElementById('tableGrid');
+    const grid = $('#tableGrid');
 
-    grid.innerHTML = Array.from({ length: maxTable }, (_, i) => {
+    grid.html(Array.from({ length: maxTable }, (_, i) => {
         const n = i + 1;
         const occupied = occupiedTables.has(n);
         const billed   = billedTables.has(n);
@@ -294,13 +305,13 @@ function renderFloorMap() {
             <div class="t-pax">${lbl}</div>
             ${order ? `<div class="t-order">${esc(order.order_number)}</div>` : ''}
         </div>`;
-    }).join('');
+    }).join(''));
 }
 
 function filterByTable(n) {
     switchView('list');
-    const q = document.getElementById('orderSearch');
-    q.value = `T${n}`;
+    const q = $('#orderSearch');
+    q.val(`T${n}`);
     applyFilters();
     showToast(`Showing orders for Table ${n}`, 'info');
 }
@@ -317,18 +328,21 @@ async function openPanel(orderId) {
     }
 
     // Always fetch full data (includes all items)
-    try {
-        const res = await fetch(`/orders/get-order-detail/${orderId}`);
-        if (!res.ok) throw new Error();
-        const json = await res.json();
-        currentOrderData = json.data;
-        renderPanel(currentOrderData);
-    } catch {
-        if (!localOrder) { showToast('Could not load order details', 'error'); return; }
-    }
+    $.ajax({
+        url: `/orders/get-order-detail/${orderId}`,
+        type: 'GET',
+        dataType: 'json',
+        success: function(json) {
+            currentOrderData = json.data;
+            renderPanel(currentOrderData);
+        },
+        error: function() {
+            if (!localOrder) { showToast('Could not load order details', 'error'); return; }
+        }
+    });
 
-    document.getElementById('detailPanel').classList.add('open');
-    document.getElementById('panelBackdrop').classList.add('open');
+    $('#detailPanel').addClass('open');
+    $('#panelBackdrop').addClass('open');
 }
 
 function renderPanel(data) {
@@ -337,14 +351,14 @@ function renderPanel(data) {
     // Header
     setText('dpOrderNum', data.order_number);
 
-    const sb = document.getElementById('dpStatus');
-    sb.textContent = data.status || 'paid';
-    sb.className   = `dp-status-badge sp-${data.status || 'paid'}`;
+    const sb = $('#dpStatus');
+    sb.text(data.status || 'paid');
+    sb.prop('className', `dp-status-badge sp-${data.status || 'paid'}`);
 
-    const tb = document.getElementById('dpType');
+    const tb = $('#dpType');
     const oType = (data.order_type || 'takeaway').toLowerCase();
-    tb.textContent = data.table_number ? `Table ${data.table_number}` : ucfirst(oType);
-    tb.className   = `dp-type-badge otype-${oType}`;
+    tb.text(data.table_number ? `Table ${data.table_number}` : ucfirst(oType));
+    tb.prop('className', `dp-type-badge otype-${oType}`);
 
     // Meta
     setText('dpTime',     data.date_created || '—');
@@ -352,21 +366,21 @@ function renderPanel(data) {
     setText('dpMethod',   data.payment_method || '—');
 
     // Add item section
-    document.getElementById('addItemSection').style.display  = isOpen ? '' : 'none';
-    document.getElementById('discountRow').style.display     = isOpen ? 'flex' : 'none';
-    document.getElementById('notesSection').style.display    = isOpen ? '' : 'none';
+    $('#addItemSection').css('display', isOpen ? '' : 'none');
+    $('#discountRow').css('display', isOpen ? 'flex' : 'none');
+    $('#notesSection').css('display', isOpen ? '' : 'none');
 
     // Notes
     if (isOpen) {
-        document.getElementById('orderNotes').value = data.notes || '';
+        $('#orderNotes').val(data.notes || '');
     }
 
     // Items
-    const container = document.getElementById('dpItemsContainer');
+    const container = $('#dpItemsContainer');
     if (!data.items || data.items.length === 0) {
-        container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--slate-400);font-size:.82rem">No items</div>';
+        container.html('<div style="padding:24px;text-align:center;color:var(--slate-400);font-size:.82rem">No items</div>');
     } else {
-        container.innerHTML = data.items.map(item => `
+        container.html(data.items.map(item => `
             <div class="dp-item-row" id="item-row-${item.id}">
                 <div>
                     <div class="dp-item-name" title="${esc(item.product_name)}">${esc(item.product_name)}</div>
@@ -382,12 +396,12 @@ function renderPanel(data) {
                 </div>
                 <div class="dp-item-total" id="line-${item.id}">₹${fmtNum(item.price * item.quantity)}</div>
             </div>
-        `).join('');
+        `).join(''));
     }
 
     // Discount inputs
     if (isOpen && data.discount > 0) {
-        document.getElementById('discountVal').value = data.discount;
+        $('#discountVal').val(data.discount);
     }
 
     recalcPanel();
@@ -398,8 +412,8 @@ function recalcPanel() {
     const items = currentOrderData?.items || [];
     const sub   = items.reduce((s, i) => s + i.price * i.quantity, 0);
     const tax   = sub * 0.05;
-    const dv    = parseFloat(document.getElementById('discountVal')?.value || 0) || 0;
-    const dt    = document.getElementById('discountType')?.value || 'flat';
+    const dv    = parseFloat($('#discountVal').val() || 0) || 0;
+    const dt    = $('#discountType').val() || 'flat';
     const disc  = dt === 'pct' ? sub * dv / 100 : dv;
     const total = Math.max(0, sub + tax - disc);
 
@@ -416,7 +430,7 @@ function changeQty(itemId, delta) {
     item.quantity = Math.max(0, item.quantity + delta);
     if (item.quantity === 0) {
         currentOrderData.items = currentOrderData.items.filter(i => i.id !== itemId);
-        document.getElementById(`item-row-${itemId}`)?.remove();
+        $(`#item-row-${itemId}`).remove();
     } else {
         setText(`qty-${itemId}`,  item.quantity);
         setText(`line-${itemId}`, '₹' + fmtNum(item.price * item.quantity));
@@ -425,9 +439,9 @@ function changeQty(itemId, delta) {
 }
 
 function renderPanelActions(data) {
-    const el     = document.getElementById('dpActions');
+    const el     = $('#dpActions');
     const isOpen = (data.status || 'paid') === 'open';
-    el.innerHTML = isOpen
+    el.html(isOpen
         ? `<button class="dp-btn dp-btn-checkout" onclick="openCheckoutModal()">
                <i class="fa-solid fa-cash-register"></i>Checkout
            </button>
@@ -445,28 +459,28 @@ function renderPanelActions(data) {
            </button>
            <button class="dp-btn dp-btn-del" onclick="openDeleteModal(${data.id},'${esc(data.order_number)}')" title="Delete">
                <i class="fa-regular fa-trash-can"></i>
-           </button>`;
+           </button>`);
 }
 
 function closePanel() {
-    document.getElementById('detailPanel').classList.remove('open');
-    document.getElementById('panelBackdrop').classList.remove('open');
-    document.getElementById('addItemResults').innerHTML = '';
-    document.getElementById('addItemSearch').value = '';
+    $('#detailPanel').removeClass('open');
+    $('#panelBackdrop').removeClass('open');
+    $('#addItemResults').empty();
+    $('#addItemSearch').val('');
     currentOrderId   = null;
     currentOrderData = null;
 }
 
 // ── Add product to open order ──────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('addItemSearch').addEventListener('input', function () {
-        const q   = this.value.toLowerCase();
-        const el  = document.getElementById('addItemResults');
-        if (!q) { el.innerHTML = ''; return; }
+$(document).ready(() => {
+    $('#addItemSearch').on('input', function () {
+        const q   = $(this).val().toLowerCase();
+        const el  = $('#addItemResults');
+        if (!q) { el.empty(); return; }
 
         const hits = allProducts.filter(p => p.name.toLowerCase().includes(q) ||
                                              p.category.toLowerCase().includes(q)).slice(0, 8);
-        el.innerHTML = hits.length
+        el.html(hits.length
             ? hits.map(p => `
                 <div class="dp-result-item" onclick="addProductToOrder(${p.id},'${esc(p.name)}',${p.price})">
                     <div>
@@ -475,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="dp-result-price">₹${fmtNum(p.price)}</div>
                 </div>`).join('')
-            : '<div style="padding:12px;text-align:center;color:var(--slate-400);font-size:.8rem">No products found</div>';
+            : '<div style="padding:12px;text-align:center;color:var(--slate-400);font-size:.8rem">No products found</div>');
     });
 });
 
@@ -489,19 +503,19 @@ function addProductToOrder(pid, pname, price) {
         currentOrderData.items.push({ id: newId, product_id: pid, product_name: pname, price, quantity: 1 });
         renderPanel(currentOrderData);
     }
-    document.getElementById('addItemSearch').value = '';
-    document.getElementById('addItemResults').innerHTML = '';
+    $('#addItemSearch').val('');
+    $('#addItemResults').empty();
     showToast(`${pname} added`, 'success');
 }
 
 // ── Save edits ─────────────────────────────────────────────────────────────
 async function saveEdits() {
     if (!currentOrderData) return;
-    const dv   = parseFloat(document.getElementById('discountVal')?.value || 0) || 0;
-    const dt   = document.getElementById('discountType')?.value || 'flat';
+    const dv   = parseFloat($('#discountVal').val() || 0) || 0;
+    const dt   = $('#discountType').val() || 'flat';
     const sub  = currentOrderData.items.reduce((s, i) => s + i.price * i.quantity, 0);
     const disc = dt === 'pct' ? sub * dv / 100 : dv;
-    const notes = document.getElementById('orderNotes')?.value || '';
+    const notes = $('#orderNotes').val() || '';
 
     const payload = {
         discount: disc,
@@ -514,18 +528,19 @@ async function saveEdits() {
         }))
     };
 
-    try {
-        const res = await fetch(`/orders/update-order/${currentOrderId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error();
-        showToast('Order saved ✓', 'success');
-        await loadOrders();
-    } catch {
-        showToast('Failed to save order', 'error');
-    }
+    $.ajax({
+        url: `/orders/update-order/${currentOrderId}`,
+        type: 'PATCH',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function() {
+            showToast('Order saved ✓', 'success');
+            loadOrders();
+        },
+        error: function() {
+            showToast('Failed to save order', 'error');
+        }
+    });
 }
 
 // ── Checkout ───────────────────────────────────────────────────────────────
@@ -534,54 +549,58 @@ function openCheckoutModal() {
     const items  = currentOrderData.items;
     const sub    = items.reduce((s, i) => s + i.price * i.quantity, 0);
     const tax    = sub * 0.05;
-    const dv     = parseFloat(document.getElementById('discountVal')?.value || 0) || 0;
-    const dt     = document.getElementById('discountType')?.value || 'flat';
+    const dv     = parseFloat($('#discountVal').val() || 0) || 0;
+    const dt     = $('#discountType').val() || 'flat';
     const disc   = dt === 'pct' ? sub * dv / 100 : dv;
     const total  = Math.max(0, sub + tax - disc);
 
-    document.getElementById('checkoutSummary').innerHTML = `
+    $('#checkoutSummary').html(`
         <strong>${items.length} item${items.length !== 1 ? 's' : ''}</strong><br>
         Subtotal: ₹${fmtNum(sub)} &nbsp;·&nbsp; Tax: ₹${fmtNum(tax)}&nbsp;
         ${disc > 0 ? `&nbsp;·&nbsp; Discount: −₹${fmtNum(disc)}` : ''}<br>
         <span style="font-family:'Plus Jakarta Sans';font-size:1.05rem;font-weight:800;color:var(--slate-900)">
             Total: ₹${fmtNum(total)}
-        </span>`;
+        </span>`);
 
     // Reset pay method selection
-    document.querySelectorAll('.pay-method-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('.pay-method-btn[data-method="Cash"]')?.classList.add('active');
+    const resetBtns = document.querySelectorAll('.pay-method-btn'); // left because I already did for loops
+    for(let i=0; i<resetBtns.length; i++) resetBtns[i].classList.remove('active');
+    $('.pay-method-btn[data-method="Cash"]').addClass('active');
     checkoutPayMethod = 'Cash';
 
     new bootstrap.Modal(document.getElementById('checkoutModal')).show();
 }
 
 function initPayMethodBtns() {
-    document.querySelectorAll('.pay-method-btn').forEach(btn => {
+    const pgBtns = document.querySelectorAll('.pay-method-btn');
+    for (let i = 0; i < pgBtns.length; i++) {
+        const btn = pgBtns[i];
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.pay-method-btn').forEach(b => b.classList.remove('active'));
+            for (let j = 0; j < pgBtns.length; j++) pgBtns[j].classList.remove('active');
             btn.classList.add('active');
             checkoutPayMethod = btn.dataset.method;
         });
-    });
+    }
 }
 
-async function confirmCheckout() {
+function confirmCheckout() {
     if (!currentOrderId) return;
-    await saveEdits();   // persist any item edits first
-    try {
-        const res = await fetch(`/orders/checkout-order/${currentOrderId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ payment_method: checkoutPayMethod })
-        });
-        if (!res.ok) throw new Error();
-        bootstrap.Modal.getInstance(document.getElementById('checkoutModal'))?.hide();
-        closePanel();
-        showToast('Order checked out ✓', 'success');
-        await loadOrders();
-    } catch {
-        showToast('Checkout failed', 'error');
-    }
+    saveEdits();   // persist any item edits first
+    $.ajax({
+        url: `/orders/checkout-order/${currentOrderId}`,
+        type: 'PATCH',
+        contentType: 'application/json',
+        data: JSON.stringify({ payment_method: checkoutPayMethod }),
+        success: function() {
+            bootstrap.Modal.getInstance(document.getElementById('checkoutModal'))?.hide();
+            closePanel();
+            showToast('Order checked out ✓', 'success');
+            loadOrders();
+        },
+        error: function() {
+            showToast('Checkout failed', 'error');
+        }
+    });
 }
 
 // ── KOT / Print ────────────────────────────────────────────────────────────
@@ -600,18 +619,18 @@ function promptVoid(id) {
     pendingVoidId = id;
     pinBuffer = '';
     updatePinDots();
-    document.getElementById('pinError').style.display = 'none';
+    $('#pinError').hide();
     new bootstrap.Modal(document.getElementById('voidPinModal')).show();
 }
 
 function buildPinPad() {
-    const pad = document.getElementById('pinPad');
-    if (!pad) return;
+    const pad = $('#pinPad');
+    if (!pad.length) return;
     const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
-    pad.innerHTML = keys.map(k => {
+    pad.html(keys.map(k => {
         if (k === '') return '<div></div>';
         return `<button class="pin-key${k === '⌫' ? ' del-key' : ''}" onclick="pinKey('${k}')">${k}</button>`;
-    }).join('');
+    }).join(''));
 }
 
 function pinKey(k) {
@@ -625,30 +644,34 @@ function pinKey(k) {
 }
 
 function updatePinDots() {
-    document.querySelectorAll('#pinDots span').forEach((dot, i) => {
-        dot.classList.toggle('filled', i < pinBuffer.length);
-    });
+    const dots = document.querySelectorAll('#pinDots span');
+    for (let i = 0; i < dots.length; i++) {
+        dots[i].classList.toggle('filled', i < pinBuffer.length);
+    }
 }
 
 async function checkPin() {
     // TODO: compare against settings.admin_pin from API
     const ADMIN_PIN = '1234';
     if (pinBuffer !== ADMIN_PIN) {
-        document.getElementById('pinError').style.display = 'flex';
+        $('#pinError').css('display', 'flex');
         pinBuffer = '';
         updatePinDots();
         return;
     }
     bootstrap.Modal.getInstance(document.getElementById('voidPinModal'))?.hide();
-    try {
-        const res = await fetch(`/orders/void-order/${pendingVoidId}`, { method: 'PATCH' });
-        if (!res.ok) throw new Error();
-        showToast('Order voided', 'info');
-        closePanel();
-        await loadOrders();
-    } catch {
-        showToast('Failed to void order', 'error');
-    }
+    $.ajax({
+        url: `/orders/void-order/${pendingVoidId}`,
+        type: 'PATCH',
+        success: function() {
+            showToast('Order voided', 'info');
+            closePanel();
+            loadOrders();
+        },
+        error: function() {
+            showToast('Failed to void order', 'error');
+        }
+    });
     pendingVoidId = null;
 }
 
@@ -657,29 +680,33 @@ function openDeleteModal(id, num) {
     pendingDeleteId  = id;
     pendingDeleteNum = num;
     setText('deleteDesc', `Order "${num}" will be permanently removed. This cannot be undone.`);
-    document.getElementById('confirmDeleteBtn').onclick = execDelete;
+    $('#confirmDeleteBtn').off('click').on('click', execDelete);
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 
 async function execDelete() {
     bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
     if (!pendingDeleteId) return;
-    try {
-        const res = await fetch(`/orders/delete-order/${pendingDeleteId}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error();
-        showToast(`Order ${pendingDeleteNum} deleted`, 'success');
-        closePanel();
-        await loadOrders();
-    } catch {
-        showToast('Delete failed', 'error');
-    }
+    $.ajax({
+        url: `/orders/delete-order/${pendingDeleteId}`,
+        type: 'DELETE',
+        success: function() {
+            showToast(`Order ${pendingDeleteNum} deleted`, 'success');
+            closePanel();
+            loadOrders();
+        },
+        error: function() {
+            showToast('Delete failed', 'error');
+        }
+    });
     pendingDeleteId = null;
 }
 
 // ── Export ─────────────────────────────────────────────────────────────────
 function exportOrders() {
     const rows = [['Order#', 'Date', 'Table', 'Customer', 'Items', 'Total', 'Method', 'Status']];
-    filteredOrders.forEach(o => {
+    for (let i = 0; i < filteredOrders.length; i++) {
+        const o = filteredOrders[i];
         rows.push([
             o.order_number,
             o.date_created,
@@ -690,7 +717,7 @@ function exportOrders() {
             o.payment_method,
             o.status || 'paid'
         ]);
-    });
+    }
     const csv  = rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
     const link = document.createElement('a');
     link.href     = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
@@ -701,16 +728,17 @@ function exportOrders() {
 
 // ── Toast ──────────────────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
-    const stack = document.getElementById('toastStack');
-    if (!stack) return;
+    const stack = $('#toastStack');
+    if (!stack.length) return;
     const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
-    const toast = document.createElement('div');
-    toast.className = `toast-item${type === 'error' ? ' error' : ''}`;
-    toast.innerHTML = `<span class="toast-icon">${icons[type] || '•'}</span>${esc(msg)}`;
-    stack.appendChild(toast);
+    const toast = $('<div>', {
+        class: `toast-item${type === 'error' ? ' error' : ''}`,
+        html: `<span class="toast-icon">${icons[type] || '•'}</span>${esc(msg)}`
+    });
+    stack.append(toast);
     setTimeout(() => {
-        toast.style.animation = 'toastIn .3s var(--ease-spring) reverse';
-        toast.addEventListener('animationend', () => toast.remove(), { once: true });
+        toast.css('animation', 'toastIn .3s var(--ease-spring) reverse');
+        toast.one('animationend', () => toast.remove());
     }, 2800);
 }
 
@@ -719,8 +747,8 @@ function esc(str) {
     return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function setText(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
+    const el = $('#' + id);
+    if (el.length) el.text(val);
 }
 function fmtNum(n) {
     return Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');

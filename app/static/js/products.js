@@ -2,12 +2,12 @@ let allProducts = [];
 let dtTable = null;
 let pendingDelete = null;
 
-document.addEventListener('DOMContentLoaded', () => {
+$(document).ready(() => {
     initDT();
     loadProducts();
-    document.getElementById('searchInput').addEventListener('input', e => dtTable.search(e.target.value).draw());
-    document.getElementById('filterCategory').addEventListener('change', applyFilters);
-    document.getElementById('fImage').addEventListener('change', previewImage);
+    $('#searchInput').on('input', e => dtTable.search(e.target.value).draw());
+    $('#filterCategory').on('change', applyFilters);
+    $('#fImage').on('change', previewImage);
 });
 
 function initDT() {
@@ -25,27 +25,33 @@ function initDT() {
     });
 }
 
-async function loadProducts() {
-    try {
-        const r = await fetch('/products/get-products');
-        const json = await r.json();
-        allProducts = json.data || [];
-        renderTable(allProducts);
-        populateCategories(allProducts);
-        document.getElementById('countBadge').textContent = allProducts.length;
-    } catch { showToast('Failed to load products', 'error'); }
+function loadProducts() {
+    $.ajax({
+        url: '/products/get-products',
+        type: 'GET',
+        dataType: 'json',
+        success: function(json) {
+            allProducts = json.data || [];
+            renderTable(allProducts);
+            populateCategories(allProducts);
+            $('#countBadge').text(allProducts.length);
+        },
+        error: function() {
+            showToast('Failed to load products', 'error');
+        }
+    });
 }
 
 function populateCategories(products) {
-    const sel = document.getElementById('filterCategory');
-    const current = sel.value;
+    const sel = $('#filterCategory');
+    const current = sel.val();
     const cats = [...new Set(products.map(p => p.category))].sort();
-    sel.innerHTML = '<option value="">All Categories</option>' + cats.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
-    sel.value = current;
+    sel.html('<option value="">All Categories</option>' + cats.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join(''));
+    sel.val(current);
 }
 
 function applyFilters() {
-    const cat = document.getElementById('filterCategory').value.toLowerCase();
+    const cat = $('#filterCategory').val().toLowerCase();
     $.fn.dataTable.ext.search = [];
     if (cat) {
         $.fn.dataTable.ext.search.push((settings, data) => {
@@ -58,7 +64,8 @@ function applyFilters() {
 
 function renderTable(products) {
     dtTable.clear();
-    products.forEach(p => {
+    for (let i = 0; i < products.length; i++) {
+        const p = products[i];
         const imgHtml = p.image && p.image !== 'placeholder.png'
             ? `<img src="${escHtml(p.image)}" class="img-preview" onerror="this.outerHTML='<div class=img-placeholder><i class=fa-solid fa-image></i></div>'">`
             : `<div class="img-placeholder"><i class="fa-solid fa-image"></i></div>`;
@@ -73,87 +80,100 @@ function renderTable(products) {
                 <button class="act-btn delete" onclick="openDeleteModal(${p.id},'${safe}')" title="Delete"><i class="fa-regular fa-trash-can"></i></button>
              </div>`
         ]);
-    });
+    }
     dtTable.draw();
 }
 
 function previewImage() {
-    const file = document.getElementById('fImage').files[0];
+    const file = $('#fImage')[0].files[0];
     if (!file) return;
-    const wrap = document.getElementById('imagePreviewWrap');
-    const img = document.getElementById('imagePreview');
-    img.src = URL.createObjectURL(file);
-    wrap.style.display = 'block';
+    const wrap = $('#imagePreviewWrap');
+    const img = $('#imagePreview');
+    img.attr('src', URL.createObjectURL(file));
+    wrap.show();
 }
 
 function openAddModal() {
-    document.getElementById('editId').value = '';
-    document.getElementById('modalTitle').textContent = 'New Product';
-    document.getElementById('saveLabel').textContent = 'Create Product';
-    document.getElementById('fName').value = '';
-    document.getElementById('fCategory').value = '';
-    document.getElementById('fPrice').value = '';
-    document.getElementById('fImage').value = '';
-    document.getElementById('imagePreviewWrap').style.display = 'none';
+    $('#editId').val('');
+    $('#modalTitle').text('New Product');
+    $('#saveLabel').text('Create Product');
+    $('#fName').val('');
+    $('#fCategory').val('');
+    $('#fPrice').val('');
+    $('#fImage').val('');
+    $('#imagePreviewWrap').hide();
     new bootstrap.Modal(document.getElementById('productModal')).show();
 }
 
 function openEditModal(id) {
     const p = allProducts.find(x => x.id === id);
     if (!p) return;
-    document.getElementById('editId').value = p.id;
-    document.getElementById('modalTitle').textContent = 'Edit Product';
-    document.getElementById('saveLabel').textContent = 'Save Changes';
-    document.getElementById('fName').value = p.name;
-    document.getElementById('fCategory').value = p.category;
-    document.getElementById('fPrice').value = p.price;
-    document.getElementById('fImage').value = '';
-    const wrap = document.getElementById('imagePreviewWrap');
-    const img = document.getElementById('imagePreview');
-    if (p.image && p.image !== 'placeholder.png') { img.src = p.image; wrap.style.display = 'block'; }
-    else { wrap.style.display = 'none'; }
+    $('#editId').val(p.id);
+    $('#modalTitle').text('Edit Product');
+    $('#saveLabel').text('Save Changes');
+    $('#fName').val(p.name);
+    $('#fCategory').val(p.category);
+    $('#fPrice').val(p.price);
+    $('#fImage').val('');
+    const wrap = $('#imagePreviewWrap');
+    const img = $('#imagePreview');
+    if (p.image && p.image !== 'placeholder.png') { img.attr('src', p.image); wrap.show(); }
+    else { wrap.hide(); }
     new bootstrap.Modal(document.getElementById('productModal')).show();
 }
 
-async function saveProduct() {
-    const id = document.getElementById('editId').value;
-    const name = document.getElementById('fName').value.trim();
-    const category = document.getElementById('fCategory').value.trim();
-    const price = document.getElementById('fPrice').value;
+function saveProduct() {
+    const id = $('#editId').val();
+    const name = $('#fName').val().trim();
+    const category = $('#fCategory').val().trim();
+    const price = $('#fPrice').val();
     if (!name || !category || !price) { showToast('Please fill all required fields', 'error'); return; }
 
     const fd = new FormData();
     fd.append('name', name);
     fd.append('category', category);
     fd.append('price', price);
-    const fileInput = document.getElementById('fImage');
+    const fileInput = $('#fImage')[0];
     if (fileInput.files[0]) fd.append('image', fileInput.files[0]);
 
-    try {
-        const isEdit = !!id;
-        const res = await fetch(isEdit ? `/products/update-product/${id}` : '/products/create-product', { method: isEdit ? 'PUT' : 'POST', body: fd });
-        if (!res.ok) throw new Error();
-        bootstrap.Modal.getInstance(document.getElementById('productModal'))?.hide();
-        showToast(isEdit ? 'Product updated ✓' : 'Product created ✓', 'success');
-        await loadProducts();
-    } catch { showToast('Something went wrong', 'error'); }
+    const isEdit = !!id;
+    $.ajax({
+        url: isEdit ? `/products/update-product/${id}` : '/products/create-product',
+        type: isEdit ? 'PUT' : 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        success: function() {
+            bootstrap.Modal.getInstance(document.getElementById('productModal'))?.hide();
+            showToast(isEdit ? 'Product updated ✓' : 'Product created ✓', 'success');
+            loadProducts();
+        },
+        error: function() {
+            showToast('Something went wrong', 'error');
+        }
+    });
 }
 
 function openDeleteModal(id, name) {
     pendingDelete = id;
-    document.getElementById('deleteDesc').textContent = `"${name}" will be permanently removed.`;
-    document.getElementById('confirmDeleteBtn').onclick = execDelete;
+    $('#deleteDesc').text(`"${name}" will be permanently removed.`);
+    $('#confirmDeleteBtn').off('click').on('click', execDelete);
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 
-async function execDelete() {
+function execDelete() {
     bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
     if (!pendingDelete) return;
-    try {
-        const res = await fetch(`/products/delete-product/${pendingDelete}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error();
-        showToast('Product deleted ✓', 'success');
-        await loadProducts();
-    } catch { showToast('Delete failed', 'error'); }
+    $.ajax({
+        url: `/products/delete-product/${pendingDelete}`,
+        type: 'DELETE',
+        success: function() {
+            showToast('Product deleted ✓', 'success');
+            loadProducts();
+        },
+        error: function() {
+            showToast('Delete failed', 'error');
+        }
+    });
     pendingDelete = null;
 }

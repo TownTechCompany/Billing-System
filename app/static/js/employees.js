@@ -16,28 +16,31 @@ document.addEventListener('DOMContentLoaded', () => {
     initSearch();
 });
 // ── Load Employees ─────────────────────────────────────────────────────────
-async function loadEmployees() {
-    try {
-        const res = await fetch('/employees/get-employees');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        allEmployees = json.data || [];
-        applyFilters();
-        document.getElementById('countBadge').textContent = allEmployees.length;
-    } catch (e) {
-        showToast('Failed to load employees', 'error');
-        console.error(e);
-    }
+function loadEmployees() {
+    $.ajax({
+        url: '/employees/get-employees',
+        type: 'GET',
+        dataType: 'json',
+        success: function(json) {
+            allEmployees = json.data || [];
+            applyFilters();
+            $('#countBadge').text(allEmployees.length);
+        },
+        error: function(xhr, status, e) {
+            showToast('Failed to load employees', 'error');
+            console.error(e);
+        }
+    });
 }
 
 // ── Search ──────────────────────────────────────────────────────────────────
 function initSearch() {
-    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    $('#searchInput').on('input', applyFilters);
 }
 
 // ── Apply Filters ───────────────────────────────────────────────────────────
 function applyFilters() {
-    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const q = $('#searchInput').val().toLowerCase().trim();
     
     filteredEmployees = allEmployees.filter(emp => {
         if (!q) return true;
@@ -55,18 +58,18 @@ function applyFilters() {
 
 // ── Render Cards ────────────────────────────────────────────────────────────
 function renderCards() {
-    const grid = document.getElementById('employeesGrid');
-    const empty = document.getElementById('emptyState');
+    const grid = $('#employeesGrid');
+    const empty = $('#emptyState');
 
     if (filteredEmployees.length === 0) {
-        grid.innerHTML = '';
-        empty.style.display = 'flex';
+        grid.empty();
+        empty.css('display', 'flex');
         return;
     }
 
-    empty.style.display = 'none';
+    empty.hide();
     
-    grid.innerHTML = filteredEmployees.map(emp => {
+    grid.html(filteredEmployees.map(emp => {
         const fullName = `${emp.first_name} ${emp.last_name}`;
         const initials = `${emp.first_name[0] || '?'}${emp.last_name[0] || '?'}`.toUpperCase();
         const role = emp.customer_type || 'Admin';
@@ -114,44 +117,44 @@ function renderCards() {
                 </div>
             </div>
         `;
-    }).join('');
+    }).join(''));
 }
 
 // ── Add/Edit Modal ──────────────────────────────────────────────────────────
 function openAddModal() {
-    document.getElementById('editId').value = '';
-    document.getElementById('modalTitle').textContent = 'New Employee';
-    document.getElementById('saveLabel').textContent = 'Create Employee';
-    document.getElementById('fFirstName').value = '';
-    document.getElementById('fLastName').value = '';
-    document.getElementById('fEmail').value = '';
-    document.getElementById('fPassword').value = '';
-    document.getElementById('fRole').value = '';
-    document.getElementById('fPassword').parentElement.parentElement.style.display = '';
+    $('#editId').val('');
+    $('#modalTitle').text('New Employee');
+    $('#saveLabel').text('Create Employee');
+    $('#fFirstName').val('');
+    $('#fLastName').val('');
+    $('#fEmail').val('');
+    $('#fPassword').val('');
+    $('#fRole').val('');
+    $('#fPassword').parent().parent().show();
     new bootstrap.Modal(document.getElementById('employeeModal')).show();
 }
 
 function openEditModal(id, firstName, lastName, email, role) {
-    document.getElementById('editId').value = id;
-    document.getElementById('modalTitle').textContent = 'Edit Employee';
-    document.getElementById('saveLabel').textContent = 'Update Employee';
-    document.getElementById('fFirstName').value = firstName;
-    document.getElementById('fLastName').value = lastName;
-    document.getElementById('fEmail').value = email;
-    document.getElementById('fRole').value = role;
-    document.getElementById('fPassword').value = '';
-    document.getElementById('fPassword').parentElement.parentElement.style.display = 'none';
+    $('#editId').val(id);
+    $('#modalTitle').text('Edit Employee');
+    $('#saveLabel').text('Update Employee');
+    $('#fFirstName').val(firstName);
+    $('#fLastName').val(lastName);
+    $('#fEmail').val(email);
+    $('#fRole').val(role);
+    $('#fPassword').val('');
+    $('#fPassword').parent().parent().hide();
     new bootstrap.Modal(document.getElementById('employeeModal')).show();
 }
 
 // ── Save Employee ───────────────────────────────────────────────────────────
 async function saveEmployee() {
-    const id = document.getElementById('editId').value;
-    const firstName = document.getElementById('fFirstName').value.trim();
-    const lastName = document.getElementById('fLastName').value.trim();
-    const email = document.getElementById('fEmail').value.trim();
-    const password = document.getElementById('fPassword').value;
-    const role = document.getElementById('fRole').value;
+    const id = $('#editId').val();
+    const firstName = $('#fFirstName').val().trim();
+    const lastName = $('#fLastName').val().trim();
+    const email = $('#fEmail').val().trim();
+    const password = $('#fPassword').val();
+    const role = $('#fRole').val();
 
     if (!firstName || !lastName || !email || !role) {
         showToast('Please fill all required fields', 'error');
@@ -171,36 +174,35 @@ async function saveEmployee() {
         ...(password && { password })
     };
 
-    try {
-        const url = id 
-            ? `/employees/update-employee/${id}`
-            : '/employees/create-employee';
-        
-        const method = id ? 'PUT' : 'POST';
+    const url = id 
+        ? `/employees/update-employee/${id}`
+        : '/employees/create-employee';
+    
+    const method = id ? 'PUT' : 'POST';
 
-        const res = await fetch(url, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) throw new Error();
-
-        bootstrap.Modal.getInstance(document.getElementById('employeeModal'))?.hide();
-        showToast(id ? 'Employee updated ✓' : 'Employee created ✓', 'success');
-        await loadEmployees();
-    } catch (e) {
-        showToast(id ? 'Failed to update employee' : 'Failed to create employee', 'error');
-        console.error(e);
-    }
+    $.ajax({
+        url: url,
+        type: method,
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function() {
+            bootstrap.Modal.getInstance(document.getElementById('employeeModal'))?.hide();
+            showToast(id ? 'Employee updated ✓' : 'Employee created ✓', 'success');
+            loadEmployees();
+        },
+        error: function(xhr, status, e) {
+            showToast(id ? 'Failed to update employee' : 'Failed to create employee', 'error');
+            console.error(e);
+        }
+    });
 }
 
 // ── Delete Modal ────────────────────────────────────────────────────────────
 function openDeleteModal(id, name) {
     pendingDelete = id;
     pendingDeleteName = name;
-    document.getElementById('deleteDesc').textContent = `"${name}" will be permanently removed. This cannot be undone.`;
-    document.getElementById('confirmDeleteBtn').onclick = execDelete;
+    $('#deleteDesc').text(`"${name}" will be permanently removed. This cannot be undone.`);
+    $('#confirmDeleteBtn').off('click').on('click', execDelete);
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 
@@ -208,19 +210,18 @@ async function execDelete() {
     bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
     if (!pendingDelete) return;
 
-    try {
-        const res = await fetch(`/employees/delete-employee/${pendingDelete}`, {
-            method: 'DELETE'
-        });
-
-        if (!res.ok) throw new Error();
-
-        showToast(`${pendingDeleteName} deleted ✓`, 'success');
-        await loadEmployees();
-    } catch (e) {
-        showToast('Failed to delete employee', 'error');
-        console.error(e);
-    }
+    $.ajax({
+        url: `/employees/delete-employee/${pendingDelete}`,
+        type: 'DELETE',
+        success: function() {
+            showToast(`${pendingDeleteName} deleted ✓`, 'success');
+            loadEmployees();
+        },
+        error: function(xhr, status, e) {
+            showToast('Failed to delete employee', 'error');
+            console.error(e);
+        }
+    });
 
     pendingDelete = null;
     pendingDeleteName = null;
@@ -228,16 +229,17 @@ async function execDelete() {
 
 // ── Toast ──────────────────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
-    const stack = document.getElementById('toastStack');
-    if (!stack) return;
+    const stack = $('#toastStack');
+    if (!stack.length) return;
     const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
-    const toast = document.createElement('div');
-    toast.className = `toast-item${type === 'error' ? ' error' : ''}`;
-    toast.innerHTML = `<span class="toast-icon">${icons[type] || '•'}</span>${esc(msg)}`;
-    stack.appendChild(toast);
+    const toast = $('<div>', {
+        class: `toast-item${type === 'error' ? ' error' : ''}`,
+        html: `<span class="toast-icon">${icons[type] || '•'}</span>${esc(msg)}`
+    });
+    stack.append(toast);
     setTimeout(() => {
-        toast.style.animation = 'toastIn .3s var(--ease-spring) reverse';
-        toast.addEventListener('animationend', () => toast.remove(), { once: true });
+        toast.css('animation', 'toastIn .3s var(--ease-spring) reverse');
+        toast.one('animationend', () => toast.remove());
     }, 2800);
 }
 

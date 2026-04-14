@@ -3,36 +3,42 @@ let selectedPayment = 'Cash';
 
 document.addEventListener('DOMContentLoaded', () => {
     // Category filter
-    document.querySelectorAll('.cat-btn').forEach(btn => {
+    const catBtns = document.querySelectorAll('.cat-btn');
+    for (let i = 0; i < catBtns.length; i++) {
+        const btn = catBtns[i];
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            for (let j = 0; j < catBtns.length; j++) catBtns[j].classList.remove('active');
             btn.classList.add('active');
-            filterProducts(btn.dataset.cat, document.getElementById('productSearch').value);
+            filterProducts(btn.dataset.cat, $('#productSearch').val());
         });
-    });
+    }
 
     // Search
-    document.getElementById('productSearch').addEventListener('input', e => {
+    $('#productSearch').on('input', e => {
         const activeCat = document.querySelector('.cat-btn.active')?.dataset.cat || '';
         filterProducts(activeCat, e.target.value);
     });
 
     // Payment method buttons
-    document.querySelectorAll('.pay-btn').forEach(btn => {
+    const payBtns = document.querySelectorAll('.pay-btn');
+    for (let i = 0; i < payBtns.length; i++) {
+        const btn = payBtns[i];
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
+            for (let j = 0; j < payBtns.length; j++) payBtns[j].classList.remove('active');
             btn.classList.add('active');
             selectedPayment = btn.dataset.method;
         });
-    });
+    }
 });
 
 function filterProducts(cat, search) {
-    document.querySelectorAll('.product-card').forEach(card => {
+    const cards = document.querySelectorAll('.product-card');
+    for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
         const matchCat = !cat || card.dataset.category === cat;
         const matchSearch = !search || card.dataset.name.toLowerCase().includes(search.toLowerCase());
         card.classList.toggle('hidden', !(matchCat && matchSearch));
-    });
+    }
 }
 
 function addToCart(productId) {
@@ -72,30 +78,31 @@ function clearCart() {
 }
 
 function renderCart() {
-    const container = document.getElementById('cartItems');
-    const emptyEl = document.getElementById('cartEmpty');
-    const checkoutBtn = document.getElementById('checkoutBtn');
+    const container = $('#cartItems');
+    const emptyEl = $('#cartEmpty');
+    const checkoutBtn = $('#checkoutBtn');
     const items = Object.values(cart);
 
     if (!items.length) {
-        container.innerHTML = '';
-        container.appendChild(emptyEl);
-        emptyEl.style.display = 'flex';
-        document.getElementById('cartTotal').textContent = '₹0.00';
-        checkoutBtn.disabled = true;
+        container.empty();
+        container.append(emptyEl);
+        emptyEl.css('display', 'flex');
+        $('#cartTotal').text('₹0.00');
+        checkoutBtn.prop('disabled', true);
         return;
     }
 
-    emptyEl.style.display = 'none';
-    container.innerHTML = '';
+    emptyEl.hide();
+    container.empty();
 
     let total = 0;
-    items.forEach(item => {
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
         const lineTotal = item.price * item.qty;
         total += lineTotal;
-        const el = document.createElement('div');
-        el.className = 'cart-item';
-        el.innerHTML = `
+        const el = $('<div>', {
+            class: 'cart-item',
+            html: `
             <div class="cart-item-info">
                 <div class="cart-item-name">${escHtml(item.name)}</div>
                 <div class="cart-item-price">₹${item.price.toFixed(2)} each</div>
@@ -107,15 +114,16 @@ function renderCart() {
             </div>
             <div class="cart-item-total">₹${lineTotal.toFixed(0)}</div>
             <button class="cart-item-remove" onclick="removeFromCart(${item.id})" title="Remove"><i class="fa-solid fa-xmark"></i></button>
-        `;
-        container.appendChild(el);
-    });
+        `
+        });
+        container.append(el);
+    }
 
-    document.getElementById('cartTotal').textContent = '₹' + total.toFixed(2);
-    checkoutBtn.disabled = false;
+    $('#cartTotal').text('₹' + total.toFixed(2));
+    checkoutBtn.prop('disabled', false);
 }
 
-async function checkout() {
+function checkout() {
     const items = Object.values(cart);
     if (!items.length) return;
 
@@ -124,15 +132,17 @@ async function checkout() {
         payment_method: selectedPayment
     };
 
-    try {
-        const res = await fetch('/orders/create-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error();
-        showToast(`Order ${data.data.order_number} placed! ✓`, 'success');
-        clearCart();
-    } catch { showToast('Order failed. Try again.', 'error'); }
+    $.ajax({
+        url: '/orders/create-order',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function(data) {
+            showToast(`Order ${data.data.order_number} placed! ✓`, 'success');
+            clearCart();
+        },
+        error: function() {
+            showToast('Order failed. Try again.', 'error');
+        }
+    });
 }
