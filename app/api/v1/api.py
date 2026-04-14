@@ -1,8 +1,9 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import pages, products, orders, auth, settings
+from app.api.v1.endpoints import pages, products, orders, auth, settings, employees
 
 router = APIRouter()
 router.include_router(auth.router)
+router.include_router(employees.router)
 router.include_router(pages.router)
 router.include_router(products.router)
 router.include_router(orders.router)

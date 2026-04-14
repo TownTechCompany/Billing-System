@@ -57,7 +57,7 @@ async def login(
             detail="An error occurred during login"
         )
 
-@router.post("/logout")
+@router.get("/logout")
 async def logout(request: Request):
     try:
         request.session.clear() 

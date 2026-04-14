@@ -105,3 +105,26 @@ class SettingsUpdate(BaseModel):
     table_count:    Optional[int]   = None
     allow_discount: Optional[int]   = None
     max_discount:   Optional[float] = None
+
+
+class EmployeeCreate(BaseModel):
+    first_name: str
+    last_name: str
+    email: EmailStr
+    password: str
+    customer_type: Optional[str] = "Admin"
+
+class EmployeeUpdate(BaseModel):
+        first_name: str = None
+        last_name: str = None
+        email: EmailStr = None
+        customer_type: Optional[str] = "Admin"
+        is_active: Optional[bool] = None
+
+        @field_validator('first_name', 'last_name', 'email', 'customer_type')
+        @classmethod
+        def validate_customer_type(cls, v):
+            allowed = {'Admin', 'Owner'}
+            if v and v not in allowed:
+                raise ValueError(f"customer_type must be one of {allowed}")
+            return v
