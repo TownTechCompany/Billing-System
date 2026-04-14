@@ -1,11 +1,27 @@
 from app.db.session import SessionLocal
-from app.models.models import Product
+from app.models.models import Product, Employee
+from app.ttutils.common import encrypt_data
 
 def seed_database():
     db = SessionLocal()
     try:
+        # Add default Employee
+        print("Seeding database with default products and admin user...")
+        if not db.query(Employee).filter(Employee.email == "admin@example.com").first():
+            db.add(Employee(
+                first_name="Admin",
+                last_name="User",
+                email="admin@example.com",
+                customer_type="Owner",
+                is_active=True,
+                password=encrypt_data("password")
+            ))
+            db.commit()
+            print("Database seeded with default products and admin user.")
+
         if db.query(Product).first():
             return
+        
         db.add(Product(
             name="Chicken Burger", category="Fast Food", price=250.0,
             image="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
@@ -31,5 +47,8 @@ def seed_database():
             image="https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=500&auto=format&fit=crop&q=60"
         ))
         db.commit()
+
+    except Exception as e:
+        print(f"Error seeding database: {e}")
     finally:
         db.close()

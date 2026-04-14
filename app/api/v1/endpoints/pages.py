@@ -66,6 +66,20 @@ async def orders_page(request: Request):
     except Exception as e:
         log_writer_.log_exception("Pages", "orders_page", e)
         raise HTTPException(500, "Error loading orders page")
+    
+    
+@router.get("/settings", response_class=HTMLResponse)
+async def settings_page(request: Request, db: Session = Depends(get_db)):
+    settings = db.query(ShopSettings).first()
+    if not settings:
+        settings = ShopSettings()
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+    return templates.TemplateResponse(
+        "settings.html",
+        {"request": request, "settings": settings, "active_page": "settings"},
+    )
 
 @router.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):

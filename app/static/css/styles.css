@@ -339,15 +339,6 @@ tr:hover .act-btn { color: var(--slate-400); }
 .img-placeholder { width: 52px; height: 52px; border-radius: 10px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; color: var(--slate-300); font-size: 1.2rem; }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: 'Nunito', sans-serif;
-      background: #dde6f5;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
     .phone {
       width: 340px;
       border-radius: 36px;

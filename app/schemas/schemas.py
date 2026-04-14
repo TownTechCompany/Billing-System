@@ -4,7 +4,7 @@
 # ════════════════════════════════════════════════
 
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 
 class UserLogin(BaseModel):
     email: EmailStr 
