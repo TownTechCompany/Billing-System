@@ -7,7 +7,7 @@ from app.utils.responses import success_response
 
 router = APIRouter(tags=["orders"])
 
-@router.get("")
+@router.get("/get-orders")
 def list_orders(db: Session = Depends(get_db)):
     """List all orders"""
     orders = OrderService(db).list_all_service()
@@ -16,7 +16,7 @@ def list_orders(db: Session = Depends(get_db)):
         message="Orders fetched successfully"
     )
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("/create-order", status_code=status.HTTP_201_CREATED)
 async def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
     """Create new order"""
     items = [{"product_id": i.product_id, "quantity": i.quantity, "price": i.price} for i in payload.items]
@@ -35,7 +35,7 @@ def analytics(db: Session = Depends(get_db)):
     data = OrderService(db).analytics_service()
     return success_response(data=data, message="Analytics fetched successfully")
 
-@router.get("/{order_id}")
+@router.get("/get-order-detail/{order_id}")
 def get_order(order_id: int, db: Session = Depends(get_db)):
     """Get order detail"""
     order = OrderService(db).get_order_service(order_id)
@@ -68,7 +68,7 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
         message="Order details fetched successfully"
     )
 
-@router.patch("/{order_id}")
+@router.patch("/update-order/{order_id}")
 async def update_order(order_id: int, payload: OrderUpdate, db: Session = Depends(get_db)):
     """Partial update order"""
     items = None
@@ -85,7 +85,7 @@ async def update_order(order_id: int, payload: OrderUpdate, db: Session = Depend
         message="Order updated successfully"
     )
 
-@router.patch("/{order_id}/void")
+@router.patch("/void-order/{order_id}")
 def void_order(order_id: int, db: Session = Depends(get_db)):
     """Void order"""
     order = OrderService(db).void_order_service(order_id)
@@ -94,7 +94,7 @@ def void_order(order_id: int, db: Session = Depends(get_db)):
         message="Order voided successfully"
     )
 
-@router.patch("/{order_id}/checkout")
+@router.patch("/checkout-order/{order_id}")
 async def checkout_order(order_id: int, payload: CheckoutRequest, db: Session = Depends(get_db)):
     """Checkout order"""
     order = OrderService(db).checkout_order_service(order_id, payload.payment_method)
@@ -103,7 +103,7 @@ async def checkout_order(order_id: int, payload: CheckoutRequest, db: Session = 
         message="Order checked out successfully"
     )
 
-@router.delete("/{order_id}")
+@router.delete("/delete-order/{order_id}")
 def delete_order(order_id: int, db: Session = Depends(get_db)):
     """Delete order"""
     OrderService(db).delete_order_service(order_id)

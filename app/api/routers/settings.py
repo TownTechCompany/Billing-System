@@ -6,14 +6,14 @@ from app.utils.responses import success_response
 
 router = APIRouter(tags=["settings"])
 
-@router.get("")
+@router.get("/load-settings")
 def get_settings(db: Session = Depends(get_db)):
     """Retrieve shop settings"""
     svc = SettingsService(db)
     settings = svc.get_settings_service()
     return success_response(data=settings.to_dict(), message="Settings fetched successfully")
  
-@router.post("")
+@router.post("/save-settings")
 async def save_settings(request: Request, db: Session = Depends(get_db)):
     """Update shop settings"""
     data = await request.json()

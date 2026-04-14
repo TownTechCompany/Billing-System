@@ -127,7 +127,7 @@ $(document).ready(function() {
     // Create employee
     function createEmployee(data) {
         $.ajax({
-            url: '/employees',
+            url: '/employees/create-employee',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(data),
@@ -153,7 +153,7 @@ $(document).ready(function() {
     // Update employee
     function updateEmployee(id, data) {
         $.ajax({
-            url: ` /employees/${id}`,
+            url: ` /employees/update-employee/${id}`,
             type: 'PUT',
             contentType: 'application/json',
             data: JSON.stringify(data),
@@ -179,7 +179,7 @@ $(document).ready(function() {
     // Load all employees
     function loadEmployees() {
         $.ajax({
-            url: '/employees',
+            url: '/employees/get-employees',
             type: 'GET',
             dataType: 'json',
             success: function(data) {
@@ -266,7 +266,7 @@ $(document).ready(function() {
     // Toggle employee status
     function toggleEmployeeStatus(id) {
         $.ajax({
-            url: ` /employees/${id}/toggle`,
+            url: ` /employees/toggle-employee/${id}`,
             type: 'PATCH',
             success: function() {
                 townTechAlert.successTopRight('Success', 'Employee status updated', 2000);
@@ -281,7 +281,7 @@ $(document).ready(function() {
     // Delete employee
     function deleteEmployee(id) {
         $.ajax({
-            url: ` /employees/${id}`,
+            url: ` /employees/delete-employee/${id}`,
             type: 'DELETE',
             success: function() {
                 townTechAlert.successTopRight('Success', 'Employee deleted successfully', 2000);

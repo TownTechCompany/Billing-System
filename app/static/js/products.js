@@ -27,8 +27,9 @@ function initDT() {
 
 async function loadProducts() {
     try {
-        const r = await fetch('/products');
-        allProducts = await r.json();
+        const r = await fetch('/products/get-products');
+        const json = await r.json();
+        allProducts = json.data || [];
         renderTable(allProducts);
         populateCategories(allProducts);
         document.getElementById('countBadge').textContent = allProducts.length;
@@ -130,7 +131,7 @@ async function saveProduct() {
 
     try {
         const isEdit = !!id;
-        const res = await fetch(isEdit ? ` /products/${id}` : '/products', { method: isEdit ? 'PUT' : 'POST', body: fd });
+        const res = await fetch(isEdit ? `/products/update-product/${id}` : '/products/create-product', { method: isEdit ? 'PUT' : 'POST', body: fd });
         if (!res.ok) throw new Error();
         bootstrap.Modal.getInstance(document.getElementById('productModal'))?.hide();
         showToast(isEdit ? 'Product updated ✓' : 'Product created ✓', 'success');
@@ -149,7 +150,7 @@ async function execDelete() {
     bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
     if (!pendingDelete) return;
     try {
-        const res = await fetch(` /products/${pendingDelete}`, { method: 'DELETE' });
+        const res = await fetch(`/products/delete-product/${pendingDelete}`, { method: 'DELETE' });
         if (!res.ok) throw new Error();
         showToast('Product deleted ✓', 'success');
         await loadProducts();

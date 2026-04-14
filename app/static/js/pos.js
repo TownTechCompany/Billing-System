@@ -125,14 +125,14 @@ async function checkout() {
     };
 
     try {
-        const res = await fetch('/orders', {
+        const res = await fetch('/orders/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
         const data = await res.json();
         if (!res.ok) throw new Error();
-        showToast(`Order ${data.order_number} placed! ✓`, 'success');
+        showToast(`Order ${data.data.order_number} placed! ✓`, 'success');
         clearCart();
     } catch { showToast('Order failed. Try again.', 'error'); }
 }

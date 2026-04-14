@@ -7,7 +7,7 @@ from app.utils.responses import success_response
 
 router = APIRouter(tags=["employees"])
 
-@router.get("")
+@router.get("/load-employees")
 def list_employees(db: Session = Depends(get_db)):
     """Get all employees"""
     employees = EmployeeService(db).list_all_service()
@@ -16,7 +16,7 @@ def list_employees(db: Session = Depends(get_db)):
         message="Employees fetched successfully"
     )
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("/create-employee", status_code=status.HTTP_201_CREATED)
 async def create_employee(payload: EmployeeCreate, db: Session = Depends(get_db)):
     """Create new employee"""
     employee = EmployeeService(db).create_employee_service(
@@ -32,7 +32,7 @@ async def create_employee(payload: EmployeeCreate, db: Session = Depends(get_db)
         status_code=status.HTTP_201_CREATED
     )
 
-@router.get("/{employee_id}")
+@router.get("/get-employee-detail/{employee_id}")
 def get_employee(employee_id: int, db: Session = Depends(get_db)):
     """Get employee by ID"""
     employee = EmployeeService(db).get_by_id_service(employee_id)
@@ -41,7 +41,7 @@ def get_employee(employee_id: int, db: Session = Depends(get_db)):
         message="Employee fetched successfully"
     )
 
-@router.put("/{employee_id}")
+@router.put("/update-employee/{employee_id}")
 async def update_employee(employee_id: int, payload: EmployeeUpdate, db: Session = Depends(get_db)):
     """Update employee"""
     employee = EmployeeService(db).update_employee_service(
@@ -53,13 +53,13 @@ async def update_employee(employee_id: int, payload: EmployeeUpdate, db: Session
         message="Employee updated successfully"
     )
 
-@router.delete("/{employee_id}")
+@router.delete("/delete-employee/{employee_id}")
 def delete_employee(employee_id: int, db: Session = Depends(get_db)):
     """Delete employee"""
     EmployeeService(db).delete_employee_service(employee_id)
     return success_response(message="Employee deleted successfully")
 
-@router.patch("/{employee_id}/toggle")
+@router.patch("/toggle-status/{employee_id}")
 async def toggle_employee_status(employee_id: int, db: Session = Depends(get_db)):
     """Toggle employee active/inactive status"""
     employee = EmployeeService(db).toggle_status_service(employee_id)

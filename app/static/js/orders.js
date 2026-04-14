@@ -48,9 +48,10 @@ function startClock() {
 // ── Load Orders ────────────────────────────────────────────────────────────
 async function loadOrders() {
     try {
-        const res = await fetch('/orders');
+        const res = await fetch('/orders/get-orders');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        allOrders = await res.json();
+        const json = await res.json();
+        allOrders = json.data || [];
         calcStats();
         applyFilters();
     } catch (e) {
@@ -62,8 +63,9 @@ async function loadOrders() {
 // ── Load Products ──────────────────────────────────────────────────────────
 async function loadProducts() {
     try {
-        const res = await fetch('/products');
-        allProducts = await res.json();
+        const res = await fetch('/products/get-products');
+        const json = await res.json();
+        allProducts = json.data || [];
     } catch {
         /* non-fatal */
     }
@@ -316,9 +318,10 @@ async function openPanel(orderId) {
 
     // Always fetch full data (includes all items)
     try {
-        const res = await fetch(` /orders/${orderId}`);
+        const res = await fetch(`/orders/get-order-detail/${orderId}`);
         if (!res.ok) throw new Error();
-        currentOrderData = await res.json();
+        const json = await res.json();
+        currentOrderData = json.data;
         renderPanel(currentOrderData);
     } catch {
         if (!localOrder) { showToast('Could not load order details', 'error'); return; }
@@ -512,7 +515,7 @@ async function saveEdits() {
     };
 
     try {
-        const res = await fetch(` /orders/${currentOrderId}`, {
+        const res = await fetch(`/orders/update-order/${currentOrderId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -566,7 +569,7 @@ async function confirmCheckout() {
     if (!currentOrderId) return;
     await saveEdits();   // persist any item edits first
     try {
-        const res = await fetch(` /orders/${currentOrderId}/checkout`, {
+        const res = await fetch(`/orders/checkout-order/${currentOrderId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ payment_method: checkoutPayMethod })
@@ -638,7 +641,7 @@ async function checkPin() {
     }
     bootstrap.Modal.getInstance(document.getElementById('voidPinModal'))?.hide();
     try {
-        const res = await fetch(` /orders/${pendingVoidId}/void`, { method: 'PATCH' });
+        const res = await fetch(`/orders/void-order/${pendingVoidId}`, { method: 'PATCH' });
         if (!res.ok) throw new Error();
         showToast('Order voided', 'info');
         closePanel();
@@ -662,7 +665,7 @@ async function execDelete() {
     bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
     if (!pendingDeleteId) return;
     try {
-        const res = await fetch(` /orders/${pendingDeleteId}`, { method: 'DELETE' });
+        const res = await fetch(`/orders/delete-order/${pendingDeleteId}`, { method: 'DELETE' });
         if (!res.ok) throw new Error();
         showToast(`Order ${pendingDeleteNum} deleted`, 'success');
         closePanel();

@@ -7,7 +7,7 @@ from app.utils.responses import success_response
 
 router = APIRouter(tags=["products"])
 
-@router.get("")
+@router.get("/get-products")
 def list_products(db: Session = Depends(get_db)):
     """List all products"""
     svc = ProductService(db)
@@ -17,7 +17,7 @@ def list_products(db: Session = Depends(get_db)):
         message="Products fetched successfully"
     )
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("/create-product", status_code=status.HTTP_201_CREATED)
 async def create_product(
     name: str = Form(...), category: str = Form(...), price: float = Form(...),
     image: UploadFile = File(None), db: Session = Depends(get_db)
@@ -32,7 +32,7 @@ async def create_product(
         status_code=status.HTTP_201_CREATED
     )
 
-@router.put("/{product_id}")
+@router.put("/update-product/{product_id}")
 async def update_product(product_id: int, request: Request, db: Session = Depends(get_db)):
     """Update product details or image"""
     svc = ProductService(db)
@@ -59,7 +59,7 @@ async def update_product(product_id: int, request: Request, db: Session = Depend
         message="Product updated successfully"
     )
 
-@router.delete("/{product_id}")
+@router.delete("/delete-product/{product_id}")
 def delete_product(product_id: int, db: Session = Depends(get_db)):
     """Delete product"""
     ProductService(db).delete_product_service(product_id)
