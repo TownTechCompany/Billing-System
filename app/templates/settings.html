@@ -4,7 +4,7 @@
 <style>
 /* ── Settings page ── */
 .settings-nav {
-  position: sticky; top: -28px;
+  position: static; top: -28px;
   display: flex; gap: 6px; overflow-x: auto;
   padding: 16px 0 14px; scrollbar-width: none; z-index: 10;
   background: var(--main-bg);
@@ -165,11 +165,9 @@
 <!-- Section navigation -->
 <div class="settings-nav">
   <button class="snav-btn active" data-section="branding"   onclick="showSection('branding')"><i class="fas fa-store"></i>Branding</button>
-  <button class="snav-btn" data-section="appearance"        onclick="showSection('appearance')"><i class="fas fa-palette"></i>Appearance</button>
   <button class="snav-btn" data-section="tax"               onclick="showSection('tax')"><i class="fas fa-percent"></i>Tax &amp; GST</button>
   <button class="snav-btn" data-section="payments"          onclick="showSection('payments')"><i class="fas fa-credit-card"></i>Payments</button>
   <button class="snav-btn" data-section="receipt"           onclick="showSection('receipt')"><i class="fas fa-receipt"></i>Receipt</button>
-  <button class="snav-btn" data-section="staff"             onclick="showSection('staff')"><i class="fas fa-users"></i>Staff</button>
   <button class="snav-btn" data-section="tables"            onclick="showSection('tables')"><i class="fas fa-chair"></i>Tables</button>
   <button class="snav-btn" data-section="general"           onclick="showSection('general')"><i class="fas fa-sliders"></i>General</button>
   <button class="snav-btn" data-section="data"              onclick="showSection('data')"><i class="fas fa-database"></i>Data</button>
@@ -237,95 +235,6 @@
         </div>
         <input type="file" id="bgInput" accept="image/*" style="display:none" onchange="previewImage(this,'bgPreview')">
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ════════════════ APPEARANCE ════════════════ -->
-<div id="sec-appearance" class="settings-section">
-
-  <div class="setting-card">
-    <h6><i class="fas fa-palette me-2"></i>Theme Color <span class="preview-pill">applied instantly</span></h6>
-    <div class="color-swatch-grid mb-3">
-      <div class="color-swatch selected" style="background:#3498db" data-color="#3498db" onclick="applyColor('#3498db',this)" title="Ocean Blue"></div>
-      <div class="color-swatch" style="background:#2ecc71" data-color="#2ecc71" onclick="applyColor('#2ecc71',this)" title="Emerald"></div>
-      <div class="color-swatch" style="background:#9b59b6" data-color="#9b59b6" onclick="applyColor('#9b59b6',this)" title="Amethyst"></div>
-      <div class="color-swatch" style="background:#e74c3c" data-color="#e74c3c" onclick="applyColor('#e74c3c',this)" title="Red"></div>
-      <div class="color-swatch" style="background:#e67e22" data-color="#e67e22" onclick="applyColor('#e67e22',this)" title="Orange"></div>
-      <div class="color-swatch" style="background:#1abc9c" data-color="#1abc9c" onclick="applyColor('#1abc9c',this)" title="Teal"></div>
-      <div class="color-swatch" style="background:#e91e63" data-color="#e91e63" onclick="applyColor('#e91e63',this)" title="Pink"></div>
-      <div class="color-swatch" style="background:#607d8b" data-color="#607d8b" onclick="applyColor('#607d8b',this)" title="Slate"></div>
-    </div>
-    <div class="d-flex align-items-center gap-3">
-      <label class="form-label mb-0 fw-bold" style="font-size:13px">Custom color</label>
-      <input type="color" class="form-control form-control-color" id="customColor" value="#3498db" style="width:48px;height:38px;padding:2px" oninput="applyColor(this.value,null)">
-      <input type="text" class="form-control" id="customColorHex" placeholder="#3498db" style="width:120px;font-family:monospace" oninput="applyColorFromHex(this.value)">
-    </div>
-  </div>
-
-  <div class="setting-card">
-    <h6><i class="fas fa-font me-2"></i>Typography</h6>
-    <label class="form-label fw-bold mb-2" style="font-size:13px">Font Family</label>
-    <div class="row g-2 mb-3">
-      <div class="col-6 col-md-3">
-        <div class="font-option selected" style="font-family:'Outfit',sans-serif" data-font="'Outfit',sans-serif" onclick="selectFont(this)">
-          Outfit<br><small style="font-size:11px;opacity:.6">Modern</small>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="font-option" style="font-family:'Poppins',sans-serif" data-font="'Poppins',sans-serif" onclick="selectFont(this)">
-          Poppins<br><small style="font-size:11px;opacity:.6">Friendly</small>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="font-option" style="font-family:'Roboto',sans-serif" data-font="'Roboto',sans-serif" onclick="selectFont(this)">
-          Roboto<br><small style="font-size:11px;opacity:.6">Clean</small>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="font-option" style="font-family:'DM Sans',sans-serif" data-font="'DM Sans',sans-serif" onclick="selectFont(this)">
-          DM Sans<br><small style="font-size:11px;opacity:.6">Compact</small>
-        </div>
-      </div>
-    </div>
-
-    <label class="form-label fw-bold" style="font-size:13px">Base Font Size</label>
-    <div class="d-flex align-items-center gap-3">
-      <input type="range" class="form-range flex-grow-1" min="12" max="20" step="1" value="16" id="fontSizeRange" oninput="applyFontSize(this.value)">
-      <span class="fw-bold" id="fontSizeLabel" style="min-width:36px">16px</span>
-    </div>
-  </div>
-
-  <div class="setting-card">
-    <h6><i class="fas fa-moon me-2"></i>Display Mode</h6>
-    <div class="row g-2">
-      <div class="col-4">
-        <div class="font-option text-center" id="modeLight" onclick="setMode('light')">
-          <i class="fas fa-sun fa-lg mb-1 d-block text-warning"></i>Light
-        </div>
-      </div>
-      <div class="col-4">
-        <div class="font-option text-center selected" id="modeDark" onclick="setMode('dark')">
-          <i class="fas fa-moon fa-lg mb-1 d-block text-primary"></i>Dark
-        </div>
-      </div>
-      <div class="col-4">
-        <div class="font-option text-center" id="modeAuto" onclick="setMode('auto')">
-          <i class="fas fa-circle-half-stroke fa-lg mb-1 d-block text-secondary"></i>Auto
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="setting-card">
-    <h6><i class="fas fa-sidebar me-2"></i>Sidebar</h6>
-    <div class="setting-row">
-      <div><div class="setting-label">Compact sidebar</div><div class="setting-desc">Icons only (expand on hover)</div></div>
-      <label class="toggle-switch"><input type="checkbox" id="compactSidebar" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
-    </div>
-    <div class="setting-row">
-      <div><div class="setting-label">Show shop name in sidebar</div></div>
-      <label class="toggle-switch"><input type="checkbox" id="showShopNameSidebar" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
     </div>
   </div>
 </div>
@@ -501,59 +410,6 @@
           <option value="1" selected>1 copy</option>
           <option value="2">2 copies</option>
           <option value="3">3 copies</option>
-        </select>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ════════════════ STAFF ════════════════ -->
-<div id="sec-staff" class="settings-section">
-
-  <div class="setting-card">
-    <h6><i class="fas fa-users me-2"></i>Staff Members</h6>
-    <div id="staffList">
-      <!-- Dynamic staff list -->
-      <div class="staff-card">
-        <div class="staff-avatar">A</div>
-        <div class="flex-grow-1">
-          <div class="fw-bold" style="font-size:14px">Admin</div>
-          <div class="text-muted" style="font-size:12px">Owner · All permissions</div>
-        </div>
-        <span class="badge bg-primary bg-opacity-10 text-primary">Admin</span>
-      </div>
-    </div>
-    <button class="btn btn-outline-primary btn-sm mt-2" onclick="addStaff()">
-      <i class="fas fa-plus me-1"></i> Add Staff Member
-    </button>
-  </div>
-
-  <div class="setting-card">
-    <h6><i class="fas fa-lock me-2"></i>Security</h6>
-    <div class="setting-row">
-      <div><div class="setting-label">Require PIN at login</div><div class="setting-desc">Staff must enter 4-digit PIN</div></div>
-      <label class="toggle-switch"><input type="checkbox" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
-    </div>
-    <div class="setting-row">
-      <div><div class="setting-label">Void order requires admin PIN</div></div>
-      <label class="toggle-switch"><input type="checkbox" checked onchange="markUnsaved()"><span class="toggle-slider"></span></label>
-    </div>
-    <div class="setting-row">
-      <div><div class="setting-label">Discount requires admin PIN</div></div>
-      <label class="toggle-switch"><input type="checkbox" onchange="markUnsaved()"><span class="toggle-slider"></span></label>
-    </div>
-    <div class="row g-3 mt-1">
-      <div class="col-md-4">
-        <label class="form-label fw-bold" style="font-size:13px">Change Admin PIN</label>
-        <input type="password" class="form-control" id="adminPin" maxlength="4" placeholder="4-digit PIN" oninput="markUnsaved()">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label fw-bold" style="font-size:13px">Session timeout (min)</label>
-        <select class="form-select" id="sessionTimeout" onchange="markUnsaved()">
-          <option value="0">Never</option>
-          <option value="15">15 minutes</option>
-          <option value="30" selected>30 minutes</option>
-          <option value="60">1 hour</option>
         </select>
       </div>
     </div>
