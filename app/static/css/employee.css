@@ -1,0 +1,320 @@
+.employees-root {
+    padding: 1.75rem 2rem 1.5rem;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    font-family: 'DM Sans', sans-serif;
+}
+
+.employees-root::-webkit-scrollbar {
+    width: 5px;
+}
+
+.employees-root::-webkit-scrollbar-thumb {
+    background: var(--slate-200);
+    border-radius: 10px;
+}
+
+.employees-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+    animation: fadeSlideIn .45s var(--ease-out) both;
+}
+
+.employees-header-left h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: var(--slate-900);
+    margin: 0 0 5px;
+    letter-spacing: -0.6px;
+}
+
+.employees-header-left .sub {
+    font-size: 0.8rem;
+    color: var(--slate-400);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sub-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--emerald);
+    flex-shrink: 0;
+}
+
+.employees-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    animation: fadeSlideIn .45s var(--ease-out) .15s both;
+}
+
+/* ════ Employee Grid (Card Layout) ════ */
+.employees-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    animation: fadeSlideIn .45s var(--ease-out) .2s both;
+}
+
+@media (max-width: 768px) {
+    .employees-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+}
+
+@media (max-width: 576px) {
+    .employees-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ════ Employee Card ════ */
+.employee-card {
+    background: var(--white);
+    border: 1px solid var(--slate-150);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    transition: all .25s var(--ease-out);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: var(--shadow-xs);
+}
+
+.employee-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    border-color: var(--brand-200);
+}
+
+/* ════ Card Header ════ */
+.card-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.emp-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--brand-400), var(--purple-500));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.emp-name-role {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.emp-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--slate-900);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.emp-role {
+    font-size: 0.7rem;
+    color: var(--slate-400);
+    font-weight: 500;
+}
+
+.emp-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: var(--emerald-bg);
+    color: var(--emerald);
+    flex-shrink: 0;
+}
+
+.emp-status-badge.inactive {
+    background: var(--slate-100);
+    color: var(--slate-500);
+}
+
+/* ════ Card Meta ════ */
+.card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    background: var(--slate-50);
+    border-radius: 10px;
+    font-size: 0.75rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--slate-600);
+}
+
+.meta-item i {
+    font-size: 0.65rem;
+    width: 14px;
+    color: var(--slate-400);
+    flex-shrink: 0;
+}
+
+.meta-value {
+    word-break: break-all;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+}
+
+/* ════ Card Actions ════ */
+.card-actions {
+    display: flex;
+    gap: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--slate-100);
+}
+
+.card-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--slate-500);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .18s var(--ease-out);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.card-btn:hover {
+    transform: translateY(-1px);
+}
+
+.card-btn.edit:hover {
+    background: var(--blue-50);
+    color: var(--blue-600);
+    border-color: var(--blue-100);
+}
+
+.card-btn.delete:hover {
+    background: var(--rose-bg);
+    color: var(--rose);
+    border-color: #ffe4e6;
+}
+
+.card-btn i {
+    font-size: 0.65rem;
+}
+
+/* ════ Empty State ════ */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 16px;
+    color: var(--slate-400);
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+.empty-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--slate-500);
+}
+
+.empty-sub {
+    font-size: 0.85rem;
+    color: var(--slate-400);
+}
+
+/* ════ Responsive ════ */
+@media (max-width: 768px) {
+    .employees-root {
+        padding: 1.25rem 1.5rem;
+    }
+
+    .employees-header-left h1 {
+        font-size: 1.4rem;
+    }
+
+    .employees-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-box input {
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .employees-header {
+        flex-direction: column;
+        margin-bottom: 1.5rem;
+    }
+
+    .header-btn-group {
+        width: 100%;
+    }
+
+    .btn-add-item {
+        width: 100%;
+    }
+
+    .employees-toolbar {
+        gap: 12px;
+    }
+
+    .employees-grid {
+        gap: 12px;
+    }
+
+    .employee-card {
+        padding: 14px;
+    }
+}

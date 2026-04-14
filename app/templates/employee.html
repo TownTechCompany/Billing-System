@@ -2,8 +2,7 @@
 {% block title %}Employees — BillPOS{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/employees.css') }}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.min.css" />
+<link rel="stylesheet" href="{{ url_for('static', path='css/employee.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -12,113 +11,104 @@
     <div class="employees-header">
         <div class="employees-header-left">
             <h1>Employees</h1>
-            <div class="sub"><span class="sub-dot"></span><span id="countBadge">—</span> employees</div>
+            <div class="sub"><span class="sub-dot"></span><span id="countBadge">—</span> staffs</div>
+        </div>
+        <div class="header-btn-group">
+            <button class="btn-add-item" onclick="openAddModal()">
+                <i class="fa-solid fa-plus"></i> New Employee
+            </button>
         </div>
     </div>
 
     <div class="employees-toolbar">
         <div class="search-box">
-            <i class="ri-search-line"></i>
-            <input type="text" id="searchInput" placeholder="Search employee name or email...">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Search employees...">
         </div>
-        <select id="filterType" class="toolbar-filter-select">
-            <option value="">All Employee Types</option>
-            <option value="Owner">Owner</option>
-            <option value="Admin">Admin</option>
-        </select>
-        <select id="filterStatus" class="toolbar-filter-select">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-        </select>
         <div style="margin-left:auto;display:flex;gap:8px;">
-            <button class="toolbar-icon-btn" id="createEmpBtn" title="Create Employee">
-                <i class="ri-add-line"></i>
-            </button>
             <button class="toolbar-icon-btn" title="Refresh" onclick="loadEmployees()">
-                <i class="ri-refresh-line"></i>
+                <i class="fa-solid fa-arrows-rotate"></i>
             </button>
         </div>
     </div>
 
-    <div class="table-container">
-        <table id="employeesTable" class="table w-100 mb-0">
-            <thead><tr>
-                <th>Employee Name</th>
-                <th>Email</th>
-                <th>Employee Type</th>
-                <th>Status</th>
-                <th style="text-align:right;">Actions</th>
-            </tr></thead>
-            <tbody></tbody>
-        </table>
+    <div class="employees-grid" id="employeesGrid">
+        <!-- Cards filled by JS -->
+    </div>
+
+    <div id="emptyState" class="empty-state" style="display:none">
+        <div class="empty-icon"><i class="fa-regular fa-users"></i></div>
+        <div class="empty-title">No employees found</div>
+        <div class="empty-sub">Add your first employee to get started</div>
     </div>
 
 </main>
 
-<!-- Employee Form Sidebar -->
-<div class="employee-form-sidebar" id="employeeFormSidebar">
-    <div class="sidebar-content">
-        <div class="sidebar-header d-flex justify-content-between align-items-center mb-4">
-            <h5 class="mb-0" id="formTitle">Create Employee</h5>
-            <button class="btn btn-link p-0" id="closeFormBtn">
-                <i class="ri-close-line"></i>
-            </button>
-        </div>
-
-        <form id="employeeForm">
-            <div class="mb-3">
-                <label class="form-label">First Name</label>
-                <input type="text" id="firstName" class="form-control" placeholder="First name" required>
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="employeeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">New Employee</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
-            <div class="mb-3">
-                <label class="form-label">Last Name</label>
-                <input type="text" id="lastName" class="form-control" placeholder="Last name" required>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input type="email" id="email" class="form-control" placeholder="Email address" required>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Password</label>
-                <div class="input-group">
-                    <input type="password" id="password" class="form-control" placeholder="Password" required>
-                    <button type="button" class="btn btn-outline-secondary password-toggle" id="passwordToggle">
-                        <i class="ri-eye-line"></i>
-                    </button>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="mb-3">
+                    <label class="form-label">First Name *</label>
+                    <input type="text" id="fFirstName" class="form-control" placeholder="e.g. John">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Last Name *</label>
+                    <input type="text" id="fLastName" class="form-control" placeholder="e.g. Doe">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email *</label>
+                    <input type="email" id="fEmail" class="form-control" placeholder="john@example.com">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password *</label>
+                    <input type="password" id="fPassword" class="form-control" placeholder="••••••••">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Role *</label>
+                    <select id="fRole" class="form-control">
+                        <option value="">Select role</option>
+                        <option value="Owner">Owner</option>
+                        <option value="Admin">Admin</option>
+                    </select>
                 </div>
             </div>
-
-            <div class="mb-3">
-                <label class="form-label">Employee Type</label>
-                <select id="employeeType" class="form-control" required>
-                    <option value="">Select type</option>
-                    <option value="Owner">Owner</option>
-                    <option value="Admin">Admin</option>
-                </select>
+            <div class="modal-footer">
+                <button class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn-modal-primary" onclick="saveEmployee()" id="saveLabel">Create Employee</button>
             </div>
-
-            <div class="mb-4 form-check">
-                <input type="checkbox" id="isActive" class="form-check-input" checked>
-                <label class="form-check-label" for="isActive">Active</label>
-            </div>
-
-            <button type="submit" class="btn btn-dark w-100 rounded-pill" id="submitBtn">
-                Create Employee
-            </button>
-        </form>
+        </div>
     </div>
 </div>
 
-<!-- Overlay -->
-<div class="form-overlay" id="formOverlay"></div>
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Employee?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.85rem;color:var(--slate-500);margin:0;" id="deleteDesc"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn-danger-modal" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<div class="toast-stack" id="toastStack"></div>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', path='js/common.js') }}"></script>
 <script src="{{ url_for('static', path='js/employees.js') }}"></script>
 {% endblock %}

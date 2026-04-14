@@ -1,310 +1,247 @@
-$(document).ready(function() {
-    const formSidebar = $('#employeeFormSidebar');
-    const formOverlay = $('#formOverlay');
-    const employeeForm = $('#employeeForm');
-    const createEmpBtn = $('#createEmpBtn');
-    const closeFormBtn = $('#closeFormBtn');
-    const passwordToggle = $('#passwordToggle');
-    const passwordInput = $('#password');
-    const employeesTable = $('#employeesTable tbody');
-    const countBadge = $('#countBadge');
-    const searchInput = $('#searchInput');
-    const filterType = $('#filterType');
-    const filterStatus = $('#filterStatus');
-    
-    window.allEmployees = [];
-    let editingId = null;
-    
-    // Load employees on page load
+/* ════════════════════════════════════════════════
+   employees.js — Employee Management
+   ════════════════════════════════════════════════ */
+
+'use strict';
+
+// ── State ──────────────────────────────────────────────────────────────────
+let allEmployees = [];
+let filteredEmployees = [];
+let pendingDelete = null;
+let pendingDeleteName = null;
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
     loadEmployees();
+    initSearch();
+});
+// ── Load Employees ─────────────────────────────────────────────────────────
+async function loadEmployees() {
+    try {
+        const res = await fetch('/employees/get-employees');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        allEmployees = json.data || [];
+        applyFilters();
+        document.getElementById('countBadge').textContent = allEmployees.length;
+    } catch (e) {
+        showToast('Failed to load employees', 'error');
+        console.error(e);
+    }
+}
+
+// ── Search ──────────────────────────────────────────────────────────────────
+function initSearch() {
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+}
+
+// ── Apply Filters ───────────────────────────────────────────────────────────
+function applyFilters() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
     
-    // Make loadEmployees globally accessible
-    window.loadEmployees = loadEmployees;
-    
-    // Open form for creating new employee
-    createEmpBtn.on('click', function() {
-        openForm();
+    filteredEmployees = allEmployees.filter(emp => {
+        if (!q) return true;
+        const hay = [
+            emp.first_name,
+            emp.last_name,
+            emp.email,
+            emp.customer_type || ''
+        ].join(' ').toLowerCase();
+        return hay.includes(q);
     });
-    
-    // Close form
-    closeFormBtn.on('click', closeForm);
-    formOverlay.on('click', closeForm);
-    
-    // Password visibility toggle
-    passwordToggle.on('click', function(e) {
-        e.preventDefault();
-        const type = passwordInput.attr('type');
-        if (type === 'password') {
-            passwordInput.attr('type', 'text');
-            $(this).find('i').removeClass('ri-eye-line').addClass('ri-eye-off-line');
-        } else {
-            passwordInput.attr('type', 'password');
-            $(this).find('i').removeClass('ri-eye-off-line').addClass('ri-eye-line');
-        }
-    });
-    
-    // Submit form
-    employeeForm.on('submit', function(e) {
-        e.preventDefault();
-        submitForm();
-    });
-    
-    // Search and filter
-    searchInput.on('keyup', applyFilters);
-    filterType.on('change', applyFilters);
-    filterStatus.on('change', applyFilters);
-    
-    // Open form
-    function openForm(employee = null) {
-        if (employee) {
-            // Edit mode
-            $('#formTitle').text('Edit Employee');
-            $('#submitBtn').text('Update Employee');
-            $('#firstName').val(employee.first_name);
-            $('#lastName').val(employee.last_name);
-            $('#email').val(employee.email);
-            $('#password').val('').attr('type', 'password');
-            $('#employeeType').val(employee.customer_type);
-            $('#isActive').prop('checked', employee.is_active);
-            editingId = employee.id;
-        } else {
-            // Create mode
-            $('#formTitle').text('Create Employee');
-            $('#submitBtn').text('Create Employee');
-            employeeForm[0].reset();
-            $('#password').attr('type', 'password');
-            $('#passwordToggle').find('i').removeClass('ri-eye-off-line').addClass('ri-eye-line');
-            $('#employeeType').val('Staff');
-            $('#isActive').prop('checked', true);
-            editingId = null;
-        }
-        
-        formSidebar.addClass('active');
-        formOverlay.addClass('active');
-    }
-    
-    // Close form
-    function closeForm() {
-        formSidebar.removeClass('active');
-        formOverlay.removeClass('active');
-        employeeForm[0].reset();
-        editingId = null;
-    }
-    
-    // Submit form
-    function submitForm() {
-        const formData = {
-            first_name: $('#firstName').val().trim(),
-            last_name: $('#lastName').val().trim(),
-            email: $('#email').val().trim(),
-            password: $('#password').val(),
-            customer_type: $('#employeeType').val()
-        };
-        
-        // Validate
-        if (!formData.first_name || !formData.last_name || !formData.email) {
-            townTechAlert.warningCenter('Validation Error', 'Please fill all required fields');
-            return;
-        }
-        
-        if (!editingId && !formData.password) {
-            townTechAlert.warningCenter('Validation Error', 'Password is required for new employees');
-            return;
-        }
-        
-        townTechAlert.loading('Processing...');
-        $('#submitBtn').prop('disabled', true);
-        
-        if (editingId) {
-            // Update employee
-            updateEmployee(editingId, formData);
-        } else {
-            // Create employee
-            createEmployee(formData);
-        }
-    }
-    
-    // Create employee
-    function createEmployee(data) {
-        $.ajax({
-            url: '/employees/create-employee',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(data),
-            success: function(response) {
-                townTechAlert.close();
-                townTechAlert.successTopRight('Success', 'Employee created successfully', 2000);
-                closeForm();
-                loadEmployees();
-            },
-            error: function(xhr) {
-                townTechAlert.close();
-                $('#submitBtn').prop('disabled', false);
-                
-                let errorMsg = 'Failed to create employee';
-                if (xhr.responseJSON && xhr.responseJSON.detail) {
-                    errorMsg = xhr.responseJSON.detail;
-                }
-                townTechAlert.errorCenter('Error', errorMsg);
-            }
-        });
-    }
-    
-    // Update employee
-    function updateEmployee(id, data) {
-        $.ajax({
-            url: ` /employees/update-employee/${id}`,
-            type: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify(data),
-            success: function(response) {
-                townTechAlert.close();
-                townTechAlert.successTopRight('Success', 'Employee updated successfully', 2000);
-                closeForm();
-                loadEmployees();
-            },
-            error: function(xhr) {
-                townTechAlert.close();
-                $('#submitBtn').prop('disabled', false);
-                
-                let errorMsg = 'Failed to update employee';
-                if (xhr.responseJSON && xhr.responseJSON.detail) {
-                    errorMsg = xhr.responseJSON.detail;
-                }
-                townTechAlert.errorCenter('Error', errorMsg);
-            }
-        });
-    }
-    
-    // Load all employees
-    function loadEmployees() {
-        $.ajax({
-            url: '/employees/get-employees',
-            type: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                window.allEmployees = data;
-                applyFilters();
-            },
-            error: function() {
-                townTechAlert.errorCenter('Error', 'Failed to load employees');
-                employeesTable.html('<tr><td colspan="5" class="text-center text-muted">Failed to load employees</td></tr>');
-            }
-        });
-    }
-    
-    // Apply filters
-    function applyFilters() {
-        let filtered = window.allEmployees;
-        
-        const searchQuery = searchInput.val().toLowerCase().trim();
-        if (searchQuery) {
-            filtered = filtered.filter(emp => 
-                emp.full_name.toLowerCase().includes(searchQuery) ||
-                emp.email.toLowerCase().includes(searchQuery)
-            );
-        }
-        
-        const typeFilter = filterType.val();
-        if (typeFilter) {
-            filtered = filtered.filter(emp => emp.customer_type === typeFilter);
-        }
-        
-        const statusFilter = filterStatus.val();
-        if (statusFilter === 'active') {
-            filtered = filtered.filter(emp => emp.is_active === true);
-        } else if (statusFilter === 'inactive') {
-            filtered = filtered.filter(emp => emp.is_active === false);
-        }
-        
-        renderEmployees(filtered);
-    }
-    
-    // Render employees table
-    function renderEmployees(employees) {
-        countBadge.text(employees.length);
-        
-        if (employees.length === 0) {
-            employeesTable.html('<tr><td colspan="5" class="text-center text-muted p-4"><i class="ri-inbox-line"></i> No employees found</td></tr>');
-            return;
-        }
-        
-        let html = '';
-        employees.forEach(emp => {
-            const statusBadge = emp.is_active ? 
-                '<span class="badge bg-success">Active</span>' : 
-                '<span class="badge bg-secondary">Inactive</span>';
-            
-            html += `
-                <tr>
-                    <td>
-                        <strong>${emp.full_name}</strong>
-                    </td>
-                    <td class="text-muted">${emp.email}</td>
-                    <td>${emp.customer_type}</td>
-                    <td>${statusBadge}</td>
-                    <td style="text-align: right;">
-                        <div class="table-actions">
-                            <button class="edit-btn" title="Edit" onclick="editEmployee(${emp.id})">
-                                <i class="ri-edit-line"></i>
-                            </button>
-                            <button class="toggle-btn" title="Toggle Status" onclick="toggleEmployeeStatus(${emp.id})">
-                                <i class="ri-check-double-line"></i>
-                            </button>
-                            <button class="delete-btn" title="Delete" onclick="deleteEmployee(${emp.id})">
-                                <i class="ri-delete-bin-line"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-        
-        employeesTable.html(html);
-    }
-    
-    // Toggle employee status
-    function toggleEmployeeStatus(id) {
-        $.ajax({
-            url: ` /employees/toggle-employee/${id}`,
-            type: 'PATCH',
-            success: function() {
-                townTechAlert.successTopRight('Success', 'Employee status updated', 2000);
-                loadEmployees();
-            },
-            error: function() {
-                townTechAlert.errorCenter('Error', 'Failed to update status');
-            }
-        });
-    }
-    
-    // Delete employee
-    function deleteEmployee(id) {
-        $.ajax({
-            url: ` /employees/delete-employee/${id}`,
-            type: 'DELETE',
-            success: function() {
-                townTechAlert.successTopRight('Success', 'Employee deleted successfully', 2000);
-                loadEmployees();
-            },
-            error: function() {
-                townTechAlert.errorCenter('Error', 'Failed to delete employee');
-            }
-        });
+
+    renderCards();
+}
+
+// ── Render Cards ────────────────────────────────────────────────────────────
+function renderCards() {
+    const grid = document.getElementById('employeesGrid');
+    const empty = document.getElementById('emptyState');
+
+    if (filteredEmployees.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'flex';
+        return;
     }
 
-    // Make functions globally accessible
-    window.editEmployee = function(id) {
-        const emp = window.allEmployees.find(e => e.id === id);
-        if (emp) {
-            openForm(emp);
-        }
-    };
+    empty.style.display = 'none';
     
-    window.toggleEmployeeStatus = toggleEmployeeStatus;
-    window.deleteEmployee = function(id) {
-        if (confirm('Are you sure you want to delete this employee?')) {
-            deleteEmployee(id);
-        }
+    grid.innerHTML = filteredEmployees.map(emp => {
+        const fullName = `${emp.first_name} ${emp.last_name}`;
+        const initials = `${emp.first_name[0] || '?'}${emp.last_name[0] || '?'}`.toUpperCase();
+        const role = emp.customer_type || 'Admin';
+        const statusClass = emp.is_active ? '' : 'inactive';
+        const statusText = emp.is_active ? 'Active' : 'Inactive';
+
+        return `
+            <div class="employee-card">
+                <div class="card-header-row">
+                    <div class="emp-avatar">${initials}</div>
+                    <div class="emp-name-role">
+                        <div class="emp-name">${esc(fullName)}</div>
+                        <div class="emp-role">${esc(role)}</div>
+                    </div>
+                    <span class="emp-status-badge ${statusClass}">
+                        <i class="fa-solid fa-circle" style="font-size:0.4rem;"></i>
+                        ${statusText}
+                    </span>
+                </div>
+
+                <div class="card-meta">
+                    <div class="meta-item">
+                        <i class="fa-solid fa-envelope"></i>
+                        <span class="meta-value">${esc(emp.email)}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fa-solid fa-id-badge"></i>
+                        <span class="meta-value">ID: ${emp.id}</span>
+                    </div>
+                    ${emp.phone ? `
+                    <div class="meta-item">
+                        <i class="fa-solid fa-phone"></i>
+                        <span class="meta-value">${esc(emp.phone)}</span>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="card-actions">
+                    <button class="card-btn edit" title="Edit" onclick="openEditModal(${emp.id}, '${esc(emp.first_name)}', '${esc(emp.last_name)}', '${esc(emp.email)}', '${esc(emp.customer_type || '')}')">
+                        <i class="fa-regular fa-pen-to-square"></i> Edit
+                    </button>
+                    <button class="card-btn delete" title="Delete" onclick="openDeleteModal(${emp.id}, '${esc(fullName)}')">
+                        <i class="fa-regular fa-trash-can"></i> Delete
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ── Add/Edit Modal ──────────────────────────────────────────────────────────
+function openAddModal() {
+    document.getElementById('editId').value = '';
+    document.getElementById('modalTitle').textContent = 'New Employee';
+    document.getElementById('saveLabel').textContent = 'Create Employee';
+    document.getElementById('fFirstName').value = '';
+    document.getElementById('fLastName').value = '';
+    document.getElementById('fEmail').value = '';
+    document.getElementById('fPassword').value = '';
+    document.getElementById('fRole').value = '';
+    document.getElementById('fPassword').parentElement.parentElement.style.display = '';
+    new bootstrap.Modal(document.getElementById('employeeModal')).show();
+}
+
+function openEditModal(id, firstName, lastName, email, role) {
+    document.getElementById('editId').value = id;
+    document.getElementById('modalTitle').textContent = 'Edit Employee';
+    document.getElementById('saveLabel').textContent = 'Update Employee';
+    document.getElementById('fFirstName').value = firstName;
+    document.getElementById('fLastName').value = lastName;
+    document.getElementById('fEmail').value = email;
+    document.getElementById('fRole').value = role;
+    document.getElementById('fPassword').value = '';
+    document.getElementById('fPassword').parentElement.parentElement.style.display = 'none';
+    new bootstrap.Modal(document.getElementById('employeeModal')).show();
+}
+
+// ── Save Employee ───────────────────────────────────────────────────────────
+async function saveEmployee() {
+    const id = document.getElementById('editId').value;
+    const firstName = document.getElementById('fFirstName').value.trim();
+    const lastName = document.getElementById('fLastName').value.trim();
+    const email = document.getElementById('fEmail').value.trim();
+    const password = document.getElementById('fPassword').value;
+    const role = document.getElementById('fRole').value;
+
+    if (!firstName || !lastName || !email || !role) {
+        showToast('Please fill all required fields', 'error');
+        return;
+    }
+
+    if (!id && !password) {
+        showToast('Password is required for new employee', 'error');
+        return;
+    }
+
+    const payload = {
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        customer_type: role,
+        ...(password && { password })
     };
-});
+
+    try {
+        const url = id 
+            ? `/employees/update-employee/${id}`
+            : '/employees/create-employee';
+        
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error();
+
+        bootstrap.Modal.getInstance(document.getElementById('employeeModal'))?.hide();
+        showToast(id ? 'Employee updated ✓' : 'Employee created ✓', 'success');
+        await loadEmployees();
+    } catch (e) {
+        showToast(id ? 'Failed to update employee' : 'Failed to create employee', 'error');
+        console.error(e);
+    }
+}
+
+// ── Delete Modal ────────────────────────────────────────────────────────────
+function openDeleteModal(id, name) {
+    pendingDelete = id;
+    pendingDeleteName = name;
+    document.getElementById('deleteDesc').textContent = `"${name}" will be permanently removed. This cannot be undone.`;
+    document.getElementById('confirmDeleteBtn').onclick = execDelete;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+async function execDelete() {
+    bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
+    if (!pendingDelete) return;
+
+    try {
+        const res = await fetch(`/employees/delete-employee/${pendingDelete}`, {
+            method: 'DELETE'
+        });
+
+        if (!res.ok) throw new Error();
+
+        showToast(`${pendingDeleteName} deleted ✓`, 'success');
+        await loadEmployees();
+    } catch (e) {
+        showToast('Failed to delete employee', 'error');
+        console.error(e);
+    }
+
+    pendingDelete = null;
+    pendingDeleteName = null;
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+    const stack = document.getElementById('toastStack');
+    if (!stack) return;
+    const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
+    const toast = document.createElement('div');
+    toast.className = `toast-item${type === 'error' ? ' error' : ''}`;
+    toast.innerHTML = `<span class="toast-icon">${icons[type] || '•'}</span>${esc(msg)}`;
+    stack.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'toastIn .3s var(--ease-spring) reverse';
+        toast.addEventListener('animationend', () => toast.remove(), { once: true });
+    }, 2800);
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function esc(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}

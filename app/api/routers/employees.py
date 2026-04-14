@@ -7,7 +7,7 @@ from app.utils.responses import success_response
 
 router = APIRouter(tags=["employees"])
 
-@router.get("/load-employees")
+@router.get("/get-employees")
 def list_employees(db: Session = Depends(get_db)):
     """Get all employees"""
     employees = EmployeeService(db).list_all_service()
