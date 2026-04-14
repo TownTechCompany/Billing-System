@@ -1,20 +1,20 @@
 from app.db.session import SessionLocal
-from app.models.models import Product, Employee
-from app.ttutils.common import encrypt_data
+from app.models import Product, Employee
+from app.utils.security import encrypt_data
 
 def seed_database():
     db = SessionLocal()
     try:
         # Add default Employee
         print("Seeding database with default products and admin user...")
-        if not db.query(Employee).filter(Employee.email == "admin@example.com").first():
+        if not db.query(Employee).filter(Employee.email == "towntech55@gmail.com").first():
             db.add(Employee(
-                first_name="Admin",
-                last_name="User",
-                email="admin@example.com",
+                first_name="Town",
+                last_name="Tech",
+                email="towntech55@gmail.com",
                 customer_type="Owner",
                 is_active=True,
-                password=encrypt_data("password")
+                password=encrypt_data("Admin123@")
             ))
             db.commit()
             print("Database seeded with default products and admin user.")

@@ -5,14 +5,14 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.models.models import Product, Order, OrderItem, ShopSettings
+from app.models import Product, Order, OrderItem, ShopSettings
 from app.services.order_service import OrderService
-from app.ttutils.logwritter import LogWriter
+from app.utils.log_writer import LogWriter
 log_writer_ = LogWriter()
 
 router = APIRouter()
 APP_ROOT = Path(__file__).resolve().parents[3]
-templates = Jinja2Templates(directory=str(APP_ROOT / "templates"))
+templates = Jinja2Templates(directory=str(APP_ROOT / "app" / "templates"))
 
 @router.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -29,7 +29,7 @@ async def dashboard(request: Request, start_date: str = None, end_date: str = No
                 end = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
             except ValueError:
                 pass
-        metrics = svc.dashboard_metrics(start, end)
+        metrics = svc.dashboard_metrics_service(start, end)
         return templates.TemplateResponse("dashboard.html", {
             "request": request,
             "active_page": "dashboard",
