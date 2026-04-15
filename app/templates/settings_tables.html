@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Tables — BillPOS{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <div class="detail-sheet-header">
+        <a href="/settings" class="detail-back-btn" data-spa-link>
+            <i class="fa-solid fa-chevron-left"></i> Back
+        </a>
+        <div class="detail-sheet-title">Dine-in / Tables</div>
+    </div>
+
+    <div class="settings-section active" style="padding: 16px;">
+        <div class="section-group-label">Feature Control</div>
+        <div class="slist-card">
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#f59e0b"><i class="fa-solid fa-chair"></i></div>
+                <span class="slist-label">
+                    <span class="slist-label-text">Enable Tables / Dine-in</span>
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="enableTables" {% if settings.enable_tables %}checked{% endif %} onchange="markUnsaved()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="section-group-label">Layout</div>
+        <div class="slist-card">
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#0ea5e9"><i class="fa-solid fa-hashtag"></i></div>
+                <span class="slist-label"><span class="slist-label-text">Number of Tables</span></span>
+                <input type="number" class="slist-input" id="tableCount" value="{{ settings.table_count or 10 }}" 
+                       min="1" max="100" style="width:60px" oninput="markUnsaved()">
+            </div>
+        </div>
+    </div>
+</div>
+
+<button class="save-fab" id="saveFab" onclick="saveTableSettings()">
+    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+</button>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function markUnsaved() {
+    document.getElementById('saveFab').classList.add('visible');
+}
+
+async function saveTableSettings() {
+    const data = {
+        enableTables: document.getElementById('enableTables').checked,
+        tableCount: parseInt(document.getElementById('tableCount').value)
+    };
+
+    try {
+        const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (res.ok) {
+            document.getElementById('saveFab').classList.remove('visible');
+            Swal.fire({ icon: 'success', title: 'Table Settings Saved', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error saving settings' });
+    }
+}
+</script>
+{% endblock %}

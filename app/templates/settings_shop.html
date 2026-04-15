@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Shop Identity — BillPOS{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <!-- Header with Back Button -->
+    <div class="detail-sheet-header">
+        <a href="/settings" class="detail-back-btn" data-spa-link>
+            <i class="fa-solid fa-chevron-left"></i> Back
+        </a>
+        <div class="detail-sheet-title">Shop Identity</div>
+    </div>
+
+    <div class="settings-section active" style="padding: 16px;">
+        <div class="section-group-label">Identity</div>
+        <div class="slist-card">
+            <div class="slist-row stacked">
+                <span class="slist-stacked-label">Shop Name</span>
+                <input type="text" class="slist-input" id="shopName" value="{{ settings.shop_name or '' }}"
+                       placeholder="Your shop name"
+                       oninput="markUnsaved()">
+            </div>
+            <div class="slist-row stacked">
+                <span class="slist-stacked-label">Tagline</span>
+                <input type="text" class="slist-input" id="shopTagline" value="{{ settings.shop_tagline or '' }}"
+                       placeholder="Fresh &amp; Fast"
+                       oninput="markUnsaved()">
+            </div>
+            <div class="slist-row stacked">
+                <span class="slist-stacked-label">Address (on receipt)</span>
+                <textarea class="slist-textarea" id="shopAddress" rows="2"
+                          placeholder="123 Main Street, City, PIN"
+                          oninput="markUnsaved()">{{ settings.shop_address or '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="section-group-label">Contact</div>
+        <div class="slist-card">
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#0ea5e9">
+                    <i class="fa-solid fa-phone"></i>
+                </div>
+                <span class="slist-label"><span class="slist-label-text">Phone</span></span>
+                <input type="tel" class="slist-input" id="shopPhone" value="{{ settings.shop_phone or '' }}"
+                       placeholder="+91 98765 43210"
+                       oninput="markUnsaved()">
+            </div>
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#8b5cf6">
+                    <i class="fa-solid fa-envelope"></i>
+                </div>
+                <span class="slist-label"><span class="slist-label-text">Email</span></span>
+                <input type="email" class="slist-input" id="shopEmail" value="{{ settings.shop_email or '' }}"
+                       placeholder="shop@example.com"
+                       oninput="markUnsaved()">
+            </div>
+        </div>
+
+        <div class="section-group-label">Security</div>
+        <div class="slist-card">
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#f59e0b">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <span class="slist-label">
+                    <span class="slist-label-text">Admin PIN</span>
+                    <span class="slist-label-desc">Required for sensitive actions</span>
+                </span>
+                <input type="password" class="slist-input" id="adminPin" value="{{ settings.admin_pin or '' }}"
+                       maxlength="4" placeholder="••••"
+                       oninput="markUnsaved()">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Save Button -->
+<button class="save-fab" id="saveFab" onclick="saveCurrentSettings()">
+    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+</button>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function markUnsaved() {
+    document.getElementById('saveFab').classList.add('visible');
+}
+
+async function saveCurrentSettings() {
+    const data = {
+        shopName: document.getElementById('shopName').value,
+        shopTagline: document.getElementById('shopTagline').value,
+        shopAddress: document.getElementById('shopAddress').value,
+        shopPhone: document.getElementById('shopPhone').value,
+        shopEmail: document.getElementById('shopEmail').value,
+        adminPin: document.getElementById('adminPin').value
+    };
+
+    try {
+        const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (res.ok) {
+            document.getElementById('saveFab').classList.remove('visible');
+            Swal.fire({ icon: 'success', title: 'Saved!', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error saving settings' });
+    }
+}
+</script>
+{% endblock %}

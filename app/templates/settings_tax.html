@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Tax & GST — BillPOS{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <div class="detail-sheet-header">
+        <a href="/settings" class="detail-back-btn" data-spa-link>
+            <i class="fa-solid fa-chevron-left"></i> Back
+        </a>
+        <div class="detail-sheet-title">Tax & GST Configuration</div>
+    </div>
+
+    <div class="settings-section active" style="padding: 16px;">
+        <div class="section-group-label">GST Configuration</div>
+        <div class="slist-card">
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#10b981">
+                    <i class="fa-solid fa-hashtag"></i>
+                </div>
+                <span class="slist-label"><span class="slist-label-text">GSTIN Number</span></span>
+                <input type="text" class="slist-input" id="gstin" value="{{ settings.gstin or '' }}"
+                       placeholder="22AAAAA0000A1Z5" maxlength="15"
+                       style="font-family:monospace;text-transform:uppercase;width:160px"
+                       oninput="markUnsaved()">
+            </div>
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#6366f1">
+                    <i class="fa-solid fa-c"></i>
+                </div>
+                <span class="slist-label"><span class="slist-label-text">CGST %</span></span>
+                <input type="number" class="slist-input" id="cgst" value="{{ settings.cgst or 0 }}"
+                       step="0.5" min="0" max="14" style="width:60px"
+                       oninput="markUnsaved()">
+            </div>
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#8b5cf6">
+                    <i class="fa-solid fa-s"></i>
+                </div>
+                <span class="slist-label"><span class="slist-label-text">SGST %</span></span>
+                <input type="number" class="slist-input" id="sgst" value="{{ settings.sgst or 0 }}"
+                       step="0.5" min="0" max="14" style="width:60px"
+                       oninput="markUnsaved()">
+            </div>
+        </div>
+
+        <div class="section-group-label">Rules</div>
+        <div class="slist-card">
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#f59e0b">
+                    <i class="fa-solid fa-tag"></i>
+                </div>
+                <span class="slist-label">
+                    <span class="slist-label-text">Prices are tax-inclusive</span>
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="taxInclusive" {% if settings.tax_inclusive %}checked{% endif %} onchange="markUnsaved()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#ec4899">
+                    <i class="fa-solid fa-circle-nodes"></i>
+                </div>
+                <span class="slist-label">
+                    <span class="slist-label-text">Round off total</span>
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="roundTotal" {% if settings.round_total %}checked{% endif %} onchange="markUnsaved()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="section-group-label">Discounts</div>
+        <div class="slist-card">
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#16a34a">
+                    <i class="fa-solid fa-percent"></i>
+                </div>
+                <span class="slist-label">
+                    <span class="slist-label-text">Allow discounts on orders</span>
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="allowDiscount" {% if settings.allow_discount %}checked{% endif %} onchange="markUnsaved()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#d97706">
+                    <i class="fa-solid fa-arrow-up-wide-short"></i>
+                </div>
+                <span class="slist-label">
+                    <span class="slist-label-text">Max discount %</span>
+                </span>
+                <input type="number" class="slist-input" id="maxDiscount" value="{{ settings.max_discount or 0 }}"
+                       min="0" max="100" style="width:60px"
+                       oninput="markUnsaved()">
+            </div>
+        </div>
+    </div>
+</div>
+
+<button class="save-fab" id="saveFab" onclick="saveTaxSettings()">
+    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+</button>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function markUnsaved() {
+    document.getElementById('saveFab').classList.add('visible');
+}
+
+async function saveTaxSettings() {
+    const data = {
+        gstin: document.getElementById('gstin').value,
+        cgst: parseFloat(document.getElementById('cgst').value),
+        sgst: parseFloat(document.getElementById('sgst').value),
+        taxInclusive: document.getElementById('taxInclusive').checked,
+        roundTotal: document.getElementById('roundTotal').checked,
+        allowDiscount: document.getElementById('allowDiscount').checked,
+        maxDiscount: parseInt(document.getElementById('maxDiscount').value)
+    };
+
+    try {
+        const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (res.ok) {
+            document.getElementById('saveFab').classList.remove('visible');
+            Swal.fire({ icon: 'success', title: 'Tax Settings Saved', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error saving settings' });
+    }
+}
+</script>
+{% endblock %}

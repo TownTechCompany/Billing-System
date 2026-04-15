@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Payments — BillPOS{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <div class="detail-sheet-header">
+        <a href="/settings" class="detail-back-btn" data-spa-link>
+            <i class="fa-solid fa-chevron-left"></i> Back
+        </a>
+        <div class="detail-sheet-title">Payment Methods</div>
+    </div>
+
+    <div class="settings-section active" style="padding: 16px;">
+        <div class="section-group-label">Enable / Disable Methods</div>
+        <div class="slist-card">
+            <!-- These would normally be bound to settings in the DB, 
+                 using placeholders for now as we focus on structural split -->
+            <div class="slist-row">
+                <div class="slist-icon pay-cash"><i class="fa-solid fa-money-bill-wave"></i></div>
+                <span class="slist-label"><span class="slist-label-text">Cash</span></span>
+                <label class="toggle-switch">
+                    <input type="checkbox" checked onchange="markUnsaved()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="slist-row">
+                <div class="slist-icon pay-card"><i class="fa-solid fa-credit-card"></i></div>
+                <span class="slist-label"><span class="slist-label-text">Credit Card</span></span>
+                <label class="toggle-switch">
+                    <input type="checkbox" checked onchange="markUnsaved()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="slist-row">
+                <div class="slist-icon pay-upi"><i class="fa-solid fa-qrcode"></i></div>
+                <span class="slist-label"><span class="slist-label-text">UPI / QR</span></span>
+                <label class="toggle-switch">
+                    <input type="checkbox" checked onchange="markUnsaved()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="section-group-label">QR Configuration</div>
+        <div class="slist-card">
+            <div class="slist-row stacked">
+                <span class="slist-stacked-label">UPI ID</span>
+                <input type="text" class="slist-input" placeholder="merchant@upi" oninput="markUnsaved()">
+            </div>
+        </div>
+    </div>
+</div>
+
+<button class="save-fab" id="saveFab" onclick="savePaymentSettings()">
+    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+</button>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function markUnsaved() {
+    document.getElementById('saveFab').classList.add('visible');
+}
+function savePaymentSettings() {
+    document.getElementById('saveFab').classList.remove('visible');
+    Swal.fire({ icon: 'success', title: 'Payment Settings Updated', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
+}
+</script>
+{% endblock %}

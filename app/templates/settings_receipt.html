@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Receipt Settings — BillPOS{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <div class="detail-sheet-header">
+        <a href="/settings" class="detail-back-btn" data-spa-link>
+            <i class="fa-solid fa-chevron-left"></i> Back
+        </a>
+        <div class="detail-sheet-title">Receipt Customization</div>
+    </div>
+
+    <div class="settings-section active" style="padding: 16px;">
+        <div class="section-group-label">Footer Messages</div>
+        <div class="slist-card">
+            <div class="slist-row stacked">
+                <span class="slist-stacked-label">Custom Message (Line 1)</span>
+                <input type="text" class="slist-input" id="footerMsg1" value="{{ settings.footer_msg1 or '' }}" 
+                       placeholder="Thank you for visiting!" oninput="markUnsaved()">
+            </div>
+            <div class="slist-row stacked">
+                <span class="slist-stacked-label">Custom Message (Line 2)</span>
+                <input type="text" class="slist-input" id="footerMsg2" value="{{ settings.footer_msg2 or '' }}" 
+                       placeholder="Have a great day!" oninput="markUnsaved()">
+            </div>
+        </div>
+
+        <div class="section-group-label">Print Options</div>
+        <div class="slist-card">
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#6366f1"><i class="fa-solid fa-print"></i></div>
+                <span class="slist-label"><span class="slist-label-text">Print logo on receipt</span></span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="printLogo" {% if settings.print_logo %}checked{% endif %} onchange="markUnsaved()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="slist-row">
+                <div class="slist-icon" style="background:#10b981"><i class="fa-solid fa-file-invoice"></i></div>
+                <span class="slist-label"><span class="slist-label-text">Show GST breakdown</span></span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="showGstReceipt" {% if settings.show_gst_receipt %}checked{% endif %} onchange="markUnsaved()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button class="save-fab" id="saveFab" onclick="saveReceiptSettings()">
+    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+</button>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function markUnsaved() {
+    document.getElementById('saveFab').classList.add('visible');
+}
+
+async function saveReceiptSettings() {
+    const data = {
+        footerMsg1: document.getElementById('footerMsg1').value,
+        footerMsg2: document.getElementById('footerMsg2').value,
+        printLogo: document.getElementById('printLogo').checked,
+        showGstReceipt: document.getElementById('showGstReceipt').checked
+    };
+
+    try {
+        const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (res.ok) {
+            document.getElementById('saveFab').classList.remove('visible');
+            Swal.fire({ icon: 'success', title: 'Receipt Settings Saved', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error saving settings' });
+    }
+}
+</script>
+{% endblock %}

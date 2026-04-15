@@ -84,6 +84,36 @@ async def settings_page(request: Request, db: Session = Depends(get_db)):
         {"request": request, "settings": settings, "active_page": "settings"},
     )
 
+@router.get("/settings/shop", response_class=HTMLResponse)
+async def settings_shop(request: Request, db: Session = Depends(get_db)):
+    settings = db.query(ShopSettings).first()
+    return templates.TemplateResponse("settings_shop.html", {"request": request, "settings": settings, "active_page": "settings"})
+
+@router.get("/settings/tax", response_class=HTMLResponse)
+async def settings_tax(request: Request, db: Session = Depends(get_db)):
+    settings = db.query(ShopSettings).first()
+    return templates.TemplateResponse("settings_tax.html", {"request": request, "settings": settings, "active_page": "settings"})
+
+@router.get("/settings/payments", response_class=HTMLResponse)
+async def settings_payments(request: Request, db: Session = Depends(get_db)):
+    settings = db.query(ShopSettings).first()
+    return templates.TemplateResponse("settings_payments.html", {"request": request, "settings": settings, "active_page": "settings"})
+
+@router.get("/settings/receipt", response_class=HTMLResponse)
+async def settings_receipt(request: Request, db: Session = Depends(get_db)):
+    settings = db.query(ShopSettings).first()
+    return templates.TemplateResponse("settings_receipt.html", {"request": request, "settings": settings, "active_page": "settings"})
+
+@router.get("/settings/tables", response_class=HTMLResponse)
+async def settings_tables(request: Request, db: Session = Depends(get_db)):
+    settings = db.query(ShopSettings).first()
+    return templates.TemplateResponse("settings_tables.html", {"request": request, "settings": settings, "active_page": "settings"})
+
+@router.get("/settings/data", response_class=HTMLResponse)
+async def settings_data(request: Request, db: Session = Depends(get_db)):
+    settings = db.query(ShopSettings).first()
+    return templates.TemplateResponse("settings_data.html", {"request": request, "settings": settings, "active_page": "settings"})
+
 @router.get("/employees", response_class=HTMLResponse)
 async def employees_page(request: Request):
     try:

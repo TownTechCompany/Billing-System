@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Data Management — BillPOS{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <div class="detail-sheet-header">
+        <a href="/settings" class="detail-back-btn" data-spa-link>
+            <i class="fa-solid fa-chevron-left"></i> Back
+        </a>
+        <div class="detail-sheet-title">Data &amp; Security</div>
+    </div>
+
+    <div class="settings-section active" style="padding: 16px;">
+        <div class="section-group-label">Backup</div>
+        <div class="slist-card">
+            <a href="/api/settings/export" class="slist-row" download>
+                <div class="slist-icon" style="background:#10b981"><i class="fa-solid fa-download"></i></div>
+                <span class="slist-label">
+                    <span class="slist-label-text">Export Database</span>
+                    <span class="slist-label-desc">Download as .db or .json</span>
+                </span>
+                <i class="fa-solid fa-chevron-right slist-chevron"></i>
+            </a>
+        </div>
+
+        <div class="section-group-label">System Info</div>
+        <div class="slist-card">
+            <div class="info-row">
+                <span class="info-label">App Version</span>
+                <span class="info-value">v2.4.0-SPA</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Local Database</span>
+                <span class="info-value">Connected (SQLite)</span>
+            </div>
+        </div>
+
+        <div class="section-group-label">Danger Zone</div>
+        <div class="danger-zone">
+            <div class="danger-zone-header"><i class="fa-solid fa-triangle-exclamation"></i> Critical Actions</div>
+            <button class="danger-btn" onclick="resetSettings()">
+                <i class="fa-solid fa-rotate-left"></i> Reset App Settings
+            </button>
+            <button class="danger-btn" onclick="clearData()">
+                <i class="fa-solid fa-trash-can"></i> Wipe All Transaction Data
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function resetSettings() {
+    Swal.fire({
+        title: 'Reset settings?',
+        text: "This will revert all shop settings to default.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: 'var(--rose)',
+        confirmButtonText: 'Yes, reset'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire('Reset!', 'Settings have been reverted.', 'success');
+        }
+    });
+}
+
+function clearData() {
+    Swal.fire({
+        title: 'Wipe all data?',
+        text: "This will delete all orders and products forever!",
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Yes, DELETE EVERYTHING'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire('Deleted!', 'All data has been wiped.', 'success');
+        }
+    });
+}
+</script>
+{% endblock %}

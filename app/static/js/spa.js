@@ -32,6 +32,12 @@
     '/orders':    'Orders',
     '/settings':  'Settings',
     '/employees': 'Employees',
+    '/settings/shop': 'Shop Identity',
+    '/settings/tax': 'Tax & GST',
+    '/settings/payments': 'Payments',
+    '/settings/receipt': 'Receipt',
+    '/settings/tables': 'Tables',
+    '/settings/data': 'Data & Reset',
   };
 
   /* ── Extract the inner content from a fetched HTML string ──
@@ -232,8 +238,9 @@
     }
   }
 
-  /* ── Intercept bottom-nav clicks ── */
+  /* ── Intercept clicks ── */
   function attachNavListeners() {
+    /* Bottom nav */
     qsa('.bottom-nav-item').forEach(item => {
       item.addEventListener('click', e => {
         const href = item.getAttribute('href');
@@ -243,15 +250,27 @@
       });
     });
 
-    /* Also intercept user-sheet links (Settings, Employees) */
+    /* User sheet */
     qsa('.user-sheet-item').forEach(item => {
       item.addEventListener('click', e => {
         const href = item.getAttribute('href');
-        if (!href || href.includes('logout')) return; /* let logout do full redirect */
+        if (!href || href.includes('logout')) return; 
         e.preventDefault();
         closeUserSheet();
         navigate(href);
       });
+    });
+
+    /* Global data-spa-link listener (Delegation) */
+    document.addEventListener('click', e => {
+      const link = e.target.closest('[data-spa-link]');
+      if (link) {
+        const href = link.getAttribute('href');
+        if (href && !href.startsWith('#')) {
+          e.preventDefault();
+          navigate(href);
+        }
+      }
     });
   }
 
