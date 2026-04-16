@@ -130,7 +130,7 @@ function openAddModal() {
     $('#fEmail').val('');
     $('#fPassword').val('');
     $('#fRole').val('');
-    $('#fPassword').parent().parent().show();
+    $('#passwordField').show();
     new bootstrap.Modal(document.getElementById('employeeModal')).show();
 }
 
@@ -143,7 +143,7 @@ function openEditModal(id, firstName, lastName, email, role) {
     $('#fEmail').val(email);
     $('#fRole').val(role);
     $('#fPassword').val('');
-    $('#fPassword').parent().parent().hide();
+    $('#passwordField').hide();
     new bootstrap.Modal(document.getElementById('employeeModal')).show();
 }
 
