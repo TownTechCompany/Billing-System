@@ -125,7 +125,7 @@
     border-radius: 14px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
-    margin: 0 16px 12px;
+    margin: 0 0px 12px;
 }
 
 .slist-row {
@@ -442,7 +442,7 @@ a.slist-row:active {
     }
 
     .slist-card {
-        margin: 0 10px 8px;
+        margin: 0 0px 8px;
         border-radius: 10px;
     }
 
@@ -509,7 +509,7 @@ a.slist-row:active {
     }
 
     .slist-card {
-        margin: 0 12px 8px;
+        margin: 0 0px 8px;
         border-radius: 11px;
     }
 
@@ -572,7 +572,7 @@ a.slist-row:active {
     }
 
     .slist-card {
-        margin: 0 14px 10px;
+        margin: 0 0px 10px;
         border-radius: 12px;
     }
 
@@ -623,7 +623,7 @@ a.slist-row:active {
     .shop-header-name  { font-size: 1rem; }
     .shop-header-tagline { font-size: 0.76rem; }
 
-    .slist-card { margin: 0 15px 11px; }
+    .slist-card { margin: 0 0px 11px; }
 
     .slist-row {
         padding: 13px 15px;
@@ -662,7 +662,7 @@ a.slist-row:active {
         font-size: 1.5rem;
     }
 
-    .slist-card { margin: 0 16px 12px; }
+    .slist-card { margin: 0 0px 12px; }
 
     .slist-row {
         padding: 13px 16px;
@@ -697,7 +697,7 @@ a.slist-row:active {
 
     .shop-header-name { font-size: 1.1rem; }
 
-    .slist-card { margin: 0 18px 12px; }
+    .slist-card { margin: 0 0px 12px; }
 
     .slist-row { padding: 14px 18px; }
 
