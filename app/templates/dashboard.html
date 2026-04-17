@@ -9,11 +9,8 @@
 <main class="chat-main w-100 dash-root">
 
     <!-- Header -->
-    <div class="dash-header">
-        <div>
-            <h1>Dashboard</h1>
-            <div class="sub"><span class="sub-dot"></span> Overview of your store performance</div>
-        </div>
+    <!-- Filters -->
+    <div class="dash-filters-toolbar">
         <div class="dash-date-filter">
             <input type="date" id="startDate" class="date-input" value="{{ start_date or '' }}">
             <span style="color:var(--slate-400);font-size:0.8rem;">to</span>

@@ -8,18 +8,6 @@
 {% block content %}
 <main class="chat-main w-100 products-root">
 
-    <div class="products-header">
-        <div class="products-header-left">
-            <h1>Products</h1>
-            <div class="sub"><span class="sub-dot"></span><span id="countBadge">—</span> items</div>
-        </div>
-        <div class="header-btn-group">
-            <button class="btn-add-item" onclick="openAddModal()">
-                <i class="fa-solid fa-plus"></i> New Product
-            </button>
-        </div>
-    </div>
-
     <div class="products-toolbar">
         <div class="search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -29,6 +17,9 @@
             <option value="">All Categories</option>
         </select>
         <div style="margin-left:auto;display:flex;gap:8px;">
+            <button class="btn-add-item sm" onclick="openAddModal()" style="padding: 7px 14px;">
+                <i class="fa-solid fa-plus"></i> New
+            </button>
             <button class="toolbar-icon-btn" title="Refresh" onclick="loadProducts()">
                 <i class="fa-solid fa-arrows-rotate"></i>
             </button>
