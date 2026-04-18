@@ -249,10 +249,11 @@
       } else if (path === '/pos') {
         if (typeof initPOS === 'function') initPOS();
       } else if (path === '/settings') {
-        /* Settings loads from API on DOMContentLoaded — re-fetch */
+        /* Settings loads from API — re-fetch for real-time visual sync if needed */
         if (typeof fetch === 'function') {
-          fetch('/api/settings').then(r => r.json()).then(s => {
-            if (typeof setVal === 'function') {
+          fetch('/settings/get-settings').then(r => r.json()).then(res => {
+            const s = res.data;
+            if (typeof setVal === 'function' && s) {
               if (s.primary_color) applyColor(s.primary_color, null);
             }
           }).catch(() => {});

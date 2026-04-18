@@ -76,34 +76,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-function markUnsaved() {
-    document.getElementById('saveFab').classList.add('visible');
-}
-
-async function saveCurrentSettings() {
-    const data = {
-        shopName: document.getElementById('shopName').value,
-        shopTagline: document.getElementById('shopTagline').value,
-        shopAddress: document.getElementById('shopAddress').value,
-        shopPhone: document.getElementById('shopPhone').value,
-        shopEmail: document.getElementById('shopEmail').value,
-        adminPin: document.getElementById('adminPin').value
-    };
-
-    try {
-        const res = await fetch('/api/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        if (res.ok) {
-            document.getElementById('saveFab').classList.remove('visible');
-            Swal.fire({ icon: 'success', title: 'Saved!', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
-        }
-    } catch (e) {
-        Swal.fire({ icon: 'error', title: 'Error saving settings' });
-    }
-}
-</script>
+<script src="{{ url_for('static', path='js/settings.js') }}"></script>
 {% endblock %}
