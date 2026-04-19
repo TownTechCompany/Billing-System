@@ -246,6 +246,8 @@
       } else if (path === '/orders') {
         if (typeof loadOrders === 'function') loadOrders();
         if (typeof startLiveClock === 'function') startLiveClock();
+      } else if (path === '/products') {
+        if (typeof ProductApp !== 'undefined') ProductApp.init();
       } else if (path === '/pos') {
         if (typeof initPOS === 'function') initPOS();
       } else if (path === '/settings') {
