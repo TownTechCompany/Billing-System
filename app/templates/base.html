@@ -19,28 +19,41 @@
 
     <!-- ── Top App Bar ── -->
     <header class="top-app-bar">
-        <a href="/dashboard" class="top-bar-brand" data-spa-link>
-            <div class="top-bar-brand-icon">
-                <i class="fa-solid fa-cash-register"></i>
-            </div>
-            <span class="top-bar-brand-text">BillPOS</span>
-        </a>
-
-        <span class="top-bar-page-title">
-            {% if active_page == 'dashboard' %}Dashboard
-            {% elif active_page == 'pos' %}Point of Sale
-            {% elif active_page == 'products' %}Products
-            {% elif active_page == 'orders' %}Orders
-            {% elif active_page == 'settings' %}Settings
-            {% elif active_page == 'employees' %}Employees
-            {% else %}BillPOS
+        <div class="top-bar-left">
+            {% if active_page in ['settings_shop', 'settings_tax', 'settings_payments', 'settings_receipt', 'settings_tables', 'settings_data'] %}
+                <a href="/settings" class="top-bar-back-btn" data-spa-link title="Back to Settings">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+            {% else %}
+                <!-- No back icon or brand for main pages -->
             {% endif %}
-        </span>
+        </div>
 
-        <div class="top-bar-actions">
-            <button class="top-bar-user-btn" id="userMenuBtn" aria-label="User menu">
-                <i class="fa-solid fa-user"></i>
-            </button>
+        <div class="top-bar-center">
+            <span class="top-bar-page-title">
+                {% if active_page == 'dashboard' %}Dashboard
+                {% elif active_page == 'pos' %}Point of Sale
+                {% elif active_page == 'products' %}Products
+                {% elif active_page == 'orders' %}Orders
+                {% elif active_page == 'employees' %}Employees
+                {% elif active_page == 'settings' %}Settings
+                {% elif active_page == 'settings_shop' %}Shop Identity
+                {% elif active_page == 'settings_tax' %}Tax & GST
+                {% elif active_page == 'settings_payments' %}Payment Methods
+                {% elif active_page == 'settings_receipt' %}Receipt Design
+                {% elif active_page == 'settings_tables' %}Tables Layout
+                {% elif active_page == 'settings_data' %}Data Management
+                {% else %}BillPOS
+                {% endif %}
+            </span>
+        </div>
+
+        <div class="top-bar-right">
+            <div class="top-bar-actions">
+                <button class="top-bar-user-btn" id="userMenuBtn" aria-label="User menu">
+                    <i class="fa-solid fa-user"></i>
+                </button>
+            </div>
         </div>
     </header>
 

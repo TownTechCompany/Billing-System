@@ -16,6 +16,11 @@ function showToast(msg, type = 'success') {
     setTimeout(() => el.remove(), 3500);
 }
 
+function markUnsaved() {
+    const fab = document.getElementById('saveFab');
+    if (fab) fab.classList.add('visible');
+}
+
 // ── User Bottom Sheet toggle ──
 function openUserSheet() {
     const s = document.getElementById('userSheet');

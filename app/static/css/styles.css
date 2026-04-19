@@ -235,6 +235,30 @@ body {
 .stat-val { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.55rem; font-weight: 800; color: var(--slate-900); line-height: 1; letter-spacing: -0.5px; }
 .stat-label { font-size: 0.73rem; color: var(--slate-400); font-weight: 500; margin-top: 4px; }
 
+/* ── Toolbars ── */
+.dash-filters-toolbar, .orders-top-actions, .products-toolbar, .employees-toolbar {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: fadeSlideIn .45s var(--ease-out) both;
+}
+
+.live-meta {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--slate-400);
+}
+
+.sub-dot {
+    width: 6px; height: 6px;
+    background: var(--emerald);
+    border-radius: 50%;
+    margin-right: 8px;
+    box-shadow: 0 0 8px rgba(16,185,129,.4);
+}
+
 /* ════ Page Entry Animation ════ */
 @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -461,14 +485,31 @@ tr:hover .act-btn { color: var(--slate-400); }
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 18px;
-    padding-top: max(14px, env(safe-area-inset-top));
+    padding: 0 16px;
+    height: calc(56px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
     background: var(--white);
     border-bottom: 1px solid rgba(226,232,240,.7);
     box-shadow: 0 1px 8px rgba(15,23,42,.05);
     flex-shrink: 0;
     z-index: 50;
 }
+
+.top-bar-left, .top-bar-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.top-bar-right {
+    justify-content: flex-end;
+}
+
+.top-bar-center {
+    flex: 0 1 auto;
+    text-align: center;
+}
+
 .top-bar-brand {
     display: flex;
     align-items: center;
@@ -492,12 +533,28 @@ tr:hover .act-btn { color: var(--slate-400); }
     color: var(--slate-900);
     letter-spacing: -0.4px;
 }
+
+.top-bar-back-btn {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--slate-600);
+    text-decoration: none;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    transition: background .15s;
+    margin-left: -4px;
+}
+.top-bar-back-btn:active {
+    background: var(--slate-100);
+}
+
 .top-bar-page-title {
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 0.95rem;
     font-weight: 700;
-    color: var(--slate-700);
+    color: var(--slate-800);
     letter-spacing: -0.2px;
+    white-space: nowrap;
 }
 .top-bar-actions {
     display: flex;

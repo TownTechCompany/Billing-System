@@ -8,24 +8,15 @@
 {% block content %}
 <main class="chat-main w-100 employees-root">
 
-    <div class="employees-header">
-        <div class="employees-header-left">
-            <h1>Employees</h1>
-            <div class="sub"><span class="sub-dot"></span><span id="countBadge">—</span> staffs</div>
-        </div>
-        <div class="header-btn-group">
-            <button class="btn-add-item" onclick="openAddModal()">
-                <i class="fa-solid fa-plus"></i> New Employee
-            </button>
-        </div>
-    </div>
-
     <div class="employees-toolbar">
         <div class="search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" id="searchInput" placeholder="Search employees...">
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;">
+            <button class="btn-add-item sm" onclick="openAddModal()" style="padding: 7px 14px;">
+                <i class="fa-solid fa-plus"></i> New
+            </button>
             <button class="toolbar-icon-btn" title="Refresh" onclick="loadEmployees()">
                 <i class="fa-solid fa-arrows-rotate"></i>
             </button>

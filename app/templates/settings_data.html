@@ -4,12 +4,7 @@
 
 {% block content %}
 <div class="settings-page">
-    <div class="detail-sheet-header">
-        <a href="/settings" class="detail-back-btn" data-spa-link>
-            <i class="fa-solid fa-chevron-left"></i> Back
-        </a>
-        <div class="detail-sheet-title">Data &amp; Security</div>
-    </div>
+
 
     <div class="settings-section active" style="padding: 16px;">
         <div class="section-group-label">Backup</div>
@@ -39,10 +34,10 @@
         <div class="section-group-label">Danger Zone</div>
         <div class="danger-zone">
             <div class="danger-zone-header"><i class="fa-solid fa-triangle-exclamation"></i> Critical Actions</div>
-            <button class="danger-btn" onclick="resetSettings()">
+            <button class="danger-btn" onclick="SettingsApp.resetSettings()">
                 <i class="fa-solid fa-rotate-left"></i> Reset App Settings
             </button>
-            <button class="danger-btn" onclick="clearData()">
+            <button class="danger-btn" onclick="SettingsApp.clearData()">
                 <i class="fa-solid fa-trash-can"></i> Wipe All Transaction Data
             </button>
         </div>
@@ -51,35 +46,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-function resetSettings() {
-    Swal.fire({
-        title: 'Reset settings?',
-        text: "This will revert all shop settings to default.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: 'var(--rose)',
-        confirmButtonText: 'Yes, reset'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            Swal.fire('Reset!', 'Settings have been reverted.', 'success');
-        }
-    });
-}
-
-function clearData() {
-    Swal.fire({
-        title: 'Wipe all data?',
-        text: "This will delete all orders and products forever!",
-        icon: 'error',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        confirmButtonText: 'Yes, DELETE EVERYTHING'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            Swal.fire('Deleted!', 'All data has been wiped.', 'success');
-        }
-    });
-}
-</script>
+<script src="{{ url_for('static', path='js/settings.js') }}"></script>
 {% endblock %}

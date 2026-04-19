@@ -4,12 +4,7 @@
 
 {% block content %}
 <div class="settings-page">
-    <div class="detail-sheet-header">
-        <a href="/settings" class="detail-back-btn" data-spa-link>
-            <i class="fa-solid fa-chevron-left"></i> Back
-        </a>
-        <div class="detail-sheet-title">Tax & GST Configuration</div>
-    </div>
+
 
     <div class="settings-section active" style="padding: 16px;">
         <div class="section-group-label">GST Configuration</div>
@@ -107,35 +102,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-function markUnsaved() {
-    document.getElementById('saveFab').classList.add('visible');
-}
-
-async function saveTaxSettings() {
-    const data = {
-        gstin: document.getElementById('gstin').value,
-        cgst: parseFloat(document.getElementById('cgst').value),
-        sgst: parseFloat(document.getElementById('sgst').value),
-        taxInclusive: document.getElementById('taxInclusive').checked,
-        roundTotal: document.getElementById('roundTotal').checked,
-        allowDiscount: document.getElementById('allowDiscount').checked,
-        maxDiscount: parseInt(document.getElementById('maxDiscount').value)
-    };
-
-    try {
-        const res = await fetch('/api/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        if (res.ok) {
-            document.getElementById('saveFab').classList.remove('visible');
-            Swal.fire({ icon: 'success', title: 'Tax Settings Saved', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
-        }
-    } catch (e) {
-        Swal.fire({ icon: 'error', title: 'Error saving settings' });
-    }
-}
-</script>
+<script src="{{ url_for('static', path='js/settings.js') }}"></script>
 {% endblock %}

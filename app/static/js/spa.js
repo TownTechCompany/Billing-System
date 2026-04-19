@@ -110,6 +110,30 @@
     document.title = (PAGE_TITLES[path] || 'BillPOS') + ' — BillPOS';
   }
 
+  /* ── Sync top-bar back button for settings sub-pages ── */
+  const SETTINGS_SUB_PAGES = [
+    '/settings/shop', '/settings/tax', '/settings/payments',
+    '/settings/receipt', '/settings/tables', '/settings/data',
+  ];
+
+  function syncTopBar(path) {
+    const topBarLeft = qs('.top-bar-left');
+    if (!topBarLeft) return;
+
+    if (SETTINGS_SUB_PAGES.includes(path)) {
+      /* Show back button if not already present */
+      if (!topBarLeft.querySelector('.top-bar-back-btn')) {
+        topBarLeft.innerHTML = `
+          <a href="/settings" class="top-bar-back-btn" data-spa-link title="Back to Settings">
+            <i class="fa-solid fa-chevron-left"></i>
+          </a>`;
+      }
+    } else {
+      /* Remove back button on all other pages */
+      topBarLeft.innerHTML = '';
+    }
+  }
+
   /* ── Update bottom-nav active state ── */
   function updateNav(path) {
     qsa('.bottom-nav-item').forEach(item => {
@@ -152,6 +176,7 @@
     showLoading();
     updateNav(path);
     updateTitle(path);
+    syncTopBar(path);
 
     try {
       const res = await fetch(url, {
@@ -221,13 +246,16 @@
       } else if (path === '/orders') {
         if (typeof loadOrders === 'function') loadOrders();
         if (typeof startLiveClock === 'function') startLiveClock();
+      } else if (path === '/products') {
+        if (typeof ProductApp !== 'undefined') ProductApp.init();
       } else if (path === '/pos') {
         if (typeof initPOS === 'function') initPOS();
       } else if (path === '/settings') {
-        /* Settings loads from API on DOMContentLoaded — re-fetch */
+        /* Settings loads from API — re-fetch for real-time visual sync if needed */
         if (typeof fetch === 'function') {
-          fetch('/api/settings').then(r => r.json()).then(s => {
-            if (typeof setVal === 'function') {
+          fetch('/settings/get-settings').then(r => r.json()).then(res => {
+            const s = res.data;
+            if (typeof setVal === 'function' && s) {
               if (s.primary_color) applyColor(s.primary_color, null);
             }
           }).catch(() => {});
