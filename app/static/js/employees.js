@@ -59,63 +59,49 @@ function applyFilters() {
 // ── Render Cards ────────────────────────────────────────────────────────────
 function renderCards() {
     const grid = $('#employeesGrid');
-    const empty = $('#emptyState');
+
+    $('#visibleCount').text(`${filteredEmployees.length} item${filteredEmployees.length !== 1 ? 's' : ''}`);
 
     if (filteredEmployees.length === 0) {
-        grid.empty();
-        empty.css('display', 'flex');
+        grid.html(`
+            <div class="emp-empty">
+                <div class="emp-empty-icon"><i class="fa-regular fa-users"></i></div>
+                <h5>No employees found</h5>
+                <p>Add your first employee to get started.</p>
+            </div>
+        `);
         return;
     }
 
-    empty.hide();
-    
     grid.html(filteredEmployees.map(emp => {
         const fullName = `${emp.first_name} ${emp.last_name}`;
         const initials = `${emp.first_name[0] || '?'}${emp.last_name[0] || '?'}`.toUpperCase();
         const role = emp.customer_type || 'Admin';
-        const statusClass = emp.is_active ? '' : 'inactive';
-        const statusText = emp.is_active ? 'Active' : 'Inactive';
 
         return `
-            <div class="employee-card">
-                <div class="card-header-row">
-                    <div class="emp-avatar">${initials}</div>
-                    <div class="emp-name-role">
-                        <div class="emp-name">${esc(fullName)}</div>
-                        <div class="emp-role">${esc(role)}</div>
-                    </div>
-                    <span class="emp-status-badge ${statusClass}">
-                        <i class="fa-solid fa-circle" style="font-size:0.4rem;"></i>
-                        ${statusText}
-                    </span>
+        <div class="emp-card" data-id="${emp.id}">
+            <div class="emp-img-wrap">
+                <div class="emp-avatar">${initials}</div>
+            </div>
+            <div class="emp-body">
+                <div class="emp-top-row">
+                    <span class="emp-name">${esc(fullName)}</span>
                 </div>
-
-                <div class="card-meta">
-                    <div class="meta-item">
-                        <i class="fa-solid fa-envelope"></i>
-                        <span class="meta-value">${esc(emp.email)}</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fa-solid fa-id-badge"></i>
-                        <span class="meta-value">ID: ${emp.id}</span>
-                    </div>
-                    ${emp.phone ? `
-                    <div class="meta-item">
-                        <i class="fa-solid fa-phone"></i>
-                        <span class="meta-value">${esc(emp.phone)}</span>
-                    </div>
-                    ` : ''}
-                </div>
-
-                <div class="card-actions">
-                    <button class="card-btn edit" title="Edit" onclick="openEditModal(${emp.id}, '${esc(emp.first_name)}', '${esc(emp.last_name)}', '${esc(emp.email)}', '${esc(emp.customer_type || '')}')">
-                        <i class="fa-regular fa-pen-to-square"></i> Edit
-                    </button>
-                    <button class="card-btn delete" title="Delete" onclick="openDeleteModal(${emp.id}, '${esc(fullName)}')">
-                        <i class="fa-regular fa-trash-can"></i> Delete
-                    </button>
+                <span class="emp-role-tag">${esc(role)}</span>
+                <div class="emp-email">
+                    <i class="fa-regular fa-envelope" style="font-size: 0.8rem; color: #94a3b8;"></i>
+                    ${esc(emp.email)}
                 </div>
             </div>
+            <div class="emp-actions">
+                <button class="act-btn edit" title="Edit" onclick="openEditModal(${emp.id}, '${esc(emp.first_name)}', '${esc(emp.last_name)}', '${esc(emp.email)}', '${esc(emp.customer_type || '')}')">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="act-btn delete" title="Delete" onclick="openDeleteModal(${emp.id}, '${esc(fullName)}')">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        </div>
         `;
     }).join(''));
 }

@@ -6,34 +6,46 @@
 {% endblock %}
 
 {% block content %}
-<main class="chat-main w-100 employees-root">
+<div class="employees-page">
 
-    <div class="employees-toolbar">
-        <div class="search-box">
+    <div class="emp-toolbar">
+        <div class="emp-search">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="searchInput" placeholder="Search employees...">
+            <input type="text" id="searchInput" placeholder="Search employees..." autocomplete="off">
         </div>
-        <div style="margin-left:auto;display:flex;gap:8px;">
-            <button class="btn-add-item sm" onclick="openAddModal()" style="padding: 7px 14px;">
-                <i class="fa-solid fa-plus"></i> New
-            </button>
-            <button class="toolbar-icon-btn" title="Refresh" onclick="loadEmployees()">
-                <i class="fa-solid fa-arrows-rotate"></i>
-            </button>
-        </div>
+    </div>
+    
+    <div class="section-header">
+        <span class="section-title">Employees</span>
+        <span class="emp-total-label" id="visibleCount">0 items</span>
     </div>
 
     <div class="employees-grid" id="employeesGrid">
-        <!-- Cards filled by JS -->
+        <!-- Skeletons while loading -->
+        <div class="skel-card">
+            <div class="skel" style="width:75px;height:75px;border-radius:18px;flex-shrink:0;"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:9px;">
+                <div class="skel" style="height:14px;width:58%;"></div>
+                <div class="skel" style="height:11px;width:35%;"></div>
+                <div class="skel" style="height:14px;width:42%;margin-top:4px;border-radius:8px;"></div>
+            </div>
+        </div>
+        <div class="skel-card">
+            <div class="skel" style="width:75px;height:75px;border-radius:18px;flex-shrink:0;"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:9px;">
+                <div class="skel" style="height:14px;width:52%;"></div>
+                <div class="skel" style="height:11px;width:40%;"></div>
+                <div class="skel" style="height:14px;width:48%;margin-top:4px;border-radius:8px;"></div>
+            </div>
+        </div>
     </div>
 
-    <div id="emptyState" class="empty-state" style="display:none">
-        <div class="empty-icon"><i class="fa-regular fa-users"></i></div>
-        <div class="empty-title">No employees found</div>
-        <div class="empty-sub">Add your first employee to get started</div>
-    </div>
+</div>
 
-</main>
+<!-- FAB: Add Employee -->
+<button class="fab-add" onclick="openAddModal()">
+    <i class="fas fa-plus"></i> Add Employee
+</button>
 
 <!-- Add/Edit Modal -->
 <div class="modal fade" id="employeeModal" tabindex="-1">
@@ -46,23 +58,23 @@
             <div class="modal-body">
                 <input type="hidden" id="editId">
                 <div class="mb-3">
-                    <label class="form-label">First Name *</label>
+                    <label class="form-label fw-semibold" style="font-size:.82rem;color:#475569;">First Name <span class="text-danger">*</span></label>
                     <input type="text" id="fFirstName" class="form-control" placeholder="e.g. John">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Last Name *</label>
+                    <label class="form-label fw-semibold" style="font-size:.82rem;color:#475569;">Last Name <span class="text-danger">*</span></label>
                     <input type="text" id="fLastName" class="form-control" placeholder="e.g. Doe">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Email *</label>
+                    <label class="form-label fw-semibold" style="font-size:.82rem;color:#475569;">Email <span class="text-danger">*</span></label>
                     <input type="email" id="fEmail" class="form-control" placeholder="john@example.com">
                 </div>
                 <div class="mb-3" id="passwordField">
-                    <label class="form-label">Password *</label>
+                    <label class="form-label fw-semibold" style="font-size:.82rem;color:#475569;">Password <span class="text-danger">*</span></label>
                     <input type="password" id="fPassword" class="form-control" placeholder="••••••••">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Role *</label>
+                    <label class="form-label fw-semibold" style="font-size:.82rem;color:#475569;">Role <span class="text-danger">*</span></label>
                     <select id="fRole" class="form-control">
                         <option value="">Select role</option>
                         <option value="Owner">Owner</option>
@@ -87,7 +99,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p style="font-size:0.85rem;color:var(--slate-500);margin:0;" id="deleteDesc"></p>
+                <p style="font-size:.83rem;color:#64748b;margin:0;" id="deleteDesc"></p>
             </div>
             <div class="modal-footer">
                 <button class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
