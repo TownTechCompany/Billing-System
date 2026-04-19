@@ -9,18 +9,26 @@ class EmployeeService:
     
     def list_all_service(self):
         """Get all employees"""
-        return self.db.query(Employee).all()
+        employees = self.db.query(Employee).all()
+        for emp in employees:
+            emp.password = decrypt_data(emp.password)
+        return employees
     
     def get_by_id_service(self, employee_id: int):
         """Get employee by ID"""
         employee = self.db.query(Employee).filter(Employee.id == employee_id).first()
         if not employee:
             raise EmployeeException(EmployeeExceptionCase.EMPLOYEE_NOT_FOUND)
+        employee.password = decrypt_data(employee.password)
         return employee
     
     def get_by_email_service(self, email: str):
         """Get employee by email"""
-        return self.db.query(Employee).filter(Employee.email == email).first()
+        employee = self.db.query(Employee).filter(Employee.email == email).first()
+        if not employee:
+            raise EmployeeException(EmployeeExceptionCase.EMPLOYEE_NOT_FOUND)
+        employee.password = decrypt_data(employee.password)
+        return employee
 
     def create_employee_service(self, first_name: str, last_name: str, email: str, 
                                password: str, customer_type: str = "Admin"):
@@ -51,7 +59,7 @@ class EmployeeService:
         employee = self.get_by_id_service(employee_id)
         
         # Update allowed fields only
-        allowed_fields = ['first_name', 'last_name', 'email', 'customer_type', 'is_active']
+        allowed_fields = ['first_name', 'last_name', 'email', 'password', 'customer_type', 'is_active']
         for key, value in kwargs.items():
             if key in allowed_fields and value is not None:
                 # If email is being updated, check for uniqueness
@@ -59,6 +67,9 @@ class EmployeeService:
                     existing = self.db.query(Employee).filter(Employee.email == value).first()
                     if existing:
                         raise EmployeeException(EmployeeExceptionCase.EMAIL_ALREADY_EXISTS)
+                # If password is being updated, hash it
+                if key == 'password':
+                    value = encrypt_data(value)
                 setattr(employee, key, value)
         
         self.db.commit()

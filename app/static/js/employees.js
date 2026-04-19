@@ -14,6 +14,15 @@ let pendingDeleteName = null;
 document.addEventListener('DOMContentLoaded', () => {
     loadEmployees();
     initSearch();
+    
+    $('#togglePassword').on('click', function() {
+        const passwordInput = $('#fPassword');
+        const type = passwordInput.attr('type') === 'password' ? 'text' : 'password';
+        passwordInput.attr('type', type);
+        
+        // Toggle icon
+        $(this).toggleClass('fa-eye fa-eye-slash');
+    });
 });
 // ── Load Employees ─────────────────────────────────────────────────────────
 function loadEmployees() {
@@ -94,7 +103,7 @@ function renderCards() {
                 </div>
             </div>
             <div class="emp-actions">
-                <button class="act-btn edit" title="Edit" onclick="openEditModal(${emp.id}, '${esc(emp.first_name)}', '${esc(emp.last_name)}', '${esc(emp.email)}', '${esc(emp.customer_type || '')}')">
+                <button class="act-btn edit" title="Edit" onclick="openEditModal(${emp.id}, '${esc(emp.first_name)}', '${esc(emp.last_name)}', '${esc(emp.email)}', '${esc(emp.customer_type || '')}', '${esc(emp.password || '')}')">
                     <i class="fa-solid fa-pen"></i>
                 </button>
                 <button class="act-btn delete" title="Delete" onclick="openDeleteModal(${emp.id}, '${esc(fullName)}')">
@@ -116,11 +125,15 @@ function openAddModal() {
     $('#fEmail').val('');
     $('#fPassword').val('');
     $('#fRole').val('');
-    $('#passwordField').show();
+    
+    // Reset password visibility state
+    $('#fPassword').attr('type', 'password');
+    $('#togglePassword').removeClass('fa-eye-slash').addClass('fa-eye');
+    
     new bootstrap.Modal(document.getElementById('employeeModal')).show();
 }
 
-function openEditModal(id, firstName, lastName, email, role) {
+function openEditModal(id, firstName, lastName, email, role, password) {
     $('#editId').val(id);
     $('#modalTitle').text('Edit Employee');
     $('#saveLabel').text('Update Employee');
@@ -128,8 +141,12 @@ function openEditModal(id, firstName, lastName, email, role) {
     $('#fLastName').val(lastName);
     $('#fEmail').val(email);
     $('#fRole').val(role);
-    $('#fPassword').val('');
-    $('#passwordField').hide();
+    $('#fPassword').val(password);
+    
+    // Reset password visibility state
+    $('#fPassword').attr('type', 'password');
+    $('#togglePassword').removeClass('fa-eye-slash').addClass('fa-eye');
+
     new bootstrap.Modal(document.getElementById('employeeModal')).show();
 }
 

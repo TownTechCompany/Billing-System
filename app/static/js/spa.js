@@ -250,6 +250,9 @@
         if (typeof ProductApp !== 'undefined') ProductApp.init();
       } else if (path === '/pos') {
         if (typeof initPOS === 'function') initPOS();
+      } else if (path === '/employees') {
+        if (typeof loadEmployees === 'function') loadEmployees();
+        if (typeof initSearch === 'function') initSearch();
       } else if (path === '/settings') {
         /* Settings loads from API — re-fetch for real-time visual sync if needed */
         if (typeof fetch === 'function') {

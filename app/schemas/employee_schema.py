@@ -14,6 +14,7 @@ class EmployeeUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     email: Optional[EmailStr] = None
+    password: Optional[str] = None
     customer_type: Optional[str] = None
     is_active: Optional[bool] = None
 
