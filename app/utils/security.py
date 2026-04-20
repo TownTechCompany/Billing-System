@@ -2,8 +2,8 @@ import datetime
 from cryptography.fernet import Fernet
 
 # Static Fernet key — store in env/.env in production
-_CRYPTO_KEY = "y7nyMfwrCnTMiS06REnDjRKRRTx_DQ_ztZE358J4Cc0="
-_cipher = Fernet(_CRYPTO_KEY)
+crypto_key = "y7nyMfwrCnTMiS06REnDjRKRRTx_DQ_ztZE358J4Cc0="
+_cipher = Fernet(crypto_key)
 
 
 def encrypt_data(data: str) -> bytes:
