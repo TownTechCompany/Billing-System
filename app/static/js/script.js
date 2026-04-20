@@ -6,15 +6,68 @@ function escHtml(str) {
     );
 }
 
-function showToast(msg, type = 'success') {
+/**
+ * showToast — Premium custom toast notifications
+ * @param {string} msg - The message to display
+ * @param {string} type - 'success', 'error', 'warning', 'info'
+ * @param {object} options - Options like onConfirm, onCancel, confirmText
+ */
+function showToast(msg, type = 'success', options = {}) {
     const stack = document.getElementById('toastStack');
     if (!stack) return;
+
     const el = document.createElement('div');
     el.className = `toast-item ${type}`;
-    el.innerHTML = `<span class="toast-icon"><i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-xmark'}"></i></span>${escHtml(msg)}`;
+    
+    const iconMap = {
+        success: 'fa-circle-check',
+        error: 'fa-circle-xmark',
+        warning: 'fa-triangle-exclamation',
+        info: 'fa-circle-info'
+    };
+
+    let innerHTML = `
+        <div class="toast-icon">
+            <i class="fa-solid ${iconMap[type] || 'fa-circle-info'}"></i>
+        </div>
+        <div class="toast-content">
+            <div>${escHtml(msg)}</div>
+    `;
+
+    // Handle Confirmation (Actions)
+    if (options.onConfirm) {
+        innerHTML += `
+            <div class="toast-actions">
+                <button class="toast-btn toast-btn-primary" id="toastConfirmBtn">${options.confirmText || 'Yes'}</button>
+                <button class="toast-btn toast-btn-secondary" id="toastCancelBtn">${options.cancelText || 'No'}</button>
+            </div>
+        `;
+    }
+
+    innerHTML += `</div>`;
+    el.innerHTML = innerHTML;
     stack.appendChild(el);
-    setTimeout(() => el.remove(), 3500);
+
+    const close = () => {
+        el.classList.add('fade-out');
+        setTimeout(() => el.remove(), 300);
+    };
+
+    if (options.onConfirm) {
+        el.querySelector('#toastConfirmBtn').addEventListener('click', () => {
+            options.onConfirm();
+            close();
+        });
+        el.querySelector('#toastCancelBtn').addEventListener('click', () => {
+            if (options.onCancel) options.onCancel();
+            close();
+        });
+    } else {
+        // Auto-remove standard toasts
+        setTimeout(close, 3500);
+    }
 }
+
 
 function markUnsaved() {
     const fab = document.getElementById('saveFab');

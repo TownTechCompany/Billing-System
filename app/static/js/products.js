@@ -262,16 +262,10 @@ window.ProductApp = {
     },
 
     _toast: function(msg, type) {
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: type,
-                title: msg,
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true
-            });
+        if (typeof townTechAlert !== 'undefined') {
+            if (type === 'success') townTechAlert.successTopRight(msg);
+            else if (type === 'error') townTechAlert.errorTopRight(msg);
+            else townTechAlert.infoTopRight(msg);
         }
     },
 

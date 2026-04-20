@@ -36,7 +36,7 @@ function loadEmployees() {
             $('#countBadge').text(allEmployees.length);
         },
         error: function(xhr, status, e) {
-            showToast('Failed to load employees', 'error');
+            townTechAlert.errorTopRight('Failed to load employees');
             console.error(e);
         }
     });
@@ -160,12 +160,12 @@ async function saveEmployee() {
     const role = $('#fRole').val();
 
     if (!firstName || !lastName || !email || !role) {
-        showToast('Please fill all required fields', 'error');
+        townTechAlert.errorTopRight('Please fill all required fields');
         return;
     }
 
     if (!id && !password) {
-        showToast('Password is required for new employee', 'error');
+        townTechAlert.errorTopRight('Password is required for new employee');
         return;
     }
 
@@ -190,38 +190,42 @@ async function saveEmployee() {
         data: JSON.stringify(payload),
         success: function() {
             bootstrap.Modal.getInstance(document.getElementById('employeeModal'))?.hide();
-            showToast(id ? 'Employee updated ✓' : 'Employee created ✓', 'success');
+            townTechAlert.successTopRight(id ? 'Employee updated ✓' : 'Employee created ✓');
             loadEmployees();
         },
-        error: function(xhr, status, e) {
-            showToast(id ? 'Failed to update employee' : 'Failed to create employee', 'error');
-            console.error(e);
+        error: function(xhr) {
+            const err = xhr.responseJSON?.message || (id ? 'Failed to update employee' : 'Failed to create employee');
+            townTechAlert.errorTopRight(err);
+            console.error('[Employees] Save error:', xhr);
         }
     });
 }
 
 // ── Delete Modal ────────────────────────────────────────────────────────────
 function openDeleteModal(id, name) {
-    pendingDelete = id;
-    pendingDeleteName = name;
-    $('#deleteDesc').text(`"${name}" will be permanently removed. This cannot be undone.`);
-    $('#confirmDeleteBtn').off('click').on('click', execDelete);
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    townTechAlert.confirmDialog(
+        'Delete Employee?',
+        `Remove "${name}" permanently?`,
+        () => {
+            pendingDelete = id;
+            pendingDeleteName = name;
+            execDelete();
+        }
+    );
 }
 
 async function execDelete() {
-    bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
     if (!pendingDelete) return;
 
     $.ajax({
         url: `/employees/delete-employee/${pendingDelete}`,
         type: 'DELETE',
         success: function() {
-            showToast(`${pendingDeleteName} deleted ✓`, 'success');
+            townTechAlert.successTopRight(`${pendingDeleteName} deleted ✓`);
             loadEmployees();
         },
         error: function(xhr, status, e) {
-            showToast('Failed to delete employee', 'error');
+            townTechAlert.errorTopRight('Failed to delete employee');
             console.error(e);
         }
     });
@@ -230,21 +234,6 @@ async function execDelete() {
     pendingDeleteName = null;
 }
 
-// ── Toast ──────────────────────────────────────────────────────────────────
-function showToast(msg, type = 'success') {
-    const stack = $('#toastStack');
-    if (!stack.length) return;
-    const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
-    const toast = $('<div>', {
-        class: `toast-item${type === 'error' ? ' error' : ''}`,
-        html: `<span class="toast-icon">${icons[type] || '•'}</span>${esc(msg)}`
-    });
-    stack.append(toast);
-    setTimeout(() => {
-        toast.css('animation', 'toastIn .3s var(--ease-spring) reverse');
-        toast.one('animationend', () => toast.remove());
-    }, 2800);
-}
 
 // ── Utils ──────────────────────────────────────────────────────────────────
 function esc(str) {
