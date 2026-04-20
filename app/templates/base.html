@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/settings.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/more_dropdown.css') }}">
     {% block head %}{% endblock %}
     {% block extra_css %}{% endblock %}
 </head>
@@ -68,14 +69,14 @@
         <a href="/dashboard"
            class="bottom-nav-item {% if active_page == 'dashboard' %}active{% endif %}"
            aria-label="Dashboard">
-            <i class="fa-solid fa-gauge-high"></i>
+            <i class="fa-solid fa-chart-simple"></i>
             <span>Home</span>
         </a>
 
         <a href="/products"
            class="bottom-nav-item {% if active_page == 'products' %}active{% endif %}"
            aria-label="Products">
-            <i class="fa-solid fa-box-open"></i>
+            <i class="fa-solid fa-utensils"></i>
             <span>Products</span>
         </a>
 
@@ -86,24 +87,61 @@
             <div class="nav-pos-pill">
                 <i class="fa-solid fa-display" style="display:flex;font-size:1.3rem;color:white;"></i>
             </div>
-            <span>POS</span>
+            <span>New Order</span>
         </a>
 
-        <a href="/employees"
-           class="bottom-nav-item {% if active_page == 'employees' %}active{% endif %}"
-           aria-label="Employees">
-            <i class="fa-solid fa-users"></i>
-            <span>Employees</span>
+        <a href="/orders"
+           class="bottom-nav-item {% if active_page == 'orders' %}active{% endif %}"
+           aria-label="Orders">
+            <i class="fa-solid fa-receipt"></i>
+            <span>Orders</span>
         </a>
 
-        <a href="/settings"
+        <button type="button"
            class="bottom-nav-item {% if active_page == 'settings' or active_page == 'employees' %}active{% endif %}"
+           id="moreNavBtn"
            aria-label="More options">
-            <i class="fa-solid fa-bars"></i>
+            <i class="fa-solid fa-bars-staggered"></i>
             <span>More</span>
-        </a>
+        </button>
 
     </nav>
+
+    <!-- ── More Dropdown Popup ── -->
+    <div class="more-dropdown-backdrop" id="moreDropdownBackdrop"></div>
+    <div class="more-dropdown" id="moreDropdown" role="menu">
+        <div class="more-dropdown-handle"></div>
+        <a href="/employees" class="more-dropdown-item" data-spa-link>
+            <div class="more-dropdown-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="more-dropdown-label">
+                <span class="more-dropdown-title">Employees</span>
+                <span class="more-dropdown-desc">Manage your staff</span>
+            </div>
+            <i class="fa-solid fa-chevron-right more-dropdown-arrow"></i>
+        </a>
+        <a href="/settings" class="more-dropdown-item" data-spa-link>
+            <div class="more-dropdown-icon" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+                <i class="fa-solid fa-gear"></i>
+            </div>
+            <div class="more-dropdown-label">
+                <span class="more-dropdown-title">Settings</span>
+                <span class="more-dropdown-desc">App preferences</span>
+            </div>
+            <i class="fa-solid fa-chevron-right more-dropdown-arrow"></i>
+        </a>
+        <div class="more-dropdown-divider"></div>
+        <a href="/auth/logout" class="more-dropdown-item more-dropdown-danger">
+            <div class="more-dropdown-icon" style="background: linear-gradient(135deg, #f43f5e, #e11d48);">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
+            <div class="more-dropdown-label">
+                <span class="more-dropdown-title">Logout</span>
+                <span class="more-dropdown-desc">Sign out of your account</span>
+            </div>
+        </a>
+    </div>
 
 </div><!-- /.app-shell -->
 
@@ -152,7 +190,9 @@
 
 <!-- SPA Router — intercepts nav, manages history -->
 <script src="{{ url_for('static', path='js/spa.js') }}"></script>
+<script src="{{ url_for('static', path='js/more_dropdown.js') }}"></script>
 
 {% block scripts %}{% endblock %}
 </body>
 </html>
+

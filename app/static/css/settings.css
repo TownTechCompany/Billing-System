@@ -28,12 +28,12 @@
 
 /* ── Base Page Layout ── */
 .settings-page {
-    display: inline-table;
+    display: block;
     flex-direction: column;
     min-height: 100%;
     width: 100%;
     background: #f2f2f7;
-    padding-bottom: 100px; /* generous space for FAB + safe area */
+    padding-bottom: 180px; /* generous space for FAB + safe area */
     box-sizing: border-box;
 }
 
@@ -297,30 +297,32 @@ a.slist-row:active {
 }
 
 
-/* ── Save FAB ── */
+/* ── Save FAB (Compact Circle) ── */
 .save-fab {
     position: fixed;
-    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-    right: 16px;
-    z-index: 200;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 13px 22px;
-    background: var(--grad-brand);
-    color: white;
-    border: none;
-    border-radius: 100px;
-    font-family: inherit;
-    font-size: 0.9rem;
-    font-weight: 700;
-    box-shadow: var(--shadow-brand-lg);
-    transition: transform .25s var(--ease-spring), opacity .2s;
+    bottom: calc(115px + env(safe-area-inset-bottom, 0px));
+    right: 20px;
+    width: 60px !important;
+    height: 60px !important;
+    min-width: 60px !important;
+    min-height: 60px !important;
+    aspect-ratio: 1 / 1 !important;
+    z-index: 1000;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    font-size: 1.4rem !important;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
+    transition: transform .28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity .2s !important;
     opacity: 0;
-    transform: translateY(10px) scale(.92);
+    transform: translateY(20px) scale(.8);
     pointer-events: none;
     cursor: pointer;
-    white-space: nowrap;
 }
 
 .save-fab.visible {
@@ -473,10 +475,12 @@ a.slist-row:active {
     .toggle-switch input:checked + .toggle-slider::before { transform: translateX(14px); }
 
     .save-fab {
-        bottom: calc(65px + env(safe-area-inset-bottom, 0px));
-        right: 10px;
-        padding: 10px 16px;
-        font-size: 0.8rem;
+        bottom: calc(95px + env(safe-area-inset-bottom, 0px));
+        right: 16px;
+        width: 52px !important;
+        height: 52px !important;
+        min-width: 52px !important;
+        min-height: 52px !important;
     }
 
     .detail-sheet-header { padding: 12px; gap: 8px; }
@@ -540,10 +544,12 @@ a.slist-row:active {
     .toggle-switch input:checked + .toggle-slider::before { transform: translateX(15px); }
 
     .save-fab {
-        bottom: calc(68px + env(safe-area-inset-bottom, 0px));
-        right: 12px;
-        padding: 11px 18px;
-        font-size: 0.82rem;
+        bottom: calc(95px + env(safe-area-inset-bottom, 0px));
+        right: 16px;
+        width: 52px !important;
+        height: 52px !important;
+        min-width: 52px !important;
+        min-height: 52px !important;
     }
 }
 
@@ -598,10 +604,12 @@ a.slist-row:active {
     }
 
     .save-fab {
-        bottom: calc(70px + env(safe-area-inset-bottom, 0px));
-        right: 14px;
-        padding: 12px 20px;
-        font-size: 0.85rem;
+        bottom: calc(95px + env(safe-area-inset-bottom, 0px));
+        right: 16px;
+        width: 54px !important;
+        height: 54px !important;
+        min-width: 54px !important;
+        min-height: 54px !important;
     }
 }
 
@@ -642,8 +650,8 @@ a.slist-row:active {
     .slist-input { width: 135px; }
 
     .save-fab {
-        bottom: calc(74px + env(safe-area-inset-bottom, 0px));
-        right: 15px;
+        bottom: calc(98px + env(safe-area-inset-bottom, 0px));
+        right: 18px;
     }
 }
 
@@ -672,7 +680,7 @@ a.slist-row:active {
     .slist-icon { width: 32px; height: 32px; }
 
     .save-fab {
-        bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(100px + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -702,7 +710,7 @@ a.slist-row:active {
     .slist-row { padding: 14px 18px; }
 
     .save-fab {
-        bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(100px + env(safe-area-inset-bottom, 0px));
         right: 18px;
     }
 }
@@ -745,12 +753,14 @@ a.slist-row:active {
 
     .save-fab {
         position: sticky;
-        bottom: 20px;
+        bottom: 30px;
         right: auto;
         align-self: flex-end;
         margin-right: 0;
         opacity: 0;
         pointer-events: none;
+        width: 60px !important;
+        height: 60px !important;
     }
 
     .save-fab.visible {
@@ -766,7 +776,7 @@ a.slist-row:active {
     }
 
     .save-fab {
-        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(30px + env(safe-area-inset-bottom, 0px));
         right: max(16px, env(safe-area-inset-right, 16px));
     }
 

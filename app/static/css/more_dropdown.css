@@ -1,0 +1,125 @@
+/* ════════════════════════════════════════════════
+   MORE DROPDOWN POPUP
+   ════════════════════════════════════════════════ */
+
+.more-dropdown-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.3);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 199;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+}
+
+.more-dropdown-backdrop.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.more-dropdown {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border-radius: 28px 28px 0 0;
+    z-index: 200;
+    padding: 10px 16px calc(28px + env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    transition: transform .32s var(--ease-out);
+    box-shadow: 0 -12px 48px rgba(15, 23, 42, 0.18);
+}
+
+.more-dropdown.open {
+    transform: translateY(0);
+}
+
+.more-dropdown-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--slate-200);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+}
+
+.more-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    color: var(--slate-800);
+    transition: background .18s, transform .2s var(--ease-spring);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.more-dropdown-item:hover,
+.more-dropdown-item:active {
+    background: var(--slate-50);
+    transform: scale(0.99);
+}
+
+.more-dropdown-item:active {
+    background: var(--slate-100);
+    transform: scale(0.97);
+}
+
+.more-dropdown-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.more-dropdown-label {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.more-dropdown-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--slate-900);
+    line-height: 1.2;
+}
+
+.more-dropdown-desc {
+    font-size: 0.75rem;
+    color: var(--slate-400);
+    font-weight: 500;
+}
+
+.more-dropdown-arrow {
+    color: var(--slate-300);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    transition: transform .2s var(--ease-spring);
+}
+
+.more-dropdown-item:hover .more-dropdown-arrow {
+    transform: translateX(3px);
+    color: var(--slate-400);
+}
+
+.more-dropdown-divider {
+    height: 1px;
+    background: var(--slate-100);
+    margin: 6px 16px;
+}
+
+.more-dropdown-item.more-dropdown-danger .more-dropdown-title {
+    color: var(--rose);
+}

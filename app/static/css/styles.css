@@ -327,7 +327,7 @@ tr:hover .act-btn { color: var(--slate-400); }
 /* ── Premium Custom Toasts ── */
 .toast-stack {
     position: fixed;
-    bottom: calc(76px + env(safe-area-inset-bottom));
+    bottom: calc(100px + env(safe-area-inset-bottom));
     right: 16px;
     left: 16px;
     display: flex;
@@ -682,21 +682,32 @@ tr:hover .act-btn { color: var(--slate-400); }
     -webkit-overflow-scrolling: touch;
 }
 
-/* ── Bottom Navigation Bar ── */
+/* ── Bottom Navigation Bar — Floating Pill ── */
 .bottom-nav {
     position: fixed;
-    bottom: 0; left: 0; right: 0;
-    height: calc(64px + env(safe-area-inset-bottom));
-    padding-bottom: env(safe-area-inset-bottom);
-    background: var(--white);
-    border-top: 1px solid rgba(226,232,240,.8);
-    box-shadow: 0 -4px 20px rgba(15,23,42,.07);
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    left: 16px;
+    right: 16px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 999px;
+    box-shadow:
+        0 8px 32px rgba(15, 23, 42, 0.12),
+        0 2px 8px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(226, 232, 240, 0.6);
     display: flex;
-    align-items: stretch;
+    align-items: center;
     z-index: 100;
-    /* Smooth glass feel */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    /* Overflow visible so the FAB can pop above */
+    overflow: visible;
+}
+
+/* Adjust content padding for floating nav */
+.main-content {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom)) !important;
 }
 
 .bottom-nav-item {
@@ -710,18 +721,20 @@ tr:hover .act-btn { color: var(--slate-400); }
     color: var(--slate-400);
     font-size: 0.6rem;
     font-weight: 600;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
     font-family: 'DM Sans', sans-serif;
-    transition: color .2s var(--ease-out);
+    transition: color .25s var(--ease-out), transform .25s var(--ease-spring);
     position: relative;
-    padding-bottom: 2px;
+    padding: 0 4px;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
+    border-radius: 999px;
+    height: 100%;
 }
 
 .bottom-nav-item i {
-    font-size: 1.25rem;
-    transition: transform .25s var(--ease-spring), color .2s;
+    font-size: 1.2rem;
+    transition: transform .3s var(--ease-spring), color .25s;
     line-height: 1;
 }
 
@@ -729,60 +742,129 @@ tr:hover .act-btn { color: var(--slate-400); }
 .bottom-nav-item.active {
     color: var(--brand-600);
 }
+
 .bottom-nav-item.active i {
-    transform: translateY(-2px) scale(1.12);
+    transform: translateY(-2px) scale(1.15);
 }
 
-/* Active indicator pill above icon */
-.bottom-nav-item.active::before {
+/* Active dot indicator — below label */
+.bottom-nav-item.active::after {
     content: '';
     position: absolute;
-    top: 0;
+    bottom: 7px;
     left: 50%;
-    transform: translateX(-50%);
-    width: 32px;
-    height: 3px;
-    border-radius: 0 0 4px 4px;
-    background: var(--grad-brand);
+    transform: translateX(-50%) scale(1);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--brand-500);
+    animation: dotPop .3s var(--ease-spring) both;
 }
 
-/* Tap ripple feedback */
+@keyframes dotPop {
+    from { transform: translateX(-50%) scale(0); opacity: 0; }
+    to   { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+/* Icon scale-down on tap */
 .bottom-nav-item:active i {
-    transform: scale(.88);
+    transform: scale(.82);
+    transition: transform .1s ease;
 }
 
-/* POS center button — elevated pill style */
+/* Hide label text on non-active to keep it minimal */
+.bottom-nav-item span {
+    transition: opacity .2s, transform .2s var(--ease-out);
+    opacity: 0.7;
+    transform: translateY(1px);
+}
+.bottom-nav-item.active span {
+    opacity: 1;
+    transform: translateY(0);
+    font-weight: 700;
+    color: var(--brand-600);
+}
+
+/* ── POS centre button — large circular FAB breaking top of bar ── */
 .bottom-nav-item.nav-pos {
     position: relative;
-}
-.bottom-nav-item.nav-pos .nav-pos-pill {
-    width: 48px; height: 48px;
-    border-radius: 16px;
-    background: var(--grad-brand);
-    color: white;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem;
-    box-shadow: var(--shadow-brand-lg);
-    margin-bottom: 2px;
-    transition: transform .25s var(--ease-spring), box-shadow .2s;
+    /* No flex content shift — FAB floats above */
     flex-shrink: 0;
+    width: 72px;
 }
+
+.bottom-nav-item.nav-pos .nav-pos-pill {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #818cf8 0%, #6366f1 50%, #4f46e5 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    box-shadow:
+        0 6px 20px rgba(99, 102, 241, 0.45),
+        0 2px 8px rgba(99, 102, 241, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transition: transform .3s var(--ease-spring), box-shadow .25s;
+    flex-shrink: 0;
+    /* Subtle ring */
+    outline: 3px solid rgba(255, 255, 255, 0.85);
+    outline-offset: 0px;
+}
+
+/* Concave cutout illusion in the bar behind FAB */
+.bottom-nav-item.nav-pos::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    z-index: -1;
+    box-shadow: 0 -2px 0 rgba(226, 232, 240, 0.6);
+}
+
 .bottom-nav-item.nav-pos:active .nav-pos-pill {
-    transform: scale(.9);
-    box-shadow: var(--shadow-brand);
+    transform: translateX(-50%) scale(.88);
+    box-shadow:
+        0 3px 10px rgba(99, 102, 241, 0.3),
+        0 1px 4px rgba(99, 102, 241, 0.2);
+    transition: transform .1s ease, box-shadow .1s ease;
 }
+
 .bottom-nav-item.nav-pos.active .nav-pos-pill {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: var(--shadow-brand-lg);
+    transform: translateX(-50%) scale(1.06) translateY(-2px);
+    box-shadow:
+        0 10px 28px rgba(99, 102, 241, 0.5),
+        0 4px 12px rgba(99, 102, 241, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
-.bottom-nav-item.nav-pos.active::before { display: none; }
-.bottom-nav-item.nav-pos i { display: none; } /* icon is inside the pill */
+
+/* No dot indicator for POS */
+.bottom-nav-item.nav-pos.active::after { display: none; }
+
+/* FAB icon is inside pill, hide default nav icon */
+.bottom-nav-item.nav-pos > i { display: none; }
+
+/* POS label sits below the normal flow */
+.bottom-nav-item.nav-pos > span {
+    margin-top: 26px;
+}
 
 /* Badge for notifications */
 .nav-badge {
     position: absolute;
-    top: 8px;
-    right: calc(50% - 18px);
+    top: -16px;
+    right: calc(50% - 22px);
     min-width: 16px; height: 16px;
     background: var(--rose);
     color: white;
@@ -793,6 +875,7 @@ tr:hover .act-btn { color: var(--slate-400); }
     display: flex; align-items: center; justify-content: center;
     border: 2px solid var(--white);
     line-height: 1;
+    z-index: 2;
 }
 
 /* ── User Dropdown (slides up from bottom) ── */
@@ -873,7 +956,159 @@ tr:hover .act-btn { color: var(--slate-400); }
     margin: 6px 0;
 }
 
-/* ── Toast stack — above bottom nav ── */
+/* ── Toast stack — above floating bottom nav ── */
 .toast-stack {
-    bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+    bottom: calc(100px + env(safe-area-inset-bottom)) !important;
 }
+
+/* ════════════════════════════════════════════════
+   PREMIUM BOTTOM NAV — Enhanced Styles
+   ════════════════════════════════════════════════ */
+
+/* ── Floating nav bar with curved center notch ── */
+.bottom-nav {
+    padding: 0 8px;
+}
+
+/* Override border-radius to reveal the curved notch shape */
+.bottom-nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: inherit;
+    z-index: -1;
+}
+
+/* ── Enhanced nav item tap states ── */
+.bottom-nav-item {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav-item:hover i {
+    transform: translateY(-3px) scale(1.18);
+    color: var(--brand-500);
+}
+
+.bottom-nav-item:hover span {
+    opacity: 1;
+    color: var(--brand-500);
+}
+
+/* Ripple on tap */
+.bottom-nav-item::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    background: var(--brand-500);
+    opacity: 0;
+    transform: scale(0);
+    transition: opacity .4s, transform .4s var(--ease-spring);
+    pointer-events: none;
+}
+
+.bottom-nav-item:active::before {
+    opacity: 0.08;
+    transform: scale(1);
+    transition: opacity .1s, transform .15s;
+}
+
+/* ── Curved POS Centre Button ── */
+/* The nav bar uses a CSS shape trick to create the dome cutout */
+.bottom-nav {
+    clip-path: none;
+}
+
+/* Notch cutout behind POS pill */
+.bottom-nav-item.nav-pos {
+    width: 80px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+/* The white dome that "eats" into the bar */
+.bottom-nav-item.nav-pos::before {
+    content: '';
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: var(--main-bg);
+    z-index: 0;
+    /* Creates the concave cutout illusion */
+    box-shadow:
+        0 0 0 2px rgba(226, 232, 240, 0.5),
+        0 -4px 0 var(--main-bg);
+}
+
+/* The actual POS pill button — larger and bolder */
+.bottom-nav-item.nav-pos .nav-pos-pill {
+    position: absolute;
+    top: -26px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #818cf8 0%, #6366f1 45%, #4f46e5 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    z-index: 2;
+    box-shadow:
+        0 8px 24px rgba(99, 102, 241, 0.5),
+        0 3px 10px rgba(99, 102, 241, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transition: transform .3s var(--ease-spring), box-shadow .25s;
+    outline: 4px solid rgba(255, 255, 255, 0.9);
+    outline-offset: 0;
+}
+
+.bottom-nav-item.nav-pos .nav-pos-pill i {
+    display: flex !important;
+    font-size: 1.4rem;
+    color: white;
+}
+
+.bottom-nav-item.nav-pos:hover .nav-pos-pill {
+    transform: translateX(-50%) translateY(-5px) scale(1.08);
+    box-shadow:
+        0 14px 32px rgba(99, 102, 241, 0.55),
+        0 6px 16px rgba(99, 102, 241, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.bottom-nav-item.nav-pos:active .nav-pos-pill {
+    transform: translateX(-50%) scale(.88);
+    box-shadow:
+        0 3px 10px rgba(99, 102, 241, 0.3),
+        0 1px 4px rgba(99, 102, 241, 0.2);
+    transition: transform .1s ease, box-shadow .1s ease;
+}
+
+.bottom-nav-item.nav-pos.active .nav-pos-pill {
+    transform: translateX(-50%) scale(1.06) translateY(-4px);
+    box-shadow:
+        0 12px 32px rgba(99, 102, 241, 0.6),
+        0 5px 16px rgba(99, 102, 241, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.bottom-nav-item.nav-pos > span {
+    margin-top: 30px;
+    font-size: 0.58rem;
+    letter-spacing: 0.3px;
+}
+
+.bottom-nav-item.nav-pos > i { display: none; }
+.bottom-nav-item.nav-pos.active::after { display: none; }
+

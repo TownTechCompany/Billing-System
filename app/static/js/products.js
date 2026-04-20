@@ -1,286 +1,328 @@
-/* ════════════════════════════════════════════════
-   products.js — Product Management Logic (Card Grid)
-   ════════════════════════════════════════════════ */
+/**
+ * products.js — Product Management Logic
+ * Handles the card grid, category filtering, search, and CRUD modals.
+ * Integrated with the SPA router via window.ProductApp.init().
+ */
 
 'use strict';
 
-window.ProductApp = {
-    state: {
-        all: [],
-        activeCategory: 'all',
-        pendingDeleteId: null
-    },
+window.ProductApp = (() => {
+    let allProducts = [];
+    let activeCategory = 'all';
+    let searchQuery = '';
+    let pendingDeleteId = null;
 
-    init: function() {
-        this.load();
-        document.getElementById('productSearch')?.addEventListener('input', () => this.filterAndRender());
-        document.getElementById('fImage')?.addEventListener('change', () => this.previewImage());
-    },
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    
+    const esc = (s) => String(s || '').replace(/[&<>'"]/g, 
+        t => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[t]));
 
-    load: async function() {
-        this._showSkeleton();
+    const toast = (msg, type = 'success') => {
+        if (typeof showToast === 'function') showToast(msg, type);
+        else alert(msg);
+    };
+
+    // ── Core Methods ────────────────────────────────────────────────────────
+
+    async function load() {
+        showSkeleton();
         try {
             const res = await fetch('/products/get-products');
             const json = await res.json();
-            this.state.all = json.data || [];
-            this.buildCategoryChips();
-            this.renderCards(this.state.all);
+            allProducts = json.data || [];
+            buildChips();
+            render();
         } catch (e) {
             console.error('[ProductApp] Load failed:', e);
-            this._toast('Failed to load products', 'error');
+            const grid = document.getElementById('productsGrid');
+            if (grid) {
+                grid.innerHTML = `
+                    <div class="prod-empty">
+                        <div class="prod-empty-icon"><i class="fas fa-exclamation-circle"></i></div>
+                        <h5>Failed to load</h5><p>Please refresh the page.</p>
+                    </div>`;
+            }
         }
-    },
+    }
 
-    buildCategoryChips: function() {
-        const products = this.state.all;
-        const cats = [...new Set(products.map(p => p.category))].sort();
-        const chipsEl = document.getElementById('catChips');
-        if (!chipsEl) return;
-
-        let html = `<button class="cat-chip ${this.state.activeCategory === 'all' ? 'active' : ''}" 
-                     data-cat="all" onclick="ProductApp.setCategory('all')">
-                     All <span class="prod-count-badge">${products.length}</span></button>`;
-        
-        cats.forEach(cat => {
-            const count = products.filter(p => p.category === cat).length;
-            html += `<button class="cat-chip ${this.state.activeCategory === cat ? 'active' : ''}" 
-                      data-cat="${this._esc(cat)}" onclick="ProductApp.setCategory('${this._esc(cat)}')">
-                      ${this._esc(cat)} <span class="prod-count-badge">${count}</span></button>`;
-        });
-        
-        chipsEl.innerHTML = html;
-
-        // Populate datalist for modal
-        const dl = document.getElementById('catSuggestions');
-        if (dl) dl.innerHTML = cats.map(c => `<option value="${this._esc(c)}">`).join('');
-    },
-
-    setCategory: function(cat) {
-        this.state.activeCategory = cat;
-        document.querySelectorAll('.cat-chip').forEach(b => {
-            b.classList.toggle('active', b.dataset.cat === cat);
-        });
-        this.filterAndRender();
-    },
-
-    filterAndRender: function() {
-        const q = document.getElementById('productSearch')?.value.toLowerCase().trim() || '';
-        let filtered = this.state.all;
-
-        if (this.state.activeCategory !== 'all') {
-            filtered = filtered.filter(p => p.category === this.state.activeCategory);
-        }
-
-        if (q) {
-            filtered = filtered.filter(p => 
-                p.name.toLowerCase().includes(q) || 
-                p.category.toLowerCase().includes(q)
-            );
-        }
-
-        this.renderCards(filtered);
-    },
-
-    renderCards: function(products) {
+    function render() {
         const grid = document.getElementById('productsGrid');
         if (!grid) return;
 
-        if (!products.length) {
+        const filtered = allProducts.filter(p => {
+            const matchCat = activeCategory === 'all' || p.category === activeCategory;
+            const matchQ = p.name.toLowerCase().includes(searchQuery) ||
+                           p.category.toLowerCase().includes(searchQuery);
+            return matchCat && matchQ;
+        });
+
+        const countLabel = document.getElementById('visibleCount');
+        if (countLabel) {
+            countLabel.textContent = `${filtered.length} item${filtered.length !== 1 ? 's' : ''}`;
+        }
+
+        if (filtered.length === 0) {
             grid.innerHTML = `
                 <div class="prod-empty">
-                    <i class="fas fa-box-open"></i>
+                    <div class="prod-empty-icon"><i class="fas fa-box-open"></i></div>
                     <h5>No products found</h5>
-                    <p>Try adjusting your search or add a new product.</p>
+                    <p>${searchQuery ? 'Try a different search term.' : 'Add your first product to get started.'}</p>
                 </div>`;
             return;
         }
 
-        grid.innerHTML = products.map((p, i) => {
+        grid.innerHTML = filtered.map(p => {
             const imgHtml = (p.image && p.image !== 'placeholder.png' && !p.image.includes('via.placeholder'))
-                ? `<img src="${p.image}" alt="${this._esc(p.name)}" onerror="this.parentElement.innerHTML='<div class=prod-img-placeholder><i class=fas fa-image></i></div>'">`
+                ? `<img src="${p.image}" alt="${esc(p.name)}" loading="lazy"
+                     onerror="this.parentElement.innerHTML='<div class=\\'prod-img-placeholder\\'><i class=\\'fas fa-utensils\\'></i></div>'">`
                 : `<div class="prod-img-placeholder"><i class="fas fa-utensils"></i></div>`;
 
             return `
-                <div class="prod-card" style="animation-delay:${i * 0.045}s;" onclick="ProductApp.openEditModal(${p.id})">
-                    <div class="prod-img-wrap">${imgHtml}</div>
-                    <div class="prod-body">
-                        <div class="prod-name">${this._esc(p.name)}</div>
-                        <div class="prod-cat">${this._esc(p.category)}</div>
-                        <div class="prod-price-row">
-                            <span class="prod-price-label">Price</span>
-                            <span class="prod-price">₹${Number(p.price).toFixed(2)}</span>
-                        </div>
+            <div class="prod-card" data-id="${p.id}">
+                <div class="prod-img-wrap">${imgHtml}</div>
+                <div class="prod-body">
+                    <div class="prod-top-row">
+                        <span class="prod-name">${esc(p.name)}</span>
                     </div>
-                    <div class="prod-actions" onclick="event.stopPropagation()">
-                        <button class="act-btn edit" onclick="ProductApp.openEditModal(${p.id})" title="Edit">
-                            <i class="fas fa-pen"></i>
-                        </button>
-                        <button class="act-btn delete" onclick="ProductApp.openDeleteModal(${p.id}, '${this._escJs(p.name)}')" title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                    <span class="prod-cat-tag">${esc(p.category)}</span>
+                    <div class="prod-price-row">
+                        <span class="prod-price">₹${parseFloat(p.price).toFixed(2)}</span>
                     </div>
-                </div>`;
+                </div>
+                <div class="prod-actions">
+                    <button class="act-btn edit" onclick="ProductApp.openEditModal(${p.id})" title="Edit product">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                    <button class="act-btn delete" onclick="ProductApp.confirmDelete(${p.id}, '${esc(p.name)}')" title="Delete product">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>`;
         }).join('');
-    },
+    }
 
-    // ── Modal Operations ─────────────────────────────────────────────────────
+    function buildChips() {
+        const container = document.getElementById('catChips');
+        if (!container) return;
 
-    openAddModal: function() {
-        this._resetForm();
+        const cats = [...new Set(allProducts.map(p => p.category))].sort();
+        const totalCountEl = document.getElementById('totalCount');
+        if (totalCountEl) totalCountEl.textContent = allProducts.length;
+
+        // Reset chips, keeping "All"
+        container.innerHTML = `<button class="cat-chip ${activeCategory === 'all' ? 'active' : ''}" 
+                                data-cat="all">All <span class="chip-count" id="totalCount">${allProducts.length}</span></button>`;
+
+        cats.forEach(cat => {
+            const count = allProducts.filter(p => p.category === cat).length;
+            const btn = document.createElement('button');
+            btn.className = `cat-chip ${activeCategory === cat ? 'active' : ''}`;
+            btn.dataset.cat = cat;
+            btn.innerHTML = `${esc(cat)} <span class="chip-count">${count}</span>`;
+            btn.onclick = () => setCategory(cat);
+            container.appendChild(btn);
+        });
+
+        // Add listener to "All" chip
+        container.querySelector('[data-cat="all"]').onclick = () => setCategory('all');
+
+        // Populate datalist for modal
+        const dl = document.getElementById('catSuggestions');
+        if (dl) dl.innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
+    }
+
+    function setCategory(cat) {
+        activeCategory = cat;
+        document.querySelectorAll('.cat-chip').forEach(c => {
+            c.classList.toggle('active', c.dataset.cat === cat);
+        });
+        render();
+    }
+
+    // ── Modals ──────────────────────────────────────────────────────────────
+
+    function openAddModal() {
+        resetForm();
         document.getElementById('modalTitle').textContent = 'Add Product';
         document.getElementById('saveProductBtn').textContent = 'Create Product';
-        new bootstrap.Modal(document.getElementById('productModal')).show();
-    },
+        const modalEl = document.getElementById('productModal');
+        if (modalEl) new bootstrap.Modal(modalEl).show();
+    }
 
-    openEditModal: function(id) {
-        const p = this.state.all.find(x => x.id === id);
+    function openEditModal(id) {
+        const p = allProducts.find(x => x.id === id);
         if (!p) return;
-
-        this._resetForm();
+        
+        resetForm();
         document.getElementById('editProductId').value = p.id;
-        document.getElementById('modalTitle').textContent = 'Edit Product';
-        document.getElementById('saveProductBtn').textContent = 'Save Changes';
         document.getElementById('fName').value = p.name;
         document.getElementById('fCategory').value = p.category;
         document.getElementById('fPrice').value = p.price;
 
-        const wrap = document.getElementById('imagePreviewWrap');
-        const img = document.getElementById('imagePreview');
+        const preview = document.getElementById('imagePreview');
+        const placeholder = document.getElementById('imagePlaceholder');
         if (p.image && p.image !== 'placeholder.png' && !p.image.includes('via.placeholder')) {
-            img.src = p.image;
-            wrap.style.display = 'inline-block';
+            preview.src = p.image;
+            preview.style.display = 'block';
+            if (placeholder) placeholder.style.display = 'none';
+        } else {
+            preview.style.display = 'none';
+            if (placeholder) placeholder.style.display = 'block';
         }
-        new bootstrap.Modal(document.getElementById('productModal')).show();
-    },
 
-    save: async function() {
-        const id = document.getElementById('editProductId').value;
-        const name = document.getElementById('fName').value.trim();
+        document.getElementById('modalTitle').textContent = 'Edit Product';
+        document.getElementById('saveProductBtn').textContent = 'Save Changes';
+        const modalEl = document.getElementById('productModal');
+        if (modalEl) new bootstrap.Modal(modalEl).show();
+    }
+
+    async function save() {
+        const id       = document.getElementById('editProductId').value;
+        const name     = document.getElementById('fName').value.trim();
         const category = document.getElementById('fCategory').value.trim();
-        const price = document.getElementById('fPrice').value;
+        const price    = document.getElementById('fPrice').value;
+        const fileInput = document.getElementById('fImage');
 
         if (!name || !category || !price) {
-            this._toast('Please fill all required fields', 'error');
+            toast('Please fill in all required fields', 'error');
             return;
         }
 
-        const fd = new FormData();
-        fd.append('name', name);
-        fd.append('category', category);
-        fd.append('price', price);
-        const file = document.getElementById('fImage').files[0];
-        if (file) fd.append('image', file);
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('category', category);
+        formData.append('price', price);
+        if (fileInput && fileInput.files.length > 0) {
+            formData.append('image', fileInput.files[0]);
+        }
 
-        const isEdit = !!id;
-        const btn = document.getElementById('saveProductBtn');
-        const originalText = btn.textContent;
+        const url    = id ? `/products/update-product/${id}` : '/products/create-product';
+        const method = id ? 'PUT' : 'POST';
+        const btn    = document.getElementById('saveProductBtn');
         
-        btn.textContent = 'Saving…';
         btn.disabled = true;
+        btn.textContent = 'Saving…';
 
         try {
-            const url = isEdit ? `/products/update-product/${id}` : '/products/create-product';
-            const method = isEdit ? 'PUT' : 'POST';
+            const res = await fetch(url, { method, body: formData });
+            if (!res.ok) throw new Error();
             
-            const res = await fetch(url, { method, body: fd });
-            if (res.ok) {
-                bootstrap.Modal.getInstance(document.getElementById('productModal'))?.hide();
-                this._toast(isEdit ? 'Product updated ✓' : 'Product added ✓', 'success');
-                this.load();
-            } else {
-                throw new Error('Save failed');
-            }
+            const modalEl = document.getElementById('productModal');
+            bootstrap.Modal.getInstance(modalEl)?.hide();
+            
+            toast(id ? 'Product updated' : 'Product added', 'success');
+            await load();
         } catch (e) {
-            this._toast('Error saving product', 'error');
+            toast('Error saving product', 'error');
         } finally {
             btn.disabled = false;
-            btn.textContent = originalText;
+            btn.textContent = id ? 'Save Changes' : 'Create Product';
         }
-    },
+    }
 
-    openDeleteModal: function(id, name) {
-        this.state.pendingDeleteId = id;
-        document.getElementById('deleteDesc').textContent = `"${name}" will be permanently removed.`;
-        document.getElementById('confirmDeleteBtn').onclick = () => this.executeDelete();
-        new bootstrap.Modal(document.getElementById('deleteModal')).show();
-    },
-
-    executeDelete: async function() {
-        const id = this.state.pendingDeleteId;
-        if (!id) return;
-
-        bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
+    function confirmDelete(id, name) {
+        pendingDeleteId = id;
+        const desc = document.getElementById('deleteDesc');
+        if (desc) desc.textContent = `"${name}" will be permanently removed. This cannot be undone.`;
         
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        if (confirmBtn) confirmBtn.onclick = executeDelete;
+        
+        const modalEl = document.getElementById('deleteModal');
+        if (modalEl) new bootstrap.Modal(modalEl).show();
+    }
+
+    async function executeDelete() {
+        if (!pendingDeleteId) return;
+        const btn = document.getElementById('confirmDeleteBtn');
+        btn.disabled = true;
+        btn.textContent = 'Deleting…';
+
         try {
-            const res = await fetch(`/products/delete-product/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                this._toast('Product deleted', 'success');
-                this.load();
-            } else {
-                throw new Error('Delete failed');
-            }
+            const res = await fetch(`/products/delete-product/${pendingDeleteId}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error();
+            
+            const modalEl = document.getElementById('deleteModal');
+            bootstrap.Modal.getInstance(modalEl)?.hide();
+            
+            toast('Product deleted', 'success');
+            await load();
         } catch (e) {
-            this._toast('Failed to delete', 'error');
+            toast('Failed to delete product', 'error');
         } finally {
-            this.state.pendingDeleteId = null;
+            btn.disabled = false;
+            btn.textContent = 'Delete';
+            pendingDeleteId = null;
         }
-    },
+    }
 
     // ── Internal Helpers ─────────────────────────────────────────────────────
 
-    previewImage: function() {
-        const file = document.getElementById('fImage').files[0];
-        if (!file) return;
-        const wrap = document.getElementById('imagePreviewWrap');
-        const img = document.getElementById('imagePreview');
-        img.src = URL.createObjectURL(file);
-        wrap.style.display = 'inline-block';
-    },
-
-    _resetForm: function() {
-        document.getElementById('editProductId').value = '';
-        document.getElementById('fName').value = '';
-        document.getElementById('fCategory').value = '';
-        document.getElementById('fPrice').value = '';
-        document.getElementById('fImage').value = '';
-        document.getElementById('imagePreviewWrap').style.display = 'none';
-    },
-
-    _showSkeleton: function() {
-        const grid = document.getElementById('productsGrid');
-        if (grid) {
-            grid.innerHTML = [1,2,3,4].map(() => `
-                <div class="skel-card">
-                    <div class="skel" style="width:90px;height:90px;border-radius:16px;flex-shrink:0;"></div>
-                    <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
-                        <div class="skel" style="height:14px;width:60%;"></div>
-                        <div class="skel" style="height:11px;width:35%;"></div>
-                        <div class="skel" style="height:20px;width:45%;margin-top:4px;border-radius:6px;"></div>
-                    </div>
-                </div>`).join('');
-        }
-    },
-
-    _toast: function(msg, type) {
-        if (typeof townTechAlert !== 'undefined') {
-            if (type === 'success') townTechAlert.successTopRight(msg);
-            else if (type === 'error') townTechAlert.errorTopRight(msg);
-            else townTechAlert.infoTopRight(msg);
-        }
-    },
-
-    _esc: function(s) {
-        if (!s) return '';
-        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    },
-
-    _escJs: function(s) {
-        if (!s) return '';
-        return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    function resetForm() {
+        ['editProductId', 'fName', 'fCategory', 'fPrice', 'fImage'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        const preview = document.getElementById('imagePreview');
+        const placeholder = document.getElementById('imagePlaceholder');
+        if (preview) preview.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'block';
     }
-};
 
-// Auto-init if DOM is ready, or let SPA handle it
+    function showSkeleton() {
+        const grid = document.getElementById('productsGrid');
+        if (!grid) return;
+        grid.innerHTML = [1,2,3,4].map(() => `
+            <div class="skel-card">
+                <div class="skel" style="width:90px;height:90px;border-radius:16px;flex-shrink:0;"></div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:9px;">
+                    <div class="skel" style="height:14px;width:60%;"></div>
+                    <div class="skel" style="height:11px;width:35%;"></div>
+                    <div class="skel" style="height:22px;width:45%;margin-top:4px;border-radius:8px;"></div>
+                </div>
+            </div>`).join('');
+    }
+
+    function handleImagePreview() {
+        const input = document.getElementById('fImage');
+        if (!input) return;
+        input.onchange = function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const preview = document.getElementById('imagePreview');
+                    const placeholder = document.getElementById('imagePlaceholder');
+                    if (preview) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    if (placeholder) placeholder.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+    }
+
+    function init() {
+        load();
+        
+        const searchInput = document.getElementById('productSearch');
+        if (searchInput) {
+            searchInput.oninput = function() {
+                searchQuery = this.value.trim().toLowerCase();
+                render();
+            };
+        }
+
+        handleImagePreview();
+    }
+
+    // Export public methods
+    return { init, openAddModal, openEditModal, save, confirmDelete };
+})();
+
+// Auto-run if not in SPA mode or first load
 if (document.readyState === 'complete') {
     ProductApp.init();
 } else {
