@@ -22,7 +22,7 @@ class Employee(Base):
             "email": self.email,
             "customer_type": self.customer_type,
             "full_name": f"{self.first_name} {self.last_name}",
-            "password": self.password,
+            "password": self.password.decode('utf-8') if isinstance(self.password, bytes) else self.password,
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),

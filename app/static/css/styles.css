@@ -877,3 +877,8 @@ tr:hover .act-btn { color: var(--slate-400); }
 .toast-stack {
     bottom: calc(76px + env(safe-area-inset-bottom)) !important;
 }
+
+/* ── Toast stack — above bottom nav ── */
+.toast-stack {
+    bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+}

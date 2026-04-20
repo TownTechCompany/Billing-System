@@ -103,7 +103,7 @@ function renderCards() {
                 </div>
             </div>
             <div class="emp-actions">
-                <button class="act-btn edit" title="Edit" onclick="openEditModal(${emp.id}, '${esc(emp.first_name)}', '${esc(emp.last_name)}', '${esc(emp.email)}', '${esc(emp.customer_type || '')}', '${esc(emp.password || '')}')">
+                <button class="act-btn edit" title="Edit" onclick="openEditModal(${emp.id}, '${esc(emp.first_name)}', '${esc(emp.last_name)}', '${esc(emp.email)}', '${esc(emp.password || '')}')">
                     <i class="fa-solid fa-pen"></i>
                 </button>
                 <button class="act-btn delete" title="Delete" onclick="openDeleteModal(${emp.id}, '${esc(fullName)}')">
@@ -124,7 +124,6 @@ function openAddModal() {
     $('#fLastName').val('');
     $('#fEmail').val('');
     $('#fPassword').val('');
-    $('#fRole').val('');
     
     // Reset password visibility state
     $('#fPassword').attr('type', 'password');
@@ -133,14 +132,13 @@ function openAddModal() {
     new bootstrap.Modal(document.getElementById('employeeModal')).show();
 }
 
-function openEditModal(id, firstName, lastName, email, role, password) {
+function openEditModal(id, firstName, lastName, email, password) {
     $('#editId').val(id);
     $('#modalTitle').text('Edit Employee');
     $('#saveLabel').text('Update Employee');
     $('#fFirstName').val(firstName);
     $('#fLastName').val(lastName);
     $('#fEmail').val(email);
-    $('#fRole').val(role);
     $('#fPassword').val(password);
     
     // Reset password visibility state
@@ -157,7 +155,7 @@ async function saveEmployee() {
     const lastName = $('#fLastName').val().trim();
     const email = $('#fEmail').val().trim();
     const password = $('#fPassword').val();
-    const role = $('#fRole').val();
+    const role = "Admin"
 
     if (!firstName || !lastName || !email || !role) {
         townTechAlert.errorTopRight('Please fill all required fields');
@@ -203,35 +201,39 @@ async function saveEmployee() {
 
 // ── Delete Modal ────────────────────────────────────────────────────────────
 function openDeleteModal(id, name) {
-    townTechAlert.confirmDialog(
-        'Delete Employee?',
-        `Remove "${name}" permanently?`,
-        () => {
-            pendingDelete = id;
-            pendingDeleteName = name;
-            execDelete();
-        }
-    );
+    pendingDelete = id;
+    pendingDeleteName = name;
+    $('#deleteDesc').text(`"${name}" will be permanently removed. This cannot be undone.`);
+    $('#confirmDeleteBtn').off('click').on('click', execDelete);
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 
 async function execDelete() {
     if (!pendingDelete) return;
 
+    const btn = $('#confirmDeleteBtn');
+    const originalText = btn.text();
+    
+    btn.prop('disabled', true).text('Deleting...');
+
     $.ajax({
         url: `/employees/delete-employee/${pendingDelete}`,
         type: 'DELETE',
         success: function() {
+            bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
             townTechAlert.successTopRight(`${pendingDeleteName} deleted ✓`);
             loadEmployees();
         },
         error: function(xhr, status, e) {
             townTechAlert.errorTopRight('Failed to delete employee');
             console.error(e);
+        },
+        complete: function() {
+            btn.prop('disabled', false).text(originalText);
+            pendingDelete = null;
+            pendingDeleteName = null;
         }
     });
-
-    pendingDelete = null;
-    pendingDeleteName = null;
 }
 
 
