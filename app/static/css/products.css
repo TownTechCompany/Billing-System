@@ -5,18 +5,21 @@
   padding: 0 16px 180px;
   position: relative;
   max-width: 600px;
-  margin: 0 auto;
+  margin: 0 10px;
   box-sizing: border-box;
 }
 
 /* ── Toolbar ─────────────────────────────────────── */
 .prod-toolbar {
   margin: 20px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .prod-search {
   position: relative;
-  width: 100%;
+  flex: 1;
 }
 .prod-search i {
   position: absolute;
@@ -152,7 +155,7 @@
   flex-shrink: 0;
   width: 95px;
   height: 95px;
-  margin: -6px 0 -6px -6px;
+  margin: -6px 0 -6px 6px;
   position: relative;
   z-index: 2;
 }
@@ -563,4 +566,267 @@
 [data-bs-theme="dark"] .image-pick-zone {
   background: #1e2a3a;
   border-color: #3a3d56;
+}
+
+/* ── Filter Button ───────────────────────────────── */
+.filter-btn {
+  position: relative;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: none;
+  background: #1e293b;
+  color: #fff;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 14px rgba(30, 41, 59, 0.25);
+}
+.filter-btn:hover {
+  background: #6366f1;
+  transform: scale(1.07);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+}
+.filter-btn.active {
+  background: #6366f1;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+}
+[data-bs-theme="dark"] .filter-btn {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+[data-bs-theme="dark"] .filter-btn.active {
+  background: #6366f1;
+  color: #fff;
+}
+
+/* Active dot indicator */
+.filter-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e11d48;
+  border: 2px solid #fff;
+}
+[data-bs-theme="dark"] .filter-dot {
+  border-color: #1e293b;
+}
+
+/* ── Filter Bottom Sheet ─────────────────────────── */
+.filter-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  z-index: 1040;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.filter-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.filter-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  background: #fff;
+  border-radius: 28px 28px 0 0;
+  padding: 0 0 env(safe-area-inset-bottom, 0px);
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: 0 -8px 40px rgba(15, 23, 42, 0.15);
+  max-height: 82vh;
+  overflow-y: auto;
+}
+.filter-sheet.open {
+  transform: translateY(0);
+}
+[data-bs-theme="dark"] .filter-sheet {
+  background: #1e2235;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.4);
+}
+
+.filter-sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 100px;
+  background: #e2e8f0;
+  margin: 14px auto 0;
+}
+[data-bs-theme="dark"] .filter-sheet-handle {
+  background: #3a3d56;
+}
+
+.filter-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 10px;
+}
+.filter-sheet-title {
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+[data-bs-theme="dark"] .filter-sheet-title {
+  color: #f1f5f9;
+}
+.filter-sheet-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.filter-sheet-close:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+[data-bs-theme="dark"] .filter-sheet-close {
+  background: #27293d;
+  color: #94a3b8;
+}
+
+.filter-sheet-body {
+  padding: 8px 24px 20px;
+}
+.filter-section-label {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #0f172a;
+  margin-bottom: 14px;
+  letter-spacing: -0.2px;
+}
+[data-bs-theme="dark"] .filter-section-label {
+  color: #e2e8f0;
+}
+
+/* Category grid — 2 columns like reference */
+.filter-cat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.filter-cat-btn {
+  padding: 13px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #e8edf5;
+  background: #f8fafc;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-family: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.filter-cat-btn:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: #f5f3ff;
+  transform: scale(1.02);
+}
+.filter-cat-btn.selected {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: #eef2ff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.18);
+}
+[data-bs-theme="dark"] .filter-cat-btn {
+  background: #27293d;
+  border-color: #3a3d56;
+  color: #94a3b8;
+}
+[data-bs-theme="dark"] .filter-cat-btn.selected {
+  border-color: #6366f1;
+  color: #818cf8;
+  background: #1e1e3a;
+}
+
+/* Footer buttons */
+.filter-sheet-footer {
+  padding: 12px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.filter-apply-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+  background: #fca5a5;
+  color: #7f1d1d;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.2px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(252, 165, 165, 0.4);
+}
+.filter-apply-btn:hover {
+  background: #f87171;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(248, 113, 113, 0.45);
+  transform: translateY(-1px);
+}
+.filter-cancel-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  border: 2px solid #1e293b;
+  background: transparent;
+  color: #1e293b;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.18s;
+}
+.filter-cancel-btn:hover {
+  background: #f1f5f9;
+}
+[data-bs-theme="dark"] .filter-apply-btn {
+  background: #fca5a5;
+  color: #7f1d1d;
+}
+[data-bs-theme="dark"] .filter-cancel-btn {
+  border-color: #e2e8f0;
+  color: #e2e8f0;
+}
+[data-bs-theme="dark"] .filter-cancel-btn:hover {
+  background: #27293d;
+}
+
+@media (max-width: 480px) {
+  .filter-sheet-header { padding: 18px 20px 8px; }
+  .filter-sheet-body { padding: 8px 20px 16px; }
+  .filter-sheet-footer { padding: 10px 20px 20px; }
+  .filter-cat-grid { gap: 8px; }
 }

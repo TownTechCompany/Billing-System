@@ -11,6 +11,8 @@ window.ProductApp = (() => {
     let activeCategory = 'all';
     let searchQuery = '';
     let pendingDeleteId = null;
+    let filterSheetOpen = false;
+    let pendingFilterCat = 'all'; // staged selection before Apply
 
     // ── Helpers ─────────────────────────────────────────────────────────────
     
@@ -30,7 +32,6 @@ window.ProductApp = (() => {
             const res = await fetch('/products/get-products');
             const json = await res.json();
             allProducts = json.data || [];
-            buildChips();
             render();
         } catch (e) {
             console.error('[ProductApp] Load failed:', e);
@@ -91,44 +92,14 @@ window.ProductApp = (() => {
                 </div>
                 <div class="prod-actions">
                     <button class="act-btn edit" onclick="ProductApp.openEditModal(${p.id})" title="Edit product">
-                        <i class="fas fa-pen"></i>
+                        <i class="fa-regular fa-pen-to-square"></i>
                     </button>
                     <button class="act-btn delete" onclick="ProductApp.confirmDelete(${p.id}, '${esc(p.name)}')" title="Delete product">
-                        <i class="fas fa-trash"></i>
+                        <i class="fa-regular fa-trash-can"></i>
                     </button>
                 </div>
             </div>`;
         }).join('');
-    }
-
-    function buildChips() {
-        const container = document.getElementById('catChips');
-        if (!container) return;
-
-        const cats = [...new Set(allProducts.map(p => p.category))].sort();
-        const totalCountEl = document.getElementById('totalCount');
-        if (totalCountEl) totalCountEl.textContent = allProducts.length;
-
-        // Reset chips, keeping "All"
-        container.innerHTML = `<button class="cat-chip ${activeCategory === 'all' ? 'active' : ''}" 
-                                data-cat="all">All <span class="chip-count" id="totalCount">${allProducts.length}</span></button>`;
-
-        cats.forEach(cat => {
-            const count = allProducts.filter(p => p.category === cat).length;
-            const btn = document.createElement('button');
-            btn.className = `cat-chip ${activeCategory === cat ? 'active' : ''}`;
-            btn.dataset.cat = cat;
-            btn.innerHTML = `${esc(cat)} <span class="chip-count">${count}</span>`;
-            btn.onclick = () => setCategory(cat);
-            container.appendChild(btn);
-        });
-
-        // Add listener to "All" chip
-        container.querySelector('[data-cat="all"]').onclick = () => setCategory('all');
-
-        // Populate datalist for modal
-        const dl = document.getElementById('catSuggestions');
-        if (dl) dl.innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
     }
 
     function setCategory(cat) {
@@ -316,10 +287,74 @@ window.ProductApp = (() => {
         }
 
         handleImagePreview();
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && filterSheetOpen) closeFilterSheet();
+        });
+    }
+
+    // ── Filter Sheet ─────────────────────────────────────────────────────────
+
+    function openFilterSheet() {
+        pendingFilterCat = activeCategory; // stage current selection
+        buildFilterGrid();
+        document.getElementById('filterOverlay').classList.add('open');
+        document.getElementById('filterSheet').classList.add('open');
+        filterSheetOpen = true;
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeFilterSheet() {
+        document.getElementById('filterOverlay').classList.remove('open');
+        document.getElementById('filterSheet').classList.remove('open');
+        filterSheetOpen = false;
+        document.body.style.overflow = '';
+    }
+
+    function buildFilterGrid() {
+        const cats = [...new Set(allProducts.map(p => p.category))].sort();
+        const grid = document.getElementById('filterCatGrid');
+        if (!grid) return;
+
+        grid.innerHTML = cats.map(cat => `
+            <button class="filter-cat-btn ${pendingFilterCat === cat ? 'selected' : ''}"
+                    data-cat="${esc(cat)}"
+                    onclick="ProductApp._stageCat('${esc(cat)}')">
+              ${esc(cat)}
+            </button>`).join('');
+    }
+
+    function _stageCat(cat) {
+        pendingFilterCat = (pendingFilterCat === cat) ? 'all' : cat;
+        document.querySelectorAll('.filter-cat-btn').forEach(btn => {
+            btn.classList.toggle('selected', btn.dataset.cat === pendingFilterCat);
+        });
+    }
+
+    function applyFilter() {
+        setCategory(pendingFilterCat);
+        // Update filter button dot indicator
+        const dot = document.getElementById('filterDot');
+        const btn = document.getElementById('filterBtn');
+        if (dot) dot.style.display = (pendingFilterCat !== 'all') ? 'block' : 'none';
+        if (btn) btn.classList.toggle('active', pendingFilterCat !== 'all');
+        closeFilterSheet();
+    }
+
+    function resetFilter() {
+        pendingFilterCat = 'all';
+        document.querySelectorAll('.filter-cat-btn').forEach(btn => btn.classList.remove('selected'));
+        // Also clear applied filter immediately
+        setCategory('all');
+        const dot = document.getElementById('filterDot');
+        const btn = document.getElementById('filterBtn');
+        if (dot) dot.style.display = 'none';
+        if (btn) btn.classList.remove('active');
+        closeFilterSheet();
     }
 
     // Export public methods
-    return { init, openAddModal, openEditModal, save, confirmDelete };
+    return { init, openAddModal, openEditModal, save, confirmDelete, openFilterSheet, closeFilterSheet, applyFilter, resetFilter, _stageCat };
 })();
 
 // Auto-run if not in SPA mode or first load

@@ -51,8 +51,8 @@
 
         <div class="top-bar-right">
             <div class="top-bar-actions">
-                <button class="top-bar-user-btn" id="userMenuBtn" aria-label="User menu">
-                    <i class="fa-solid fa-user"></i>
+                <button class="top-bar-user-btn" id="" aria-label="User menu">
+                    <i class="fa-solid fa-bell"></i>
                 </button>
             </div>
         </div>
@@ -111,69 +111,45 @@
     <div class="more-dropdown-backdrop" id="moreDropdownBackdrop"></div>
     <div class="more-dropdown" id="moreDropdown" role="menu">
         <div class="more-dropdown-handle"></div>
+        <a href="/orderhistory" class="more-dropdown-item" data-spa-link>
+            <div class="more-dropdown-icon">
+                <i class="fa-solid fa-history"></i>
+            </div>
+            <div class="more-dropdown-label">
+                <span class="more-dropdown-title">Order History</span>
+            </div>
+            <i class="fa-solid fa-chevron-right more-dropdown-arrow"></i>
+        </a>
         <a href="/employees" class="more-dropdown-item" data-spa-link>
-            <div class="more-dropdown-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+            <div class="more-dropdown-icon">
                 <i class="fa-solid fa-users"></i>
             </div>
             <div class="more-dropdown-label">
                 <span class="more-dropdown-title">Employees</span>
-                <span class="more-dropdown-desc">Manage your staff</span>
             </div>
             <i class="fa-solid fa-chevron-right more-dropdown-arrow"></i>
         </a>
         <a href="/settings" class="more-dropdown-item" data-spa-link>
-            <div class="more-dropdown-icon" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+            <div class="more-dropdown-icon">
                 <i class="fa-solid fa-gear"></i>
             </div>
             <div class="more-dropdown-label">
                 <span class="more-dropdown-title">Settings</span>
-                <span class="more-dropdown-desc">App preferences</span>
             </div>
             <i class="fa-solid fa-chevron-right more-dropdown-arrow"></i>
         </a>
         <div class="more-dropdown-divider"></div>
         <a href="/auth/logout" class="more-dropdown-item more-dropdown-danger">
-            <div class="more-dropdown-icon" style="background: linear-gradient(135deg, #f43f5e, #e11d48);">
+            <div class="more-dropdown-icon">
                 <i class="fa-solid fa-right-from-bracket"></i>
             </div>
             <div class="more-dropdown-label">
                 <span class="more-dropdown-title">Logout</span>
-                <span class="more-dropdown-desc">Sign out of your account</span>
             </div>
         </a>
     </div>
 
 </div><!-- /.app-shell -->
-
-<!-- ── User Bottom Sheet ── -->
-<div class="user-sheet-backdrop" id="userSheetBackdrop"></div>
-<div class="user-sheet" id="userSheet" role="dialog" aria-modal="true" aria-label="User menu">
-    <div class="user-sheet-handle"></div>
-
-    <div class="user-sheet-profile">
-        <div class="user-sheet-avatar">
-            <i class="fa-solid fa-user"></i>
-        </div>
-        <div>
-            <div class="user-sheet-name">Admin</div>
-            <div class="user-sheet-role">BillPOS Pro</div>
-        </div>
-    </div>
-
-    <a href="/employees" class="user-sheet-item">
-        <i class="fa-solid fa-users"></i>
-        Employees
-    </a>
-    <a href="/settings" class="user-sheet-item">
-        <i class="fa-solid fa-gear"></i>
-        Settings
-    </a>
-    <div class="user-sheet-divider"></div>
-    <a href="/auth/logout" class="user-sheet-item danger">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        Logout
-    </a>
-</div>
 
 <!-- Toast stack -->
 <div id="toastStack" class="toast-stack"></div>

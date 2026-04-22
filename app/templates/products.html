@@ -7,19 +7,17 @@
 {% block content %}
 <div class="products-page">
 
-  <!-- Toolbar: search right-aligned -->
+  <!-- Toolbar: search + filter -->
   <div class="prod-toolbar">
     <div class="prod-search">
       <i class="fas fa-search"></i>
       <input type="text" id="productSearch" placeholder="Search products…" autocomplete="off">
     </div>
+    <button class="filter-btn" id="filterBtn" onclick="ProductApp.openFilterSheet()" title="Filter" aria-label="Filter products">
+      <i class="fas fa-sliders-h"></i>
+      <span class="filter-dot" id="filterDot" style="display:none;"></span>
+    </button>
   </div>
-
-  <!-- Category chips (wrap) -->
-  <div class="cat-chips" id="catChips">
-    <button class="cat-chip active" data-cat="all">All <span class="chip-count" id="totalCount">0</span></button>
-  </div>
-
   <!-- Section header -->
   <div class="section-header">
     <span class="section-title">Products</span>
@@ -128,6 +126,30 @@
         <button class="btn-danger-modal" id="confirmDeleteBtn">Delete</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ── Filter Bottom Sheet ── -->
+<div class="filter-overlay" id="filterOverlay" onclick="ProductApp.closeFilterSheet()"></div>
+<div class="filter-sheet" id="filterSheet">
+  <div class="filter-sheet-handle"></div>
+  <div class="filter-sheet-header">
+    <h5 class="filter-sheet-title">Search Filter</h5>
+    <button class="filter-sheet-close" onclick="ProductApp.closeFilterSheet()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  <div class="filter-sheet-body">
+    <div class="filter-section">
+      <div class="filter-section-label">Category</div>
+      <div class="filter-cat-grid" id="filterCatGrid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+  <div class="filter-sheet-footer">
+    <button class="filter-apply-btn" onclick="ProductApp.applyFilter()">Apply Filter</button>
+    <button class="filter-cancel-btn" onclick="ProductApp.resetFilter()">Reset</button>
   </div>
 </div>
 

@@ -104,10 +104,10 @@ function renderCards() {
             </div>
             <div class="emp-actions">
                 <button class="act-btn edit" title="Edit" onclick="openEditModal(${emp.id}, '${esc(emp.first_name)}', '${esc(emp.last_name)}', '${esc(emp.email)}', '${esc(emp.password || '')}')">
-                    <i class="fa-solid fa-pen"></i>
+                    <i class="fa-regular fa-pen-to-square"></i>
                 </button>
                 <button class="act-btn delete" title="Delete" onclick="openDeleteModal(${emp.id}, '${esc(fullName)}')">
-                    <i class="fa-solid fa-trash"></i>
+                    <i class="fa-regular fa-pen-to-square"></i>
                 </button>
             </div>
         </div>
