@@ -8,11 +8,11 @@
 
 window.ProductApp = (() => {
     let allProducts = [];
-    let activeCategory = 'all';
+    let activeCategories = new Set(); // empty = show all
     let searchQuery = '';
     let pendingDeleteId = null;
     let filterSheetOpen = false;
-    let pendingFilterCat = 'all'; // staged selection before Apply
+    let pendingFilterCats = new Set(); // staged multi-select before Apply
 
     // ── Helpers ─────────────────────────────────────────────────────────────
     
@@ -51,7 +51,7 @@ window.ProductApp = (() => {
         if (!grid) return;
 
         const filtered = allProducts.filter(p => {
-            const matchCat = activeCategory === 'all' || p.category === activeCategory;
+            const matchCat = activeCategories.size === 0 || activeCategories.has(p.category);
             const matchQ = p.name.toLowerCase().includes(searchQuery) ||
                            p.category.toLowerCase().includes(searchQuery);
             return matchCat && matchQ;
@@ -102,12 +102,31 @@ window.ProductApp = (() => {
         }).join('');
     }
 
-    function setCategory(cat) {
-        activeCategory = cat;
-        document.querySelectorAll('.cat-chip').forEach(c => {
-            c.classList.toggle('active', c.dataset.cat === cat);
-        });
+    function toggleChipCategory(cat) {
+        if (activeCategories.has(cat)) {
+            activeCategories.delete(cat);
+        } else {
+            activeCategories.add(cat);
+        }
+        syncChipUI();
         render();
+    }
+
+    function clearCategories() {
+        activeCategories.clear();
+        syncChipUI();
+        render();
+    }
+
+    function syncChipUI() {
+        const allActive = activeCategories.size === 0;
+        document.querySelectorAll('.cat-chip').forEach(c => {
+            if (c.dataset.cat === 'all') {
+                c.classList.toggle('active', allActive);
+            } else {
+                c.classList.toggle('active', activeCategories.has(c.dataset.cat));
+            }
+        });
     }
 
     // ── Modals ──────────────────────────────────────────────────────────────
@@ -296,7 +315,7 @@ window.ProductApp = (() => {
     // ── Filter Sheet ─────────────────────────────────────────────────────────
 
     function openFilterSheet() {
-        pendingFilterCat = activeCategory; // stage current selection
+        pendingFilterCats = new Set(activeCategories); // clone current state
         buildFilterGrid();
         document.getElementById('filterOverlay').classList.add('open');
         document.getElementById('filterSheet').classList.add('open');
@@ -317,39 +336,61 @@ window.ProductApp = (() => {
         if (!grid) return;
 
         grid.innerHTML = cats.map(cat => `
-            <button class="filter-cat-btn ${pendingFilterCat === cat ? 'selected' : ''}"
+            <button class="filter-cat-btn ${pendingFilterCats.has(cat) ? 'selected' : ''}"
                     data-cat="${esc(cat)}"
                     onclick="ProductApp._stageCat('${esc(cat)}')">
+              <span class="fcat-check"><i class="fas fa-check"></i></span>
               ${esc(cat)}
             </button>`).join('');
+
+        _updateApplyLabel();
     }
 
     function _stageCat(cat) {
-        pendingFilterCat = (pendingFilterCat === cat) ? 'all' : cat;
+        if (pendingFilterCats.has(cat)) {
+            pendingFilterCats.delete(cat);
+        } else {
+            pendingFilterCats.add(cat);
+        }
         document.querySelectorAll('.filter-cat-btn').forEach(btn => {
-            btn.classList.toggle('selected', btn.dataset.cat === pendingFilterCat);
+            btn.classList.toggle('selected', pendingFilterCats.has(btn.dataset.cat));
         });
+        // Update the Apply button label with count
+        _updateApplyLabel();
+    }
+
+    function _updateApplyLabel() {
+        const btn = document.querySelector('.filter-apply-btn');
+        if (!btn) return;
+        const count = pendingFilterCats.size;
+        btn.textContent = count > 0 ? `Apply Filter (${count})` : 'Apply Filter';
     }
 
     function applyFilter() {
-        setCategory(pendingFilterCat);
-        // Update filter button dot indicator
+        activeCategories = new Set(pendingFilterCats);
+        syncChipUI();
+        render();
+        // Update filter button dot + active state
         const dot = document.getElementById('filterDot');
-        const btn = document.getElementById('filterBtn');
-        if (dot) dot.style.display = (pendingFilterCat !== 'all') ? 'block' : 'none';
-        if (btn) btn.classList.toggle('active', pendingFilterCat !== 'all');
+        const filterBtn = document.getElementById('filterBtn');
+        const hasFilter = activeCategories.size > 0;
+        if (dot) dot.style.display = hasFilter ? 'block' : 'none';
+        if (filterBtn) filterBtn.classList.toggle('active', hasFilter);
         closeFilterSheet();
     }
 
     function resetFilter() {
-        pendingFilterCat = 'all';
+        pendingFilterCats.clear();
         document.querySelectorAll('.filter-cat-btn').forEach(btn => btn.classList.remove('selected'));
-        // Also clear applied filter immediately
-        setCategory('all');
+        _updateApplyLabel();
+        // Also clear immediately
+        activeCategories.clear();
+        syncChipUI();
+        render();
         const dot = document.getElementById('filterDot');
-        const btn = document.getElementById('filterBtn');
+        const filterBtn = document.getElementById('filterBtn');
         if (dot) dot.style.display = 'none';
-        if (btn) btn.classList.remove('active');
+        if (filterBtn) filterBtn.classList.remove('active');
         closeFilterSheet();
     }
 

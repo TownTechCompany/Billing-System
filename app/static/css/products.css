@@ -576,7 +576,7 @@
   height: 48px;
   border-radius: 14px;
   border: none;
-  background: #1e293b;
+  background: #6366f1;
   color: #fff;
   font-size: 1rem;
   display: flex;
@@ -744,6 +744,10 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
 }
 .filter-cat-btn:hover {
   border-color: #6366f1;
@@ -768,6 +772,23 @@
   background: #1e1e3a;
 }
 
+/* Checkmark shown only when selected */
+.fcat-check {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #6366f1;
+  color: #fff;
+  font-size: 0.55rem;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.filter-cat-btn.selected .fcat-check {
+  display: flex;
+}
+
 /* Footer buttons */
 .filter-sheet-footer {
   padding: 12px 24px 24px;
@@ -780,8 +801,8 @@
   padding: 16px;
   border-radius: 16px;
   border: none;
-  background: #fca5a5;
-  color: #7f1d1d;
+  background: #6366f1;
+  color: #fff;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
@@ -791,7 +812,7 @@
   box-shadow: 0 4px 16px rgba(252, 165, 165, 0.4);
 }
 .filter-apply-btn:hover {
-  background: #f87171;
+  background: #6366f1;
   color: #fff;
   box-shadow: 0 6px 20px rgba(248, 113, 113, 0.45);
   transform: translateY(-1px);
