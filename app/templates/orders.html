@@ -6,94 +6,25 @@
 {% block content %}
 <div class="orders-root">
 
-  <!-- ── Header ── -->
-  <!-- ── Actions Toolbar ── -->
-  <div class="orders-top-actions">
-    <div class="live-meta">
-        <span class="sub-dot"></span>
-        <span id="liveTime"></span>
-        &nbsp;·&nbsp;
-        <span id="headerOrderCount">0 orders today</span>
-    </div>
-    <div class="orders-header-right">
-      <button class="hdr-btn hdr-btn-ghost" onclick="exportOrders()">
-        <i class="fa-solid fa-arrow-down-to-line"></i>
-        <span>Export</span>
+  <!-- ── Main View Toggle ── -->
+  <div class="main-tab-wrapper">
+    <div class="main-tab-toggle">
+      <button class="tab-btn active" id="mainTab-orders" onclick="switchMainTab('orders')">
+        Orders
       </button>
-      <button class="hdr-btn hdr-btn-primary" onclick="window.location.href='/pos'">
-        <i class="fa-solid fa-plus"></i>
-        <span>New Order</span>
+      <button class="tab-btn" id="mainTab-tables" onclick="switchMainTab('tables')">
+        Tables
       </button>
     </div>
   </div>
 
-  <!-- ── Stats Row ── -->
-  <div class="stats-row">
-    <div class="stat-card sc-blue">
-      <div class="stat-icon blue"><i class="fa-solid fa-receipt"></i></div>
-      <div>
-        <div class="stat-val" id="statOpen">0</div>
-        <div class="stat-label">Open Orders</div>
-      </div>
-    </div>
-    <div class="stat-card sc-emerald">
-      <div class="stat-icon emerald"><i class="fa-solid fa-circle-check"></i></div>
-      <div>
-        <div class="stat-val" id="statPaid">0</div>
-        <div class="stat-label">Paid Today</div>
-      </div>
-    </div>
-    <div class="stat-card sc-purple">
-      <div class="stat-icon purple"><i class="fa-solid fa-indian-rupee-sign"></i></div>
-      <div>
-        <div class="stat-val" id="statRevenue">₹0</div>
-        <div class="stat-label">Revenue Today</div>
-      </div>
-    </div>
-    <div class="stat-card sc-amber">
-      <div class="stat-icon amber"><i class="fa-solid fa-chart-simple"></i></div>
-      <div>
-        <div class="stat-val" id="statAvg">₹0</div>
-        <div class="stat-label">Avg. Order Value</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Toolbar ── -->
-  <div class="orders-toolbar">
-    <!-- View toggle -->
-    <div class="view-toggle">
-      <button class="vtoggle active" id="vBtn-list" onclick="switchView('list')" title="List view">
-        <i class="fa-solid fa-list-ul"></i>
-      </button>
-      <button class="vtoggle" id="vBtn-table" onclick="switchView('table')" title="Floor map">
-        <i class="fa-solid fa-table-cells-large"></i>
-      </button>
-    </div>
-    <!-- Status chips -->
-    <div class="chip-group" id="statusChips">
-      <button class="chip active" data-filter="all">All</button>
-      <button class="chip" data-filter="open">
-        <span class="chip-dot chip-dot-amber"></span>Open
-      </button>
-      <button class="chip" data-filter="paid">
-        <span class="chip-dot chip-dot-green"></span>Paid
-      </button>
-      <button class="chip" data-filter="void">
-        <span class="chip-dot chip-dot-red"></span>Void
-      </button>
-    </div>
-    <!-- Spacer -->
-    <div style="flex:1"></div>
-    <!-- Date range -->
-    <div class="toolbar-input-wrap">
-      <i class="fa-regular fa-calendar toolbar-input-icon"></i>
-      <input type="text" id="orderDateRange" class="toolbar-input" placeholder="Date range">
-    </div>
-    <!-- Search -->
-    <div class="toolbar-input-wrap">
-      <i class="fa-solid fa-magnifying-glass toolbar-input-icon"></i>
-      <input type="text" id="orderSearch" class="toolbar-input" placeholder="Search orders…" style="width:160px">
+  <!-- ── Order Type Chips ── -->
+  <div class="filter-chips-wrapper">
+    <div class="filter-chips" id="typeChips">
+      <button class="type-chip active" data-type="all">All</button>
+      <button class="type-chip" data-type="dine-in">Dine-in</button>
+      <button class="type-chip" data-type="takeaway">Takeaway</button>
+      <button class="type-chip" data-type="delivery">Delivery</button>
     </div>
   </div>
 
@@ -112,8 +43,24 @@
     </div>
   </div>
 
+  <!-- ── Card View ── -->
+  <div id="cardsView">
+    <div class="section-header" style="margin: 0 1.25rem 1rem;">
+      <span class="section-title">Recent Orders</span>
+      <span class="pagin-info" id="orderTotalLabel">0 orders</span>
+    </div>
+    <div class="orders-card-grid" id="ordersCardGrid">
+      <!-- filled by JS -->
+    </div>
+    <div id="emptyStateCards" class="empty-state" style="display:none">
+      <div class="empty-icon"><i class="fa-regular fa-receipt"></i></div>
+      <div class="empty-title">No orders found</div>
+      <div class="empty-sub">Try changing the filter or date range</div>
+    </div>
+  </div>
+
   <!-- ── List View ── -->
-  <div id="listView" class="table-container">
+  <div id="listView" style="display:none" class="table-container">
     <table id="ordersTable" class="w-100">
       <thead>
         <tr>
@@ -129,33 +76,32 @@
           <th class="text-end">Actions</th>
         </tr>
       </thead>
-      <tbody id="ordersBody">
-        <!-- filled by JS -->
-      </tbody>
+      <tbody id="ordersBody"></tbody>
     </table>
-    <!-- empty state -->
     <div id="emptyState" class="empty-state" style="display:none">
       <div class="empty-icon"><i class="fa-regular fa-receipt"></i></div>
       <div class="empty-title">No orders found</div>
       <div class="empty-sub">Try changing the filter or date range</div>
     </div>
-    <!-- pagination -->
-    <div class="table-footer">
-      <div id="paginInfo" class="pagin-info">—</div>
-      <div class="pagin-btns" id="paginBtns"></div>
-    </div>
   </div>
 
 </div><!-- /orders-root -->
 
+<!-- ════ FAB ════ -->
+<div class="fab-group">
+  <button class="fab-btn fab-history" onclick="window.location.href='/orders/history'" title="Order History" aria-label="Order History">
+    <i class="fa-solid fa-clock-rotate-left"></i>
+  </button>
+  <button class="fab-btn fab-new-order" onclick="window.location.href='/pos'" title="New Order" aria-label="New Order">
+    <i class="fa-solid fa-plus"></i>
+  </button>
+</div>
 
 <!-- ════════════════════════════════════════
      DETAIL / EDIT SLIDE PANEL
 ════════════════════════════════════════ -->
 <div class="panel-backdrop" id="panelBackdrop" onclick="closePanel()"></div>
 <div class="detail-panel" id="detailPanel">
-
-  <!-- Panel header -->
   <div class="dp-header">
     <div class="dp-header-left">
       <div class="dp-order-num" id="dpOrderNum">—</div>
@@ -168,15 +114,11 @@
       <i class="fa-solid fa-xmark"></i>
     </button>
   </div>
-
-  <!-- Meta row -->
   <div class="dp-meta">
     <span class="dp-meta-item"><i class="fa-regular fa-clock"></i><span id="dpTime">—</span></span>
     <span class="dp-meta-item"><i class="fa-regular fa-user"></i><span id="dpCustomer">Walk-in</span></span>
     <span class="dp-meta-item"><i class="fa-solid fa-credit-card"></i><span id="dpMethod">—</span></span>
   </div>
-
-  <!-- Add product search (open orders only) -->
   <div id="addItemSection" class="dp-add-section" style="display:none">
     <div class="dp-add-label">Add item to order</div>
     <div class="dp-search-wrap">
@@ -185,18 +127,10 @@
     </div>
     <div id="addItemResults" class="dp-search-results"></div>
   </div>
-
-  <!-- Cart items -->
   <div class="dp-items-header">
-    <span>Item</span>
-    <span>Qty</span>
-    <span class="text-end">Amount</span>
+    <span>Item</span><span>Qty</span><span class="text-end">Amount</span>
   </div>
-  <div class="dp-items" id="dpItemsContainer">
-    <!-- filled by JS -->
-  </div>
-
-  <!-- Discount row (open orders only) -->
+  <div class="dp-items" id="dpItemsContainer"></div>
   <div id="discountRow" class="dp-discount" style="display:none">
     <label class="dp-discount-label">Discount</label>
     <div class="dp-discount-inputs">
@@ -207,8 +141,6 @@
       </select>
     </div>
   </div>
-
-  <!-- Totals -->
   <div class="dp-totals">
     <div class="dp-total-row"><span>Subtotal</span><span id="dpSubtotal">₹0.00</span></div>
     <div class="dp-total-row"><span>Tax (5%)</span><span id="dpTax">₹0.00</span></div>
@@ -219,18 +151,11 @@
       <span>Total</span><span id="dpTotal">₹0.00</span>
     </div>
   </div>
-
-  <!-- Notes (open orders) -->
   <div id="notesSection" class="dp-notes-section" style="display:none">
     <textarea id="orderNotes" class="dp-notes-input" placeholder="Order notes, special instructions…" rows="2"></textarea>
   </div>
-
-  <!-- Actions -->
-  <div class="dp-actions" id="dpActions">
-    <!-- filled by JS -->
-  </div>
+  <div class="dp-actions" id="dpActions"></div>
 </div>
-
 
 <!-- ════ VOID PIN MODAL ════ -->
 <div class="modal fade" id="voidPinModal" tabindex="-1">
@@ -242,9 +167,7 @@
       </div>
       <div class="modal-body text-center" style="padding:28px 24px">
         <p style="font-size:.83rem;color:var(--slate-400);margin-bottom:16px">Enter admin PIN to void this order.</p>
-        <div class="pin-dots" id="pinDots">
-          <span></span><span></span><span></span><span></span>
-        </div>
+        <div class="pin-dots" id="pinDots"><span></span><span></span><span></span><span></span></div>
         <div class="pin-pad" id="pinPad"></div>
         <div id="pinError" class="pin-error" style="display:none">
           <i class="fa-solid fa-circle-exclamation"></i> Incorrect PIN. Try again.
@@ -266,25 +189,15 @@
         <div class="checkout-summary" id="checkoutSummary"></div>
         <label class="form-label mt-3">Payment Method</label>
         <div class="pay-method-grid">
-          <button class="pay-method-btn active" data-method="Cash">
-            <i class="fa-solid fa-money-bill-wave"></i><span>Cash</span>
-          </button>
-          <button class="pay-method-btn" data-method="Card">
-            <i class="fa-solid fa-credit-card"></i><span>Card</span>
-          </button>
-          <button class="pay-method-btn" data-method="UPI">
-            <i class="fa-brands fa-google-pay"></i><span>UPI</span>
-          </button>
-          <button class="pay-method-btn" data-method="Khata">
-            <i class="fa-solid fa-book"></i><span>Khata</span>
-          </button>
+          <button class="pay-method-btn active" data-method="Cash"><i class="fa-solid fa-money-bill-wave"></i><span>Cash</span></button>
+          <button class="pay-method-btn" data-method="Card"><i class="fa-solid fa-credit-card"></i><span>Card</span></button>
+          <button class="pay-method-btn" data-method="UPI"><i class="fa-brands fa-google-pay"></i><span>UPI</span></button>
+          <button class="pay-method-btn" data-method="Khata"><i class="fa-solid fa-book"></i><span>Khata</span></button>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn-modal-primary" onclick="confirmCheckout()">
-          <i class="fa-solid fa-check me-1"></i>Confirm Payment
-        </button>
+        <button class="btn-modal-primary" onclick="confirmCheckout()"><i class="fa-solid fa-check me-1"></i>Confirm Payment</button>
       </div>
     </div>
   </div>
@@ -309,6 +222,36 @@
 
 <!-- Toast stack -->
 <div class="toast-stack" id="toastStack"></div>
+
+<!-- ── Filter Bottom Sheet ── -->
+<div class="filter-overlay" id="filterOverlay" onclick="closeFilterSheet()"></div>
+<div class="filter-sheet" id="filterSheet">
+  <div class="filter-sheet-handle"></div>
+  <div class="filter-sheet-header">
+    <h5 class="filter-sheet-title">Order Filters</h5>
+    <button class="filter-sheet-close" onclick="closeFilterSheet()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="filter-sheet-body">
+    <div class="filter-section">
+      <div class="filter-section-label">Date Range</div>
+      <div class="toolbar-input-wrap w-100 mb-3">
+        <i class="fa-regular fa-calendar toolbar-input-icon"></i>
+        <input type="text" id="orderDateRange" class="toolbar-input w-100" placeholder="Pick date range…" readonly style="background:var(--white);cursor:pointer;padding:12px 14px 12px 40px;border-radius:14px;border:1.5px solid var(--slate-200);">
+      </div>
+    </div>
+    <div class="filter-section mt-4">
+        <button class="btn-modal-primary w-100" onclick="exportOrders()" style="justify-content:center">
+          <i class="fa-solid fa-file-export me-2"></i>Export Today's Orders
+        </button>
+    </div>
+  </div>
+  <div class="filter-sheet-footer">
+    <button class="filter-apply-btn" onclick="closeFilterSheet()">Apply Filters</button>
+    <button class="filter-cancel-btn" onclick="resetAllFilters()">Reset All</button>
+  </div>
+</div>
 
 {% endblock %}
 

@@ -38,6 +38,14 @@ class Order(Base):
             "notes":          self.notes,
             "served_by":      self.served_by,
             "item_count":     len(self.items),
+            "items": [
+                {
+                    "product_name": item.product_name,
+                    "quantity": item.quantity,
+                    "price": item.price,
+                }
+                for item in self.items
+            ],
         }
 
 class OrderItem(Base):
