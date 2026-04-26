@@ -1133,6 +1133,33 @@
     color: #1a1c22;
     text-transform: uppercase;
 }
+ 
+/* ── Created by row ── */
+.oc-created-by {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--slate-500);
+    margin-bottom: 16px;
+    padding: 6px 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    width: fit-content;
+    border: 1px solid #f1f5f9;
+}
+.oc-created-by i {
+    font-size: 0.8rem;
+    color: #4361ee;
+}
+.oc-created-by span {
+    color: #64748b;
+}
+.oc-creator-name {
+    color: #1a1c22;
+    font-weight: 800;
+}
 
 /* ── Line items list ── */
 .oc-line-items {
@@ -1157,7 +1184,7 @@
 /* ── Dashed divider ── */
 .oc-dashed-divider {
     border: none;
-    border-top: 1.5px dashed #f0f1f4;
+    border-top: 2.5px dashed #101010;
     margin: 18px 0 12px;
 }
 
@@ -1172,7 +1199,7 @@
     height: auto;
     border: none;
     background: transparent;
-    color: #b0b8c9;
+    color: #dc3545;
     display: flex;
     align-items: center;
     justify-content: center;

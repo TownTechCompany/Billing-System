@@ -1,148 +1,232 @@
-let cart = {}; // { productId: { id, name, price, qty } }
+/* ── pos.js ── Point of Sale logic ── */
+
+let cart = {};           // { id: { id, name, price, qty } }
 let selectedPayment = 'Cash';
+let sheetExpanded = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Category filter
-    const catBtns = document.querySelectorAll('.cat-btn');
-    for (let i = 0; i < catBtns.length; i++) {
-        const btn = catBtns[i];
-        btn.addEventListener('click', () => {
-            for (let j = 0; j < catBtns.length; j++) catBtns[j].classList.remove('active');
-            btn.classList.add('active');
-            filterProducts(btn.dataset.cat, $('#productSearch').val());
-        });
-    }
 
-    // Search
-    $('#productSearch').on('input', e => {
-        const activeCat = document.querySelector('.cat-btn.active')?.dataset.cat || '';
-        filterProducts(activeCat, e.target.value);
+  // ── Category filter
+  document.querySelectorAll('.cat-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterProducts(btn.dataset.cat, document.getElementById('productSearch').value);
     });
+  });
 
-    // Payment method buttons
-    const payBtns = document.querySelectorAll('.pay-btn');
-    for (let i = 0; i < payBtns.length; i++) {
-        const btn = payBtns[i];
-        btn.addEventListener('click', () => {
-            for (let j = 0; j < payBtns.length; j++) payBtns[j].classList.remove('active');
-            btn.classList.add('active');
-            selectedPayment = btn.dataset.method;
-        });
-    }
+  // ── Search
+  const searchEl = document.getElementById('productSearch');
+  if (searchEl) {
+    searchEl.addEventListener('input', e => {
+      const activeCat = document.querySelector('.cat-pill.active')?.dataset.cat || '';
+      filterProducts(activeCat, e.target.value);
+    });
+  }
+
+  // Initialise qty=0 state on all cards
+  document.querySelectorAll('.product-card').forEach(card => {
+    card.setAttribute('data-qty', '0');
+  });
+
+  renderCart();
 });
 
+/* ─────────────────────────────────────────
+   Filter
+───────────────────────────────────────── */
 function filterProducts(cat, search) {
-    const cards = document.querySelectorAll('.product-card');
-    for (let i = 0; i < cards.length; i++) {
-        const card = cards[i];
-        const matchCat = !cat || card.dataset.category === cat;
-        const matchSearch = !search || card.dataset.name.toLowerCase().includes(search.toLowerCase());
-        card.classList.toggle('hidden', !(matchCat && matchSearch));
-    }
+  document.querySelectorAll('.product-card').forEach(card => {
+    const matchCat    = !cat    || card.dataset.category === cat;
+    const matchSearch = !search || card.dataset.name.toLowerCase().includes(search.toLowerCase());
+    card.classList.toggle('hidden', !(matchCat && matchSearch));
+  });
 }
 
-function addToCart(productId) {
-    const card = document.querySelector(`.product-card[data-id="${productId}"]`);
-    if (!card) return;
-    const id = parseInt(card.dataset.id);
-    const name = card.dataset.name;
-    const price = parseFloat(card.dataset.price);
+/* ─────────────────────────────────────────
+   Qty controls (called inline from HTML)
+───────────────────────────────────────── */
+function changeQty(productId, delta) {
+  const card = document.querySelector(`.product-card[data-id="${productId}"]`);
+  if (!card) return;
 
-    if (cart[id]) {
-        cart[id].qty++;
-    } else {
-        cart[id] = { id, name, price, qty: 1 };
-    }
-    renderCart();
+  const id    = parseInt(card.dataset.id);
+  const name  = card.dataset.name;
+  const price = parseFloat(card.dataset.price);
 
-    // Pulse animation
-    card.style.transform = 'scale(0.97)';
-    setTimeout(() => card.style.transform = '', 120);
-}
+  if (!cart[id] && delta > 0) {
+    cart[id] = { id, name, price, qty: 0 };
+  }
+  if (!cart[id]) return;
 
-function changeQty(id, delta) {
-    if (!cart[id]) return;
-    cart[id].qty += delta;
-    if (cart[id].qty <= 0) delete cart[id];
-    renderCart();
-}
+  cart[id].qty += delta;
 
-function removeFromCart(id) {
+  if (cart[id].qty <= 0) {
     delete cart[id];
-    renderCart();
+    updateCardQtyDisplay(card, 0);
+    card.classList.remove('in-cart');
+    card.setAttribute('data-qty', '0');
+  } else {
+    updateCardQtyDisplay(card, cart[id].qty);
+    card.classList.add('in-cart');
+    card.setAttribute('data-qty', String(cart[id].qty));
+
+    // Pulse animation on +
+    if (delta > 0) {
+      const plusBtn = card.querySelector('.qty-plus');
+      if (plusBtn) {
+        plusBtn.style.transform = 'scale(0.88)';
+        setTimeout(() => plusBtn.style.transform = '', 120);
+      }
+    }
+  }
+
+  renderCart();
 }
 
-function clearCart() {
-    cart = {};
-    renderCart();
+function updateCardQtyDisplay(card, qty) {
+  const numEl = card.querySelector('.qty-num');
+  if (numEl) numEl.textContent = qty;
 }
 
+/* ─────────────────────────────────────────
+   Cart render
+───────────────────────────────────────── */
 function renderCart() {
-    const container = $('#cartItems');
-    const emptyEl = $('#cartEmpty');
-    const checkoutBtn = $('#checkoutBtn');
-    const items = Object.values(cart);
+  const items       = Object.values(cart);
+  const totalEl     = document.getElementById('cartBarTotal');
+  const proceedBtn  = document.getElementById('proceedBtn');
+  const listEl      = document.getElementById('cartItemsList');
+  const bkSubtotal  = document.getElementById('bkSubtotal');
+  const bkTax       = document.getElementById('bkTax');
+  const bkTotal     = document.getElementById('bkTotal');
+  const sheet       = document.getElementById('cartSheet');
+  const gridWrap    = document.getElementById('posGridWrap');
 
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const tax      = subtotal * 0.05;
+  const total    = subtotal + tax;
+
+  if (totalEl)    totalEl.textContent   = '₹' + subtotal.toFixed(2);
+  if (bkSubtotal) bkSubtotal.textContent = '₹' + subtotal.toFixed(2);
+  if (bkTax)      bkTax.textContent     = '₹' + tax.toFixed(2);
+  if (bkTotal)    bkTotal.textContent   = '₹' + total.toFixed(2);
+
+  if (proceedBtn) proceedBtn.disabled = items.length === 0;
+
+  // Render cart rows
+  if (listEl) {
     if (!items.length) {
-        container.empty();
-        container.append(emptyEl);
-        emptyEl.css('display', 'flex');
-        $('#cartTotal').text('₹0.00');
-        checkoutBtn.prop('disabled', true);
-        return;
+      listEl.innerHTML = '';
+    } else {
+      listEl.innerHTML = items.map(item => `
+        <div class="cart-item-row">
+          <div class="cart-item-badge">${item.qty}</div>
+          <div class="cart-item-info">
+            <div class="cart-item-name">${escHtml(item.name)}</div>
+          </div>
+          <div class="cart-item-price">₹${(item.price * item.qty).toFixed(0)}</div>
+        </div>
+      `).join('');
     }
+  }
 
-    emptyEl.hide();
-    container.empty();
-
-    let total = 0;
-    for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        const lineTotal = item.price * item.qty;
-        total += lineTotal;
-        const el = $('<div>', {
-            class: 'cart-item',
-            html: `
-            <div class="cart-item-info">
-                <div class="cart-item-name">${escHtml(item.name)}</div>
-                <div class="cart-item-price">₹${item.price.toFixed(2)} each</div>
-            </div>
-            <div class="cart-item-controls">
-                <button class="qty-btn" onclick="changeQty(${item.id}, -1)">−</button>
-                <span class="qty-num">${item.qty}</span>
-                <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
-            </div>
-            <div class="cart-item-total">₹${lineTotal.toFixed(0)}</div>
-            <button class="cart-item-remove" onclick="removeFromCart(${item.id})" title="Remove"><i class="fa-solid fa-xmark"></i></button>
-        `
-        });
-        container.append(el);
-    }
-
-    $('#cartTotal').text('₹' + total.toFixed(2));
-    checkoutBtn.prop('disabled', false);
+  // Show/hide sheet and manage bottom padding on grid
+  if (!items.length) {
+    collapseSheet();
+    if (gridWrap) gridWrap.style.paddingBottom = '12px';
+  } else {
+    // Sheet visible — give grid breathing room
+    if (gridWrap) gridWrap.style.paddingBottom = '110px';
+  }
 }
 
-function checkout() {
-    const items = Object.values(cart);
-    if (!items.length) return;
+/* ─────────────────────────────────────────
+   Sheet expand / collapse
+───────────────────────────────────────── */
+function toggleCartExpand() {
+  const items = Object.values(cart);
+  if (!items.length) return;
 
-    const payload = {
-        items: items.map(i => ({ product_id: i.id, quantity: i.qty, price: i.price })),
-        payment_method: selectedPayment
-    };
+  const sheet = document.getElementById('cartSheet');
+  if (!sheet) return;
 
-    $.ajax({
-        url: '/orders/create-order',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(payload),
-        success: function(data) {
-            showToast(`Order ${data.data.order_number} placed! ✓`, 'success');
-            clearCart();
-        },
-        error: function() {
-            showToast('Order failed. Try again.', 'error');
-        }
+  sheetExpanded = !sheetExpanded;
+  sheet.classList.toggle('expanded', sheetExpanded);
+}
+
+function collapseSheet() {
+  sheetExpanded = false;
+  const sheet = document.getElementById('cartSheet');
+  if (sheet) sheet.classList.remove('expanded');
+}
+
+/* ─────────────────────────────────────────
+   Checkout
+───────────────────────────────────────── */
+function placeorder() {
+  const items = Object.values(cart);
+  if (!items.length) return;
+
+  const payload = {
+    items: items.map(i => ({ product_id: i.id, quantity: i.qty, price: i.price })),
+    payment_method: selectedPayment
+  };
+
+  const btn = document.getElementById('proceedBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Placing order…'; }
+
+  fetch('/api/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(r => {
+      if (!r.ok) throw new Error('Network error');
+      return r.json();
+    })
+    .then(data => {
+      showToast('Order ' + (data.order_number || '') + ' placed! ✓', 'success');
+      clearAllCart();
+    })
+    .catch(() => {
+      showToast('Order failed. Please try again.', 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = 'Proceed to Payment <i class="fa-solid fa-chevron-right proceed-arrow"></i>'; }
     });
+}
+
+function clearAllCart() {
+  cart = {};
+  document.querySelectorAll('.product-card').forEach(card => {
+    updateCardQtyDisplay(card, 0);
+    card.classList.remove('in-cart');
+    card.setAttribute('data-qty', '0');
+  });
+  renderCart();
+}
+
+/* ─────────────────────────────────────────
+   Utilities
+───────────────────────────────────────── */
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;');
+}
+
+function showToast(msg, type) {
+  // Use global showToast from common.js/script.js if available
+  if (typeof window.showToast === 'function' && window.showToast !== showToast) {
+    window.showToast(msg, type);
+    return;
+  }
+  const stack = document.getElementById('toastStack');
+  if (!stack) return;
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type || 'success');
+  el.textContent = msg;
+  stack.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
 }

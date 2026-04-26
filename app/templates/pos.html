@@ -1,84 +1,114 @@
 {% extends "base.html" %}
-{% block title %}Point of Sale — BillPOS{% endblock %}
+{% block title %}New Order — SmartPOS{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/pos.css') }}">
 {% endblock %}
 
 {% block content %}
-<main class="chat-main w-100 pos-root">
+<main class="pos-root">
 
-    <!-- Left: Product Grid -->
-    <div class="pos-left">
-        <div class="pos-left-header">
-
-            <div class="pos-search-bar">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="productSearch" placeholder="Search products...">
-            </div>
-            <div class="pos-cats" id="categoryTabs">
-                <button class="cat-btn active" data-cat="">All</button>
-                {% for cat in categories %}
-                <button class="cat-btn" data-cat="{{ cat }}">{{ cat }}</button>
-                {% endfor %}
-            </div>
-        </div>
-        <div class="pos-grid" id="productGrid">
-            {% for product in products %}
-            <div class="product-card" data-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}" data-category="{{ product.category }}" onclick="addToCart({{ product.id }})">
-                <div class="product-card-img">
-                    {% if product.image and product.image != 'placeholder.png' %}
-                    <img src="{{ product.image }}" alt="{{ product.name }}" onerror="this.parentElement.innerHTML='<i class=fa-solid fa-image style=color:var(--slate-300);font-size:2rem></i>'">
-                    {% else %}
-                    <i class="fa-solid fa-image" style="color:var(--slate-300);font-size:2rem;"></i>
-                    {% endif %}
-                </div>
-                <div class="product-card-body">
-                    <div class="product-card-name">{{ product.name }}</div>
-                    <div class="product-card-cat">{{ product.category }}</div>
-                    <div class="product-card-price">₹{{ "%.0f"|format(product.price) }}</div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+  <!-- Category Tabs -->
+  <div class="pos-cats-wrap">
+    <div class="pos-cats" id="categoryTabs">
+      <button class="cat-pill active" data-cat="">All</button>
+      {% for cat in categories %}
+      <button class="cat-pill" data-cat="{{ cat }}">{{ cat }}</button>
+      {% endfor %}
     </div>
+  </div>
 
-    <!-- Right: Cart -->
-    <div class="pos-right">
-        <div class="pos-right-header">
-            <div class="cart-title"><i class="fa-solid fa-cart-shopping"></i> Cart</div>
-            <button class="clear-cart-btn" onclick="clearCart()" title="Clear cart"><i class="fa-solid fa-broom"></i> Clear</button>
+  <!-- Search Bar -->
+  <div class="pos-search-wrap">
+    <div class="pos-search">
+      <i class="fa-solid fa-magnifying-glass pos-search-icon"></i>
+      <input type="text" id="productSearch" placeholder="Search menu items..." autocomplete="off">
+    </div>
+  </div>
+
+  <!-- Product Grid -->
+  <div class="pos-grid-wrap" id="posGridWrap">
+    <div class="pos-grid" id="productGrid">
+      {% for product in products %}
+      <div class="product-card" data-id="{{ product.id }}" data-name="{{ product.name }}"
+        data-price="{{ product.price }}" data-category="{{ product.category }}">
+
+        <div class="product-card-img">
+          {% if product.image and product.image != 'placeholder.png' %}
+          <img src="{{ product.image }}" alt="{{ product.name }}"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="product-img-fallback" style="display:none">
+            <i class="fa-regular fa-image"></i>
+          </div>
+          {% else %}
+          <div class="product-img-fallback">
+            <i class="fa-regular fa-image"></i>
+          </div>
+          {% endif %}
+          <span class="product-price-badge">₹{{ "%.0f"|format(product.price) }}</span>
         </div>
 
-        <div class="cart-items" id="cartItems">
-            <div class="cart-empty" id="cartEmpty">
-                <i class="fa-solid fa-bag-shopping"></i>
-                <span>Cart is empty</span>
-                <span style="font-size:0.75rem;">Click products to add them</span>
-            </div>
-        </div>
-
-        <div class="cart-footer">
-            <div class="cart-total-row">
-                <span class="cart-total-label">Total</span>
-                <span class="cart-total-val" id="cartTotal">₹0.00</span>
-            </div>
-            <div class="cart-payment-row">
-                <label class="form-label mb-1" style="font-size:0.75rem;">Payment Method</label>
-                <div class="payment-btns">
-                    <button class="pay-btn active" data-method="Cash"><i class="fa-solid fa-money-bill-wave"></i> Cash</button>
-                    <button class="pay-btn" data-method="Card"><i class="fa-solid fa-credit-card"></i> Card</button>
-                    <button class="pay-btn" data-method="UPI"><i class="fa-solid fa-mobile-screen-button"></i> UPI</button>
-                </div>
-            </div>
-            <button class="checkout-btn" onclick="checkout()" id="checkoutBtn" disabled>
-                <i class="fa-solid fa-check-circle"></i> Place Order
+        <div class="product-card-body">
+          <div class="product-name">{{ product.name }}</div>
+          <div class="product-desc">{{ product.category }}</div>
+          <div class="product-qty-row">
+            <button class="qty-btn qty-minus" onclick="changeQty({{ product.id }}, -1)">
+              <i class="fa-solid fa-minus"></i>
             </button>
+            <span class="qty-num" id="qty-{{ product.id }}">0</span>
+            <button class="qty-btn qty-plus" onclick="changeQty({{ product.id }}, 1)">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
         </div>
+      </div>
+      {% endfor %}
     </div>
+  </div>
+
+  <!-- Cart Bottom Sheet -->
+  <div class="cart-sheet" id="cartSheet">
+
+    <div class="cart-handle-bar" id="cartHandleBar" onclick="toggleCartExpand()">
+      <div class="cart-handle-pill"></div>
+    </div>
+
+    <!-- Always-visible summary row -->
+    <div class="cart-summary" id="cartSummary" onclick="toggleCartExpand()">
+      <div class="cart-summary-left">
+        <div class="cart-summary-label">Total Amount</div>
+        <div class="cart-summary-total" id="cartBarTotal">₹0.00</div>
+      </div>
+      <button class="proceed-btn" id="proceedBtn" onclick="event.stopPropagation(); placeorder()" disabled>
+        Place Order
+        <i class="fa-solid fa-chevron-right proceed-arrow"></i>
+      </button>
+    </div>
+
+    <!-- Expanded content -->
+    <div class="cart-panel" id="cartPanel">
+
+      <div class="cart-items-list" id="cartItemsList"></div>
+
+      <div class="cart-breakdown" id="cartBreakdown">
+        <div class="breakdown-row">
+          <span>Subtotal</span>
+          <span id="bkSubtotal">₹0.00</span>
+        </div>
+        <div class="breakdown-row">
+          <span>Tax (5%)</span>
+          <span id="bkTax">₹0.00</span>
+        </div>
+        <div class="breakdown-row breakdown-total">
+          <span>Total</span>
+          <span id="bkTotal">₹0.00</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
 
 </main>
-<div class="toast-stack" id="toastStack"></div>
 {% endblock %}
 
 {% block scripts %}

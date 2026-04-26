@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}BillPOS{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -15,161 +18,158 @@
     {% block head %}{% endblock %}
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-<div class="app-shell">
 
-    <!-- ── Top App Bar ── -->
-    <header class="top-app-bar">
-        <div class="top-bar-left">
-            {% if active_page in ['settings_shop', 'settings_tax', 'settings_payments', 'settings_receipt', 'settings_tables', 'settings_data'] %}
+<body>
+    <div class="app-shell">
+
+        <!-- ── Top App Bar ── -->
+        <header class="top-app-bar">
+            <div class="top-bar-left">
+                {% if active_page in ['settings_shop', 'settings_tax', 'settings_payments', 'settings_receipt',
+                'settings_tables', 'settings_data'] %}
                 <a href="/settings" class="top-bar-back-btn" data-spa-link title="Back to Settings">
                     <i class="fa-solid fa-chevron-left"></i>
                 </a>
-            {% else %}
+                {% else %}
                 <!-- No back icon or brand for main pages -->
-            {% endif %}
-        </div>
-
-        <div class="top-bar-center">
-            <span class="top-bar-page-title">
-                {% if active_page == 'dashboard' %}Dashboard
-                {% elif active_page == 'pos' %}Point of Sale
-                {% elif active_page == 'products' %}Products
-                {% elif active_page == 'orders' %}Orders
-                {% elif active_page == 'employees' %}Employees
-                {% elif active_page == 'settings' %}Settings
-                {% elif active_page == 'settings_shop' %}Shop Identity
-                {% elif active_page == 'settings_tax' %}Tax & GST
-                {% elif active_page == 'settings_payments' %}Payment Methods
-                {% elif active_page == 'settings_receipt' %}Receipt Design
-                {% elif active_page == 'settings_tables' %}Tables Layout
-                {% elif active_page == 'settings_data' %}Data Management
-                {% else %}BillPOS
                 {% endif %}
-            </span>
+            </div>
+
+            <div class="top-bar-center">
+                <span class="top-bar-page-title">
+                    {% if active_page == 'dashboard' %}Dashboard
+                    {% elif active_page == 'pos' %}New Order
+                    {% elif active_page == 'products' %}Products
+                    {% elif active_page == 'orders' %}Orders
+                    {% elif active_page == 'employees' %}Employees
+                    {% elif active_page == 'settings' %}Settings
+                    {% elif active_page == 'settings_shop' %}Shop Identity
+                    {% elif active_page == 'settings_tax' %}Tax & GST
+                    {% elif active_page == 'settings_payments' %}Payment Methods
+                    {% elif active_page == 'settings_receipt' %}Receipt Design
+                    {% elif active_page == 'settings_tables' %}Tables Layout
+                    {% elif active_page == 'settings_data' %}Data Management
+                    {% else %}BillPOS
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="top-bar-right">
+                <div class="top-bar-actions">
+                    <button class="top-bar-user-btn" id="" aria-label="User menu">
+                        <i class="fa-solid fa-bell"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── Main Content ── -->
+        <div class="main-content" id="spaContent">
+            {% block content %}{% endblock %}
         </div>
 
-        <div class="top-bar-right">
-            <div class="top-bar-actions">
-                <button class="top-bar-user-btn" id="" aria-label="User menu">
-                    <i class="fa-solid fa-bell"></i>
-                </button>
-            </div>
+        <!-- ── Bottom Navigation Bar ── -->
+        <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+
+            <a href="/dashboard" class="bottom-nav-item {% if active_page == 'dashboard' %}active{% endif %}"
+                aria-label="Dashboard">
+                <i class="fa-solid fa-chart-simple"></i>
+                <span>Home</span>
+            </a>
+
+            <a href="/products" class="bottom-nav-item {% if active_page == 'products' %}active{% endif %}"
+                aria-label="Products">
+                <i class="fa-solid fa-utensils"></i>
+                <span>Products</span>
+            </a>
+
+            <!-- Centre POS button — elevated pill -->
+            <a href="/pos" class="bottom-nav-item nav-pos {% if active_page == 'pos' %}active{% endif %}"
+                aria-label="Point of Sale">
+                <div class="nav-pos-pill">
+                    <i class="fa-solid fa-display" style="display:flex;font-size:1.3rem;color:white;"></i>
+                </div>
+                <span>New Order</span>
+            </a>
+
+            <a href="/orders" class="bottom-nav-item {% if active_page == 'orders' %}active{% endif %}"
+                aria-label="Orders">
+                <i class="fa-solid fa-receipt"></i>
+                <span>Orders</span>
+            </a>
+
+            <button type="button"
+                class="bottom-nav-item {% if active_page == 'settings' or active_page == 'employees' %}active{% endif %}"
+                id="moreNavBtn" aria-label="More options">
+                <i class="fa-solid fa-bars-staggered"></i>
+                <span>More</span>
+            </button>
+
+        </nav>
+
+        <!-- ── More Dropdown Popup ── -->
+        <div class="more-dropdown-backdrop" id="moreDropdownBackdrop"></div>
+        <div class="more-dropdown" id="moreDropdown" role="menu">
+            <div class="more-dropdown-handle"></div>
+            <a href="/orderhistory" class="more-dropdown-item" data-spa-link>
+                <div class="more-dropdown-icon">
+                    <i class="fa-solid fa-history"></i>
+                </div>
+                <div class="more-dropdown-label">
+                    <span class="more-dropdown-title">Order History</span>
+                </div>
+                <i class="fa-solid fa-chevron-right more-dropdown-arrow"></i>
+            </a>
+            <a href="/employees" class="more-dropdown-item" data-spa-link>
+                <div class="more-dropdown-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="more-dropdown-label">
+                    <span class="more-dropdown-title">Employees</span>
+                </div>
+                <i class="fa-solid fa-chevron-right more-dropdown-arrow"></i>
+            </a>
+            <a href="/settings" class="more-dropdown-item" data-spa-link>
+                <div class="more-dropdown-icon">
+                    <i class="fa-solid fa-gear"></i>
+                </div>
+                <div class="more-dropdown-label">
+                    <span class="more-dropdown-title">Settings</span>
+                </div>
+                <i class="fa-solid fa-chevron-right more-dropdown-arrow"></i>
+            </a>
+            <div class="more-dropdown-divider"></div>
+            <a href="/auth/logout" class="more-dropdown-item more-dropdown-danger">
+                <div class="more-dropdown-icon">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </div>
+                <div class="more-dropdown-label">
+                    <span class="more-dropdown-title">Logout</span>
+                </div>
+            </a>
         </div>
-    </header>
 
-    <!-- ── Main Content ── -->
-    <div class="main-content" id="spaContent">
-        {% block content %}{% endblock %}
-    </div>
+    </div><!-- /.app-shell -->
 
-    <!-- ── Bottom Navigation Bar ── -->
-    <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <!-- Toast stack -->
+    <div id="toastStack" class="toast-stack"></div>
 
-        <a href="/dashboard"
-           class="bottom-nav-item {% if active_page == 'dashboard' %}active{% endif %}"
-           aria-label="Dashboard">
-            <i class="fa-solid fa-chart-simple"></i>
-            <span>Home</span>
-        </a>
+    <!-- ── Scripts ── -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 
-        <a href="/products"
-           class="bottom-nav-item {% if active_page == 'products' %}active{% endif %}"
-           aria-label="Products">
-            <i class="fa-solid fa-utensils"></i>
-            <span>Products</span>
-        </a>
+    <!-- Global helpers (toast, user-sheet) — must come BEFORE spa.js -->
+    <script src="{{ url_for('static', path='js/script.js') }}"></script>
+    <script src="{{ url_for('static', path='js/common.js') }}"></script>
 
-        <!-- Centre POS button — elevated pill -->
-        <a href="/pos"
-           class="bottom-nav-item nav-pos {% if active_page == 'pos' %}active{% endif %}"
-           aria-label="Point of Sale">
-            <div class="nav-pos-pill">
-                <i class="fa-solid fa-display" style="display:flex;font-size:1.3rem;color:white;"></i>
-            </div>
-            <span>New Order</span>
-        </a>
+    <!-- SPA Router — intercepts nav, manages history -->
+    <script src="{{ url_for('static', path='js/spa.js') }}"></script>
+    <script src="{{ url_for('static', path='js/more_dropdown.js') }}"></script>
 
-        <a href="/orders"
-           class="bottom-nav-item {% if active_page == 'orders' %}active{% endif %}"
-           aria-label="Orders">
-            <i class="fa-solid fa-receipt"></i>
-            <span>Orders</span>
-        </a>
-
-        <button type="button"
-           class="bottom-nav-item {% if active_page == 'settings' or active_page == 'employees' %}active{% endif %}"
-           id="moreNavBtn"
-           aria-label="More options">
-            <i class="fa-solid fa-bars-staggered"></i>
-            <span>More</span>
-        </button>
-
-    </nav>
-
-    <!-- ── More Dropdown Popup ── -->
-    <div class="more-dropdown-backdrop" id="moreDropdownBackdrop"></div>
-    <div class="more-dropdown" id="moreDropdown" role="menu">
-        <div class="more-dropdown-handle"></div>
-        <a href="/orderhistory" class="more-dropdown-item" data-spa-link>
-            <div class="more-dropdown-icon">
-                <i class="fa-solid fa-history"></i>
-            </div>
-            <div class="more-dropdown-label">
-                <span class="more-dropdown-title">Order History</span>
-            </div>
-            <i class="fa-solid fa-chevron-right more-dropdown-arrow"></i>
-        </a>
-        <a href="/employees" class="more-dropdown-item" data-spa-link>
-            <div class="more-dropdown-icon">
-                <i class="fa-solid fa-users"></i>
-            </div>
-            <div class="more-dropdown-label">
-                <span class="more-dropdown-title">Employees</span>
-            </div>
-            <i class="fa-solid fa-chevron-right more-dropdown-arrow"></i>
-        </a>
-        <a href="/settings" class="more-dropdown-item" data-spa-link>
-            <div class="more-dropdown-icon">
-                <i class="fa-solid fa-gear"></i>
-            </div>
-            <div class="more-dropdown-label">
-                <span class="more-dropdown-title">Settings</span>
-            </div>
-            <i class="fa-solid fa-chevron-right more-dropdown-arrow"></i>
-        </a>
-        <div class="more-dropdown-divider"></div>
-        <a href="/auth/logout" class="more-dropdown-item more-dropdown-danger">
-            <div class="more-dropdown-icon">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </div>
-            <div class="more-dropdown-label">
-                <span class="more-dropdown-title">Logout</span>
-            </div>
-        </a>
-    </div>
-
-</div><!-- /.app-shell -->
-
-<!-- Toast stack -->
-<div id="toastStack" class="toast-stack"></div>
-
-<!-- ── Scripts ── -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
-
-<!-- Global helpers (toast, user-sheet) — must come BEFORE spa.js -->
-<script src="{{ url_for('static', path='js/script.js') }}"></script>
-<script src="{{ url_for('static', path='js/common.js') }}"></script>
-
-<!-- SPA Router — intercepts nav, manages history -->
-<script src="{{ url_for('static', path='js/spa.js') }}"></script>
-<script src="{{ url_for('static', path='js/more_dropdown.js') }}"></script>
-
-{% block scripts %}{% endblock %}
+    {% block scripts %}{% endblock %}
 </body>
-</html>
 
+</html>

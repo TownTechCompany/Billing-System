@@ -377,6 +377,11 @@ function renderCards() {
               <span class="oc-type-label">${typeLabel}</span>
             </div>
 
+            <div class="oc-created-by">
+              <i class="fa-regular fa-user"></i>
+              <span>Served by <span class="oc-creator-name">${esc(o.served_by || 'Admin')}</span></span>
+            </div>
+
             <div class="oc-line-items">${lineItemsHtml}</div>
 
             <hr class="oc-dashed-divider">
