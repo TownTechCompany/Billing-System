@@ -107,7 +107,7 @@ function renderCards() {
                     <i class="fa-regular fa-pen-to-square"></i>
                 </button>
                 <button class="act-btn delete" title="Delete" onclick="openDeleteModal(${emp.id}, '${esc(fullName)}')">
-                    <i class="fa-regular fa-pen-to-square"></i>
+                    <i class="fa-regular fa-trash-can"></i>
                 </button>
             </div>
         </div>
