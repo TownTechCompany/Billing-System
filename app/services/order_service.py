@@ -29,6 +29,8 @@ class OrderService:
         customer_name: str = None,
         customer_phone: str = None,
         notes: str = None,
+        served_by: str = None,
+        date_created: str = None,
     ):
         """Create new order"""
         order_num  = f"ORD-{int(datetime.utcnow().timestamp())}"
@@ -36,8 +38,20 @@ class OrderService:
         tax        = subtotal * 0.05
         total      = round(subtotal + tax, 2)
 
+        # Parse date_created if provided, otherwise use now
+        creation_date = datetime.utcnow()
+        if date_created:
+            try:
+                # Expecting ISO format from JS: YYYY-MM-DDTHH:mm:ss.sssZ
+                # We'll just take the first 19 chars for YYYY-MM-DD HH:mm:ss
+                dt_str = date_created.replace('T', ' ').split('.')[0]
+                creation_date = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+            except Exception:
+                creation_date = datetime.utcnow()
+
         order = Order(
             order_number=order_num,
+            date_created=creation_date,
             total_amount=total,
             payment_method=payment_method,
             status="open",               # NEW: all orders start as open
@@ -46,6 +60,7 @@ class OrderService:
             customer_name=customer_name,
             customer_phone=customer_phone,
             notes=notes,
+            served_by=served_by,
         )
         self.db.add(order)
         self.db.flush()

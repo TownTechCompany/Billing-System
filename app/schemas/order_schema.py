@@ -16,6 +16,8 @@ class OrderCreate(BaseModel):
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None
     notes: Optional[str] = None
+    served_by: Optional[str] = None
+    date_created: Optional[str] = None
 
     @field_validator("order_type")
     @classmethod

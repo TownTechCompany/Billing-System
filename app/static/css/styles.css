@@ -688,7 +688,7 @@ tr:hover .act-btn { color: var(--slate-400); }
 
 /* Content padding */
 .main-content {
-    padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
 }
 
 /* ── The floating card bar ── */
@@ -857,10 +857,6 @@ tr:hover .act-btn { color: var(--slate-400); }
 /* Active FAB */
 .bottom-nav-item.nav-pos.active .nav-pos-pill {
     transform: translateX(-50%) scale(1.08) translateY(-4px);
-    box-shadow:
-        0 14px 32px rgba(99, 102, 241, 0.60),
-        0 6px 16px rgba(99, 102, 241, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .bottom-nav-item.nav-pos.active > span {

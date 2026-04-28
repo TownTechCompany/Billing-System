@@ -17,10 +17,21 @@ def list_orders(db: Session = Depends(get_db)):
     )
 
 @router.post("/create-order", status_code=status.HTTP_201_CREATED)
-async def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
+async def create_order(payload: OrderCreate, request: Request, db: Session = Depends(get_db)):
     """Create new order"""
     items = [{"product_id": i.product_id, "quantity": i.quantity, "price": i.price} for i in payload.items]
-    order = OrderService(db).create_order_service(items, payload.payment_method)
+    
+    # Get current user email from session for served_by
+    served_by = request.session.get("email")
+    
+    order = OrderService(db).create_order_service(
+        items, 
+        payload.payment_method,
+        order_type=payload.order_type,
+        table_number=payload.table_number,
+        served_by=served_by or payload.served_by,
+        date_created=payload.date_created
+    )
     return success_response(
         data={"order_number": order.order_number},
         message="Order created successfully",
