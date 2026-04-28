@@ -1,36 +1,63 @@
 /* ── pos.js ── Point of Sale logic ── */
 
-let cart = {};           // { id: { id, name, price, qty } }
-let selectedPayment = 'Cash';
-let sheetExpanded = false;
+// Use var to allow re-declaration in SPA navigation
+if (typeof cart === 'undefined') {
+  var cart = {};           // { id: { id, name, price, qty } }
+}
+if (typeof selectedPayment === 'undefined') {
+  var selectedPayment = 'Cash';
+}
+if (typeof sheetExpanded === 'undefined') {
+  var sheetExpanded = false;
+}
 
-document.addEventListener('DOMContentLoaded', () => {
+function initPOS() {
+  console.log('[POS] Initialising...');
+  
+  // Reset state for a new order if needed, or keep it. 
+  // Usually for "New Order" page we might want a fresh start.
+  // cart = {}; 
 
   // ── Category filter
   document.querySelectorAll('.cat-pill').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.onclick = () => {
       document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       filterProducts(btn.dataset.cat, document.getElementById('productSearch').value);
-    });
+    };
   });
 
   // ── Search
   const searchEl = document.getElementById('productSearch');
   if (searchEl) {
-    searchEl.addEventListener('input', e => {
+    searchEl.oninput = e => {
       const activeCat = document.querySelector('.cat-pill.active')?.dataset.cat || '';
       filterProducts(activeCat, e.target.value);
-    });
+    };
   }
 
   // Initialise qty=0 state on all cards
   document.querySelectorAll('.product-card').forEach(card => {
-    card.setAttribute('data-qty', '0');
+    const id = card.dataset.id;
+    const qty = cart[id] ? cart[id].qty : 0;
+    updateCardQtyDisplay(card, qty);
+    if (qty > 0) card.classList.add('in-cart');
+    else card.classList.remove('in-cart');
+    card.setAttribute('data-qty', String(qty));
   });
 
   renderCart();
-});
+}
+
+// Global expose for SPA
+window.initPOS = initPOS;
+
+// Run on load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPOS);
+} else {
+  initPOS();
+}
 
 /* ─────────────────────────────────────────
    Filter
@@ -112,7 +139,13 @@ function renderCart() {
   if (bkTax)      bkTax.textContent     = '₹' + tax.toFixed(2);
   if (bkTotal)    bkTotal.textContent   = '₹' + total.toFixed(2);
 
-  if (proceedBtn) proceedBtn.disabled = items.length === 0;
+  if (proceedBtn) {
+    proceedBtn.disabled = items.length === 0;
+    // Reset text if it was in "Placing order..." state
+    if (items.length === 0) {
+      proceedBtn.innerHTML = 'Place Order <i class="fa-solid fa-chevron-right proceed-arrow"></i>';
+    }
+  }
 
   // Render cart rows
   if (listEl) {
@@ -174,9 +207,12 @@ function placeorder() {
   };
 
   const btn = document.getElementById('proceedBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Placing order…'; }
+  if (btn) { 
+    btn.disabled = true; 
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Placing order…'; 
+  }
 
-  fetch('/api/orders', {
+  fetch('/orders/create-order', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -186,12 +222,17 @@ function placeorder() {
       return r.json();
     })
     .then(data => {
-      showToast('Order ' + (data.order_number || '') + ' placed! ✓', 'success');
+      const orderNum = data.data?.order_number || '';
+      showToast('Order #' + orderNum + ' placed successfully! ✓', 'success');
       clearAllCart();
     })
-    .catch(() => {
+    .catch((err) => {
+      console.error('[POS] Order failed:', err);
       showToast('Order failed. Please try again.', 'error');
-      if (btn) { btn.disabled = false; btn.innerHTML = 'Proceed to Payment <i class="fa-solid fa-chevron-right proceed-arrow"></i>'; }
+      if (btn) { 
+        btn.disabled = false; 
+        btn.innerHTML = 'Place Order <i class="fa-solid fa-chevron-right proceed-arrow"></i>'; 
+      }
     });
 }
 
