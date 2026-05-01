@@ -99,7 +99,7 @@ function renderCards() {
                 <span class="emp-role-tag">${esc(role)}</span>
                 <div class="emp-email">
                     <i class="fa-regular fa-envelope" style="font-size: 0.8rem; color: #94a3b8;"></i>
-                    ${esc(emp.email.length > 25 ? emp.email.substring(0, 25) + '...' : emp.email)}
+                    ${esc(emp.email.length > 17 ? emp.email.substring(0, 17) + '...' : emp.email)}
                 </div>
             </div>
             <div class="emp-actions">
