@@ -166,16 +166,48 @@ function applyFilters(dateFrom, dateTo) {
 function switchMainTab(view) {
     $('.tab-btn').removeClass('active');
     $(`#mainTab-${view}`).addClass('active');
-    
+
     if (view === 'orders') {
-        currentView = 'cards';
+        // Restore last order sub-view (cards or list)
+        const v = lastOrderView || 'cards';
+        currentView = v;
         $('#tableView').hide();
-        $('#cardsView').show();
-        renderCards();
+        if (v === 'list') {
+            $('#listView').show();
+            $('#cardsView').hide();
+            renderTable();
+        } else {
+            $('#cardsView').show();
+            $('#listView').hide();
+            renderCards();
+        }
     } else {
         currentView = 'table';
         $('#cardsView').hide();
+        $('#listView').hide();
         $('#tableView').show();
+        renderFloorMap();
+    }
+}
+
+// ── Switch sub-view (cards ↔ list) ─────────────────────────────────────────
+function switchView(v) {
+    currentView = v;
+    if (v !== 'table') lastOrderView = v;
+    if (v === 'cards') {
+        $('#cardsView').show();
+        $('#listView').hide();
+        $('#tableView').hide();
+        renderCards();
+    } else if (v === 'list') {
+        $('#listView').show();
+        $('#cardsView').hide();
+        $('#tableView').hide();
+        renderTable();
+    } else if (v === 'table') {
+        $('#tableView').show();
+        $('#cardsView').hide();
+        $('#listView').hide();
         renderFloorMap();
     }
 }
@@ -234,9 +266,9 @@ function renderTable() {
         const oType   = normalizeOrderType(o.order_type || 'takeaway');
         const typeCls = `otype-badge otype-${oType}`;
         const typeLabel = oType === 'dine-in' ? 'Dine-in' : oType === 'delivery' ? 'Delivery' : 'Takeaway';
-        const tableInfo = o.table_number
-            ? `<span class="${typeCls}">T${o.table_number}</span>`
-            : `<span class="${typeCls}">${typeLabel}</span>`;
+        const tableCell = o.table_number
+            ? `<span class="table-num-badge">T${o.table_number}</span>`
+            : `<span class="text-muted" style="font-size:.78rem;color:var(--slate-400)">—</span>`;
         const d = new Date(o.date_created);
         const dateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
         const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -248,7 +280,8 @@ function renderTable() {
                 <div class="order-date">${dateStr}</div>
                 <div class="order-time">${timeStr}</div>
             </td>
-            <td class="hide-sm">${tableInfo}</td>
+            <td class="hide-sm">${tableCell}</td>
+            <td class="hide-sm"><span class="${typeCls}">${typeLabel}</span></td>
             <td class="hide-sm" style="color:var(--slate-500);font-size:.81rem">${esc(o.customer_name || '—')}</td>
             <td><span class="items-badge">${o.item_count ?? (o.items ? o.items.length : '?')}</span></td>
             <td><span class="total-val">₹${fmtNum(o.total_amount)}</span></td>
@@ -308,14 +341,6 @@ function buildPageRange(cur, total) {
     if (cur <= 4) return [1, 2, 3, 4, 5, '…', total];
     if (cur >= total - 3) return [1, '…', total-4, total-3, total-2, total-1, total];
     return [1, '…', cur-1, cur, cur+1, '…', total];
-}
-
-function switchMainTab(tab) {
-    if (tab === 'orders') {
-        switchView(lastOrderView);
-    } else {
-        switchView('table');
-    }
 }
 
 // ── Render Cards ───────────────────────────────────────────────────────────
@@ -480,12 +505,127 @@ function renderFloorMap() {
     }).join(''));
 }
 
+// ── Table Tile Click ↔ Popup ───────────────────────────────────────────────────
 function filterByTable(n) {
-    switchView('list');
-    const q = $('#orderSearch');
-    q.val(`T${n}`);
-    applyFilters();
-    showToast(`Showing orders for Table ${n}`, 'info');
+    openTablePopup(n);
+}
+
+function openTablePopup(n) {
+    window._tblPopupTable = n;
+    const openOrders = allOrders.filter(o => o.status === 'open' && Number(o.table_number) === n);
+    const paidToday  = allOrders.filter(o => o.status === 'paid'
+        && Number(o.table_number) === n
+        && new Date(o.date_created).toDateString() === new Date().toDateString());
+
+    const isOccupied = openOrders.length > 0;
+    const isBilled   = !isOccupied && paidToday.length > 0;
+    const isFree     = !isOccupied && !isBilled;
+
+    // Set header
+    $('#tblPopupName').text(`Table ${n}`);
+    const icon = isOccupied ? '🍽️' : isBilled ? '🧾' : '🪑';
+    const lbl  = isOccupied ? 'Occupied' : isBilled ? 'Billed Today' : 'Free';
+    const lblCls = isOccupied ? 'tbl-status-occupied' : isBilled ? 'tbl-status-billed' : 'tbl-status-free';
+    $('#tblPopupIcon').text(icon);
+    $('#tblPopupStatusLabel').html(`<span class="tbl-status-chip ${lblCls}">${lbl}</span>`);
+
+    const body = $('#tblPopupBody');
+
+    if (isFree) {
+        body.html(`
+            <div class="tbl-popup-empty">
+                <div style="font-size:2.4rem;margin-bottom:10px">🪑</div>
+                <div class="tbl-popup-empty-title">Table is Free</div>
+                <div class="tbl-popup-empty-sub">No active orders for this table.</div>
+            </div>`);
+    } else {
+        const orders = isOccupied ? openOrders : paidToday;
+        body.html(orders.map(o => {
+            const st = o.status || 'paid';
+            const items = o.items || [];
+            const itemList = items.length
+                ? items.slice(0, 5).map(it => `
+                    <div class="tbl-order-line">
+                        <span>${it.quantity}x ${esc(it.product_name || it.name || 'Item')}</span>
+                        <span>₹${fmtNum(it.price * it.quantity)}</span>
+                    </div>`).join('')
+                    + (items.length > 5 ? `<div class="tbl-order-more">+${items.length - 5} more items</div>` : '')
+                : '<div class="tbl-order-more">No item details loaded</div>';
+            const d = new Date(o.date_created);
+            const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+            return `
+                <div class="tbl-order-card" onclick="openPanel(${o.id}); closeTablePopup();">
+                    <div class="tbl-order-card-hdr">
+                        <span class="tbl-order-num">#${esc(o.order_number)}</span>
+                        <span class="status-pill sp-${st}">${st}</span>
+                    </div>
+                    <div class="tbl-order-meta">
+                        <i class="fa-regular fa-clock"></i> ${timeStr}
+                        ${o.customer_name ? `&nbsp;·&nbsp;<i class="fa-regular fa-user"></i> ${esc(o.customer_name)}` : ''}
+                    </div>
+                    <div class="tbl-order-items">${itemList}</div>
+                    <div class="tbl-order-total">
+                        <span>Total</span>
+                        <span class="tbl-total-amt">₹${fmtNum(o.total_amount)}</span>
+                    </div>
+                </div>`;
+        }).join(''));
+    }
+
+    $('#tblPopupBackdrop').addClass('open');
+    $('#tblPopup').addClass('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeTablePopup() {
+    $('#tblPopupBackdrop').removeClass('open');
+    $('#tblPopup').removeClass('open');
+    document.body.style.overflow = '';
+    window._tblPopupTable = null;
+}
+
+// ── New Order Modal ────────────────────────────────────────────────────────────
+function openNewOrderModal(preselectedTable) {
+    // Close table popup if open
+    closeTablePopup();
+
+    // Reset form
+    $('#newOrderCustomer').val('');
+    $('.new-otype-btn').removeClass('active');
+    $('.new-otype-btn[data-type="dine-in"]').addClass('active');
+
+    // Populate table dropdown
+    const maxTable = Math.max(12, ...allOrders.filter(o => o.table_number).map(o => o.table_number));
+    const occupiedTables = new Set(allOrders.filter(o => o.status === 'open' && o.table_number).map(o => o.table_number));
+    const sel = $('#newOrderTable');
+    sel.empty().append('<option value="">— No table —</option>');
+    for (let i = 1; i <= maxTable; i++) {
+        const occ = occupiedTables.has(i);
+        sel.append(`<option value="${i}" ${occ ? 'disabled' : ''}>Table ${i}${occ ? ' (Occupied)' : ''}</option>`);
+    }
+    if (preselectedTable) sel.val(preselectedTable);
+
+    new bootstrap.Modal(document.getElementById('newOrderModal')).show();
+}
+
+function selectNewOrderType(btn) {
+    $('.new-otype-btn').removeClass('active');
+    $(btn).addClass('active');
+    const type = $(btn).data('type');
+    // Hide table row for non dine-in
+    $('#newOrderTableRow').toggle(type === 'dine-in');
+}
+
+function confirmNewOrder() {
+    const customer = $('#newOrderCustomer').val().trim();
+    const type = $('.new-otype-btn.active').data('type') || 'dine-in';
+    const table  = $('#newOrderTable').val();
+    const params = new URLSearchParams();
+    if (customer) params.set('customer', customer);
+    params.set('type', type);
+    if (table) params.set('table', table);
+    bootstrap.Modal.getInstance(document.getElementById('newOrderModal'))?.hide();
+    window.location.href = '/pos?' + params.toString();
 }
 
 // ── Open Detail Panel ──────────────────────────────────────────────────────

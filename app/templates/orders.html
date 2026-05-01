@@ -67,7 +67,8 @@
           <th style="width:16px"></th>
           <th>Order</th>
           <th>Date & Time</th>
-          <th class="hide-sm">Table / Type</th>
+          <th class="hide-sm">Table</th>
+          <th class="hide-sm">Type</th>
           <th class="hide-sm">Customer</th>
           <th>Items</th>
           <th>Total</th>
@@ -92,7 +93,7 @@
   <button class="fab-btn fab-history" onclick="window.location.href='/orders/history'" title="Order History" aria-label="Order History">
     <i class="fa-solid fa-clock-rotate-left"></i>
   </button>
-  <button class="fab-btn fab-new-order" onclick="window.location.href='/pos'" title="New Order" aria-label="New Order">
+  <button class="fab-btn fab-new-order" onclick="openNewOrderModal()" title="New Order" aria-label="New Order">
     <i class="fa-solid fa-plus"></i>
   </button>
 </div>
@@ -222,6 +223,73 @@
 
 <!-- Toast stack -->
 <div class="toast-stack" id="toastStack"></div>
+
+<!-- ════ TABLE ORDER POPUP ════ -->
+<div class="tbl-popup-backdrop" id="tblPopupBackdrop" onclick="closeTablePopup()"></div>
+<div class="tbl-popup" id="tblPopup">
+  <div class="tbl-popup-header">
+    <div class="tbl-popup-title-wrap">
+      <span class="tbl-popup-icon" id="tblPopupIcon">🍽️</span>
+      <div>
+        <div class="tbl-popup-name" id="tblPopupName">Table —</div>
+        <div class="tbl-popup-status" id="tblPopupStatusLabel">—</div>
+      </div>
+    </div>
+    <button class="dp-close" onclick="closeTablePopup()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div id="tblPopupBody" class="tbl-popup-body">
+    <!-- filled by JS -->
+  </div>
+  <div class="tbl-popup-footer">
+    <button class="tbl-popup-new-btn" onclick="openNewOrderModal(window._tblPopupTable)">
+      <i class="fa-solid fa-plus me-1"></i>New Order
+    </button>
+  </div>
+</div>
+
+<!-- ════ NEW ORDER MODAL ════ -->
+<div class="modal fade" id="newOrderModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fa-solid fa-plus me-2"></i>New Order</div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label" style="font-size:.82rem;font-weight:700;color:var(--slate-600)">Customer Name <span style="color:var(--slate-400);font-weight:400">(optional)</span></label>
+          <input type="text" id="newOrderCustomer" class="form-control" placeholder="Walk-in customer…" autocomplete="off">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" style="font-size:.82rem;font-weight:700;color:var(--slate-600)">Order Type</label>
+          <div class="new-order-type-grid" id="newOrderTypeGrid">
+            <button class="new-otype-btn active" data-type="dine-in" onclick="selectNewOrderType(this)">
+              <i class="fa-solid fa-utensils"></i><span>Dine-in</span>
+            </button>
+            <button class="new-otype-btn" data-type="takeaway" onclick="selectNewOrderType(this)">
+              <i class="fa-solid fa-bag-shopping"></i><span>Takeaway</span>
+            </button>
+            <button class="new-otype-btn" data-type="delivery" onclick="selectNewOrderType(this)">
+              <i class="fa-solid fa-motorcycle"></i><span>Delivery</span>
+            </button>
+          </div>
+        </div>
+        <div class="mb-2" id="newOrderTableRow">
+          <label class="form-label" style="font-size:.82rem;font-weight:700;color:var(--slate-600)">Table Number <span style="color:var(--slate-400);font-weight:400">(optional)</span></label>
+          <select id="newOrderTable" class="form-select">
+            <option value="">— No table —</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-modal-primary" onclick="confirmNewOrder()">
+          <i class="fa-solid fa-bolt me-1"></i>Go to POS
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ── Filter Bottom Sheet ── -->
 <div class="filter-overlay" id="filterOverlay" onclick="closeFilterSheet()"></div>

@@ -55,9 +55,34 @@ window.initPOS = initPOS;
 
 // Boot on first load
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initPOS);
+  document.addEventListener('DOMContentLoaded', () => { initPOS(); applyURLParams(); });
 } else {
   initPOS();
+  applyURLParams();
+}
+
+/* ─────────────────────────────────────────
+   Apply URL query params (table, type, customer)
+   Passed when coming from Orders → New Order modal
+───────────────────────────────────────── */
+function applyURLParams() {
+  const params = new URLSearchParams(window.location.search);
+  const tableParam = params.get('table');
+  const typeParam  = params.get('type');
+
+  if (typeParam) {
+    selectedOrderType = typeParam;
+    syncOrderTypeButtons();
+  }
+
+  if (tableParam) {
+    const n = parseInt(tableParam, 10);
+    if (!isNaN(n) && n > 0) {
+      selectedTable = n;
+      // Rebuild chips so the correct one is highlighted
+      buildTableChips();
+    }
+  }
 }
 
 /* ─────────────────────────────────────────
