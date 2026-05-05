@@ -9,9 +9,9 @@ from app.api.routers.settings import router as settings_router
 
 router = APIRouter()
 
-router.include_router(page_router)
 router.include_router(auth_router, prefix="/auth")
 router.include_router(employee_router, prefix="/employees")
 router.include_router(order_router, prefix="/orders")
 router.include_router(product_router, prefix="/products")
 router.include_router(settings_router, prefix="/settings")
+router.include_router(page_router)

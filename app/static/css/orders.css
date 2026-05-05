@@ -432,35 +432,144 @@
 .pagin-btn.active { background: var(--brand-600); color: #fff; border-color: var(--brand-600); font-weight: 700; }
 .pagin-btn:disabled { opacity: .35; cursor: default; }
 
-/* ── Empty state ── */
-.empty-state {
-    display: flex;
+/* ── Empty state — Premium Card UI ── */
+.empty-state-container {
+    display: none; /* Controlled by JS */
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 64px 24px;
+    padding: 0px 20px;
+    padding-bottom: 30px;
     flex: 1;
+    animation: spaEnter .4s var(--ease-out) both;
 }
-.empty-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: var(--slate-100);
+
+.empty-state-card {
+    background: var(--white);
+    border-radius: 28px;
+    border: 1px solid var(--slate-150);
+    box-shadow: 
+        0 10px 25px -5px rgba(15, 23, 42, 0.04),
+        0 8px 10px -6px rgba(15, 23, 42, 0.04);
+    padding: 30px 32px;
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform .3s var(--ease-spring), box-shadow .3s ease;
+}
+
+.empty-state-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -12px rgba(15, 23, 42, 0.1);
+}
+
+.esc-icon-wrap {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    margin-bottom: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    color: var(--slate-300);
-    margin-bottom: 14px;
 }
-.empty-title {
+
+.esc-icon-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--brand-50) 0%, #fff 100%);
+    border-radius: 24px;
+    transform: rotate(-8deg);
+    transition: transform .4s var(--ease-spring), background .3s ease;
+    border: 1px solid var(--brand-100);
+}
+
+.empty-state-card:hover .esc-icon-bg {
+    transform: rotate(0deg) scale(1.1);
+    background: var(--brand-50);
+}
+
+.esc-icon {
+    position: relative;
+    font-size: 2.4rem;
+    color: var(--brand-500);
+    z-index: 1;
+    filter: drop-shadow(0 4px 6px rgba(99, 102, 241, 0.2));
+}
+
+.esc-title {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--slate-600);
-    margin-bottom: 5px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--slate-900);
+    margin-bottom: 12px;
+    letter-spacing: -0.3px;
 }
-.empty-sub { font-size: 0.8rem; color: var(--slate-400); }
+
+.esc-text {
+    font-size: 0.88rem;
+    color: var(--slate-500);
+    max-width: 320px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.esc-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
+
+.esc-btn-primary, .esc-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s var(--ease-out);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.esc-btn-primary {
+    background: var(--brand-600);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    flex: 1;
+    min-width: 140px;
+    justify-content: center;
+}
+
+.esc-btn-primary:hover {
+    background: var(--brand-700);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+}
+
+.esc-btn-primary:active { transform: translateY(0); }
+
+.esc-btn-secondary {
+    background: var(--white);
+    color: var(--slate-600);
+    border: 1px solid var(--slate-200);
+    flex: 1;
+    min-width: 140px;
+    justify-content: center;
+}
+
+.esc-btn-secondary:hover {
+    background: var(--slate-50);
+    border-color: var(--slate-300);
+    color: var(--slate-900);
+    transform: translateY(-2px);
+}
+.esc-btn-secondary:active { transform: translateY(0); }
 
 /* ── DETAIL PANEL ── */
 .panel-backdrop {
@@ -1810,4 +1919,4 @@
     transition: all .17s;
 }
 .act-btn.view:hover   { background: var(--brand-50);   border-color: var(--brand-200); color: var(--brand-600); }
-.act-btn.delete:hover { background: var(--rose-bg);     border-color: #fecdd3;          color: var(--rose); }
+.act-btn.delete:hover { background: var(--rose-bg);     border-color: #fecdd3;          color: var(--rose); }

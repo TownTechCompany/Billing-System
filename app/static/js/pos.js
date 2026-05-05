@@ -6,6 +6,8 @@ if (typeof selectedPayment === 'undefined') var selectedPayment = 'Cash';
 if (typeof sheetExpanded   === 'undefined') var sheetExpanded   = false;
 if (typeof selectedTable   === 'undefined') var selectedTable   = null;   // null = no table
 if (typeof selectedOrderType === 'undefined') var selectedOrderType = 'dine-in';
+if (typeof editOrderId       === 'undefined') var editOrderId       = null;
+if (typeof editOrderNum      === 'undefined') var editOrderNum      = null;
 
 // Number of tables to generate (can be adjusted)
 var TABLE_COUNT = 15;
@@ -48,6 +50,9 @@ function initPOS() {
   syncOrderTypeButtons();
 
   renderCart();
+
+  // Ensure URL params are evaluated even when navigating via SPA router
+  applyURLParams();
 }
 
 // Expose for SPA router
@@ -55,10 +60,9 @@ window.initPOS = initPOS;
 
 // Boot on first load
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => { initPOS(); applyURLParams(); });
+  document.addEventListener('DOMContentLoaded', () => { initPOS(); });
 } else {
   initPOS();
-  applyURLParams();
 }
 
 /* ─────────────────────────────────────────
@@ -79,10 +83,77 @@ function applyURLParams() {
     const n = parseInt(tableParam, 10);
     if (!isNaN(n) && n > 0) {
       selectedTable = n;
-      // Rebuild chips so the correct one is highlighted
       buildTableChips();
     }
   }
+
+  const editId = params.get('edit_order_id');
+  if (editId) {
+    loadOrderForEdit(editId);
+  } else {
+    editOrderId = null;
+    editOrderNum = null;
+    const titleEl = document.querySelector('.top-bar-page-title');
+    if (titleEl) titleEl.innerHTML = 'New Order';
+  }
+}
+
+/* ─────────────────────────────────────────
+   Load Order for Edit
+───────────────────────────────────────── */
+function loadOrderForEdit(id) {
+  fetch(`/orders/get-order-detail/${id}`)
+    .then(r => r.json())
+    .then(res => {
+      if (!res.data) return;
+      const order = res.data;
+      
+      editOrderId = order.id;
+      editOrderNum = order.order_number;
+      
+      // Update UI title
+      const titleEl = document.querySelector('.top-bar-page-title');
+      if (titleEl) {
+        titleEl.innerHTML = `Editing <span style="color:var(--brand-500);font-weight:800">#${editOrderNum}</span>`;
+      }
+      
+      // Set table & type
+      if (order.table_number) selectedTable = parseInt(order.table_number);
+      if (order.order_type) selectedOrderType = order.order_type;
+      buildTableChips();
+      syncOrderTypeButtons();
+      
+      // Populate cart
+      cart = {};
+      if (order.items && order.items.length) {
+        order.items.forEach(item => {
+          cart[item.product_id] = {
+            id: item.product_id,
+            name: item.product_name,
+            price: item.price,
+            qty: item.quantity
+          };
+          
+          // Update card UI if visible
+          const card = document.querySelector(`.product-card[data-id="${item.product_id}"]`);
+          if (card) {
+            updateCardQtyDisplay(card, item.quantity);
+            card.classList.add('in-cart');
+            card.setAttribute('data-qty', String(item.quantity));
+          }
+        });
+      }
+      
+      renderCart();
+      
+      // Expand cart by default for edit mode
+      sheetExpanded = false; // ensure toggle expands it
+      toggleCartExpand();
+    })
+    .catch(err => {
+      console.error('[POS] Failed to load order for edit:', err);
+      showToast('Failed to load order details for editing', 'error');
+    });
 }
 
 /* ─────────────────────────────────────────
@@ -212,7 +283,9 @@ function renderCart() {
   if (proceedBtn) {
     proceedBtn.disabled = items.length === 0;
     if (items.length === 0) {
-      proceedBtn.innerHTML = 'Place Order <i class="fa-solid fa-bolt proceed-arrow"></i>';
+      proceedBtn.innerHTML = (editOrderId ? 'Update Order' : 'Place Order') + ' <i class="fa-solid fa-bolt proceed-arrow"></i>';
+    } else {
+      proceedBtn.innerHTML = (editOrderId ? 'Update Order' : 'Place Order') + ' <i class="fa-solid fa-bolt proceed-arrow"></i>';
     }
   }
 
@@ -266,25 +339,32 @@ function collapseSheet() {
    Checkout
 ───────────────────────────────────────── */
 function placeorder() {
+  const savedId = editOrderId;
   const items = Object.values(cart);
   if (!items.length) return;
 
+  const isEdit = !!savedId;
   const payload = {
-    items:          items.map(i => ({ product_id: i.id, quantity: i.qty, price: i.price })),
+    items:          items.map(i => ({ product_id: i.id, product_name: i.name, quantity: i.qty, price: i.price })),
     payment_method: selectedPayment,
     order_type:     selectedOrderType,
     table_number:   selectedTable || null,
-    date_created:   new Date().toISOString(),
   };
+  if (!isEdit) {
+    payload.date_created = new Date().toISOString();
+  }
 
   const btn = document.getElementById('proceedBtn');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Placing order…';
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${isEdit ? 'Updating' : 'Placing'} order…`;
   }
 
-  fetch('/orders/create-order', {
-    method: 'POST',
+  const url = isEdit ? `/orders/update-order/${savedId}` : '/orders/create-order';
+  const method = isEdit ? 'PATCH' : 'POST';
+
+  fetch(url, {
+    method: method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   })
@@ -293,16 +373,23 @@ function placeorder() {
       return r.json();
     })
     .then(data => {
-      const orderNum = data.data?.order_number || '';
-      showToast('Order #' + orderNum + ' placed successfully! ✓', 'success');
+      const orderNum = isEdit ? editOrderNum : (data.data?.order_number || '');
+      showToast('Order #' + orderNum + (isEdit ? ' updated successfully! ✓' : ' placed successfully! ✓'), 'success');
       clearAllCart();
+      
+      // If editing, navigate back to the order details page
+      if (isEdit) {
+        setTimeout(() => {
+          window.__spa.navigate(`/orders/${savedId}`);
+        }, 1000);
+      }
     })
     .catch(err => {
       console.error('[POS] Order failed:', err);
-      showToast('Order failed. Please try again.', 'error');
+      showToast((isEdit ? 'Update' : 'Order') + ' failed. Please try again.', 'error');
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = 'Place Order <i class="fa-solid fa-bolt proceed-arrow"></i>';
+        btn.innerHTML = (isEdit ? 'Update Order' : 'Place Order') + ' <i class="fa-solid fa-bolt proceed-arrow"></i>';
       }
     });
 }
@@ -323,6 +410,19 @@ function clearAllCart() {
 
   // Reset order type
   syncOrderTypeButtons();
+
+  // Clear edit mode
+  editOrderId = null;
+  editOrderNum = null;
+  const titleEl = document.querySelector('.top-bar-page-title');
+  if (titleEl) titleEl.innerHTML = 'New Order';
+
+  // Clear URL params
+  const url = new URL(window.location);
+  url.searchParams.delete('edit_order_id');
+  url.searchParams.delete('table');
+  url.searchParams.delete('type');
+  window.history.replaceState({}, '', url);
 
   renderCart();
 }

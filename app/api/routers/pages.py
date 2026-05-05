@@ -122,3 +122,19 @@ async def employees_page(request: Request):
         log_writer_.log_exception("Pages", "employees_page", e)
         raise HTTPException(500, "Error loading employees page")
 
+@router.get("/orders/{order_id}", response_class=HTMLResponse)
+async def order_details_page(request: Request, order_id: int, db: Session = Depends(get_db)):
+    try:
+        svc = OrderService(db)
+        order = svc.get_order_service(order_id)
+        if not order:
+            raise HTTPException(404, "Order not found")
+        return templates.TemplateResponse("order_details.html", {
+            "request": request,
+            "active_page": "order_details",
+            "order": order
+        })
+    except Exception as e:
+        log_writer_.log_exception("Pages", "order_details_page", e)
+        raise HTTPException(500, f"Error loading order details: {str(e)}")
+

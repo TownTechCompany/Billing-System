@@ -71,11 +71,12 @@
 
   /* ── Lazy-load a CSS <link> (once per href) ── */
   function ensureCSS(href) {
-    if (loadedCSS.has(href)) return Promise.resolve();
-    loadedCSS.add(href);
+    const absHref = new URL(href, location.origin).href;
+    if (loadedCSS.has(absHref)) return Promise.resolve();
+    loadedCSS.add(absHref);
     return new Promise(resolve => {
       const link = document.createElement('link');
-      link.rel = 'stylesheet'; link.href = href;
+      link.rel = 'stylesheet'; link.href = absHref;
       link.onload = link.onerror = resolve;
       document.head.appendChild(link);
     });
@@ -83,11 +84,12 @@
 
   /* ── Lazy-load a script (once per src) ── */
   function ensureScript(src) {
-    if (loadedJS.has(src)) return Promise.resolve();
-    loadedJS.add(src);
+    const absSrc = new URL(src, location.origin).href;
+    if (loadedJS.has(absSrc)) return Promise.resolve();
+    loadedJS.add(absSrc);
     return new Promise(resolve => {
       const s = document.createElement('script');
-      s.src = src;
+      s.src = absSrc;
       s.onload = s.onerror = resolve;
       document.body.appendChild(s);
     });
@@ -106,8 +108,15 @@
   /* ── Update top-bar page title ── */
   function updateTitle(path) {
     const titleEl = qs('.top-bar-page-title');
-    if (titleEl) titleEl.textContent = PAGE_TITLES[path] || 'BillPOS';
-    document.title = (PAGE_TITLES[path] || 'BillPOS') + ' — BillPOS';
+    let title = PAGE_TITLES[path];
+    
+    // Handle dynamic order details path
+    if (!title && path.startsWith('/orders/')) {
+      title = 'Order Details';
+    }
+    
+    if (titleEl) titleEl.textContent = title || 'BillPOS';
+    document.title = (title || 'BillPOS') + ' — BillPOS';
   }
 
   /* ── Sync top-bar back button for settings sub-pages ── */
@@ -116,21 +125,34 @@
     '/settings/receipt', '/settings/tables', '/settings/data',
   ];
 
-  function syncTopBar(path) {
-    const topBarLeft = qs('.top-bar-left');
-    if (!topBarLeft) return;
+  /* Regex for dynamic order-detail path: /orders/123 */
+  const ORDER_DETAIL_RE = /^\/orders\/\d+(\/.*)?$/;
 
-    if (SETTINGS_SUB_PAGES.includes(path)) {
-      /* Show back button if not already present */
-      if (!topBarLeft.querySelector('.top-bar-back-btn')) {
-        topBarLeft.innerHTML = `
-          <a href="/settings" class="top-bar-back-btn" data-spa-link title="Back to Settings">
-            <i class="fa-solid fa-chevron-left"></i>
-          </a>`;
-      }
+  function syncTopBar(path) {
+    const topBar   = qs('.top-app-bar');
+    const topBarLeft = qs('.top-bar-left');
+    const mc       = qs('.main-content');
+
+    if (ORDER_DETAIL_RE.test(path)) {
+      /* ── Order Details page: hide global top bar, lock main-content scroll ── */
+      if (topBar) topBar.style.display = 'none';
+      if (mc) { mc.style.overflow = 'hidden'; mc.style.paddingBottom = '0'; }
     } else {
-      /* Remove back button on all other pages */
-      topBarLeft.innerHTML = '';
+      /* ── All other pages: restore global top bar ── */
+      if (topBar) topBar.style.display = '';
+      if (mc) { mc.style.overflow = ''; mc.style.paddingBottom = ''; }
+
+      if (!topBarLeft) return;
+      if (SETTINGS_SUB_PAGES.includes(path)) {
+        if (!topBarLeft.querySelector('.top-bar-back-btn')) {
+          topBarLeft.innerHTML = `
+            <a href="/settings" class="top-bar-back-btn" data-spa-link title="Back to Settings">
+              <i class="fa-solid fa-chevron-left"></i>
+            </a>`;
+        }
+      } else {
+        topBarLeft.innerHTML = '';
+      }
     }
   }
 
@@ -145,8 +167,10 @@
         // Active if path is settings, employees, or any settings sub-page
         active = path === '/employees' || path === '/settings' || path.startsWith('/settings/');
       } else {
-        active = (path === '/' || path === '/dashboard') && (href === '/' || href === '/dashboard')
-                 || (path !== '/' && path !== '/dashboard' && href === path);
+        const isDashboard = (path === '/' || path === '/dashboard') && (href === '/' || href === '/dashboard');
+        const isExact = (href === path);
+        const isOrders = (path.startsWith('/orders') && href === '/orders');
+        active = isDashboard || isExact || isOrders;
       }
       
       item.classList.toggle('active', active);
@@ -176,10 +200,12 @@
 
   /* ── Core navigate function ── */
   async function navigate(url, pushToHistory = true) {
-    const path = new URL(url, location.origin).pathname;
+    const urlObj = new URL(url, location.origin);
+    const path = urlObj.pathname;
+    const fullPath = urlObj.pathname + urlObj.search;
 
     /* Don't re-navigate to same page */
-    if (path === location.pathname && pushToHistory) return;
+    if (fullPath === location.pathname + location.search && pushToHistory) return;
 
     /* Close any open layout overlays */
     if (typeof closeMoreDropdown === 'function') closeMoreDropdown();
@@ -223,22 +249,26 @@
         await ensureScript(src);
       }
 
+      if (pushToHistory) {
+        history.pushState({ path: fullPath }, '', fullPath);
+      }
+
       /* Re-init page logic for scripts already loaded (second visit) */
-      const pageSrc = scripts.find(s =>
-        !s.includes('bootstrap') && !s.includes('jquery') &&
-        !s.includes('datatables') && !s.includes('sweetalert2') &&
-        !s.includes('script.js') && !s.includes('spa.js'));
-      if (pageSrc && loadedJS.has(pageSrc)) {
-        /* Script already loaded: call its init if available */
-        reinitPage(path);
+      const pageSrc = scripts.find(s => {
+        const abs = new URL(s, location.origin).href;
+        return !abs.includes('bootstrap') && !abs.includes('jquery') &&
+               !abs.includes('datatables') && !abs.includes('sweetalert2') &&
+               !abs.includes('script.js') && !abs.includes('spa.js');
+      });
+      if (pageSrc) {
+        const absPageSrc = new URL(pageSrc, location.origin).href;
+        if (loadedJS.has(absPageSrc)) {
+          reinitPage(path);
+        }
       }
 
       /* Execute inline scripts */
       inlineScripts.forEach(execInline);
-
-      if (pushToHistory) {
-        history.pushState({ path }, '', path);
-      }
 
     } catch (err) {
       console.error('[SPA] Navigation failed:', err);
@@ -256,14 +286,20 @@
       } else if (path === '/products') {
         if (typeof ProductApp !== 'undefined') ProductApp.init();
       } else if (path === '/orders') {
-        if (typeof loadOrders === 'function') loadOrders();
-        if (typeof startLiveClock === 'function') startLiveClock();
+        if (typeof initOrders === 'function') initOrders();
+        else {
+          if (typeof loadOrders === 'function') loadOrders();
+          if (typeof initTypeChips === 'function') initTypeChips();
+          if (typeof startLiveClock === 'function') startLiveClock();
+        }
+      } else if (ORDER_DETAIL_RE.test(path)) {
+        if (typeof initOrderDetails === 'function') initOrderDetails();
       } else if (path === '/pos') {
         if (typeof initPOS === 'function') initPOS();
       } else if (path === '/employees') {
         if (typeof loadEmployees === 'function') loadEmployees();
         if (typeof initSearch === 'function') initSearch();
-      } else if (path === '/settings') {
+      } else if (path === '/settings' || path.startsWith('/settings/')) {
         /* Settings loads from API — re-fetch for real-time visual sync if needed */
         if (typeof fetch === 'function') {
           fetch('/settings/get-settings').then(r => r.json()).then(res => {
@@ -392,15 +428,16 @@
   });
 
   /* ── Initial page state into history ── */
-  history.replaceState({ path: location.pathname }, '', location.pathname);
+  const initFullPath = location.pathname + location.search;
+  history.replaceState({ path: initFullPath }, '', initFullPath);
 
   /* Mark all global CSS as already loaded (base.html injects them) */
   qsa('head link[rel="stylesheet"]').forEach(l => {
-    if (l.href) loadedCSS.add(l.getAttribute('href') || l.href);
+    if (l.href) loadedCSS.add(new URL(l.getAttribute('href') || l.href, location.origin).href);
   });
   /* Mark global scripts as already loaded */
   qsa('script[src]').forEach(s => {
-    if (s.src) loadedJS.add(s.getAttribute('src') || s.src);
+    if (s.src) loadedJS.add(new URL(s.getAttribute('src') || s.src, location.origin).href);
   });
 
   /* ── Boot ── */

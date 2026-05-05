@@ -1,37 +1,39 @@
-/* ════════════════════════════════════════════════
-   orders.js — Order Management
-   ════════════════════════════════════════════════ */
-
-'use strict';
+if (window.ORDERS_JS_LOADED) {
+    if (typeof initOrders === 'function') initOrders();
+}
+window.ORDERS_JS_LOADED = true;
 
 // ── State ──────────────────────────────────────────────────────────────────
-let allOrders    = [];
-let filteredOrders = [];
-let allProducts  = [];
-let currentView  = 'cards';
-let lastOrderView = 'cards';
-let activeFilter = 'all';
-let activeTypeFilter = 'all';
-let currentPage  = 1;
-const PAGE_SIZE  = 15;
+var allOrders    = [];
+var filteredOrders = [];
+var allProducts  = [];
+var currentView  = 'cards';
+var lastOrderView = 'cards';
+var activeFilter = 'all';
+var activeTypeFilter = 'all';
+var currentPage  = 1;
+var PAGE_SIZE  = 15;
 
-let currentOrderId   = null;
-let currentOrderData = null;
-let pendingVoidId    = null;
-let pendingDeleteId  = null;
-let pendingDeleteNum = null;
-let checkoutPayMethod = 'Cash';
-let pinBuffer = '';
+var currentOrderId   = null;
+var currentOrderData = null;
+var pendingVoidId    = null;
+var pendingDeleteId  = null;
+var pendingDeleteNum = null;
+var checkoutPayMethod = 'Cash';
+var pinBuffer = '';
 
-// ── Init ───────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+function initOrders() {
     initTypeChips();
     initDatePicker();
     buildPinPad();
     initPayMethodBtns();
     loadOrders();
     loadProducts();
-});
+    if (typeof startLiveClock === 'function') startLiveClock();
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', initOrders);
 
 // ── Load Orders ────────────────────────────────────────────────────────────
 function loadOrders() {
@@ -79,7 +81,6 @@ function calcStats() {
     }
 
     const todayOrders = allOrders.filter(o => new Date(o.date_created).toDateString() === today);
-    // setText('headerOrderCount', `${todayOrders.length} order${todayOrders.length !== 1 ? 's' : ''} today`);
     $('#headerOrderCount').text(todayOrders.length);
 }
 
@@ -95,7 +96,7 @@ function initTypeChips() {
     });
 }
 
-// ── Search (Disabled in new design) ─────────────────────────────────────────
+// ── Search ─────────────────────────────────────────────────────────────────
 function initSearch() {}
 
 // ── Date picker ────────────────────────────────────────────────────────────
@@ -119,7 +120,6 @@ function initDatePicker() {
 function applyFilters(dateFrom, dateTo) {
     const q = ($('#orderSearch').val() || '').toLowerCase().trim();
     
-    // Auto-detect from input if not passed
     if (!dateFrom || !dateTo) {
         const dp = document.querySelector("#orderDateRange")?._flatpickr;
         if (dp && dp.selectedDates.length === 2) {
@@ -131,17 +131,12 @@ function applyFilters(dateFrom, dateTo) {
     }
 
     filteredOrders = allOrders.filter(o => {
-        // status
         if (activeFilter !== 'all' && (o.status || 'paid') !== activeFilter) return false;
-        
-        // type
-        if (activeTypeFilter !== 'all' && (o.order_type || 'dine-in') !== activeTypeFilter) return false;
-        // date range
+        if (activeTypeFilter !== 'all' && normalizeOrderType(o.order_type) !== activeTypeFilter) return false;
         if (dateFrom && dateTo) {
             const d = new Date(o.date_created);
             if (d < dateFrom || d > dateTo) return false;
         }
-        // search
         if (q) {
             const hay = [o.order_number, o.customer_name, o.payment_method,
                          o.table_number, o.status, String(o.total_amount)].join(' ').toLowerCase();
@@ -149,13 +144,6 @@ function applyFilters(dateFrom, dateTo) {
         }
         return true;
     });
-
-    // Update Filter UI status (Elements removed in new design, safe call)
-    const hasRange = dateFrom && dateTo;
-    $('#filterDot').css('display', hasRange ? 'block' : 'none');
-    $('#filterBtn').toggleClass('active', !!hasRange);
-
-    // headerOrderCount removed from HTML
 
     if (currentView === 'cards') renderCards();
     else if (currentView === 'list') renderTable();
@@ -168,10 +156,10 @@ function switchMainTab(view) {
     $(`#mainTab-${view}`).addClass('active');
 
     if (view === 'orders') {
-        // Restore last order sub-view (cards or list)
         const v = lastOrderView || 'cards';
         currentView = v;
         $('#tableView').hide();
+        $('.filter-chips-wrapper').show();
         if (v === 'list') {
             $('#listView').show();
             $('#cardsView').hide();
@@ -186,6 +174,7 @@ function switchMainTab(view) {
         $('#cardsView').hide();
         $('#listView').hide();
         $('#tableView').show();
+        $('.filter-chips-wrapper').hide();
         renderFloorMap();
     }
 }
@@ -198,16 +187,19 @@ function switchView(v) {
         $('#cardsView').show();
         $('#listView').hide();
         $('#tableView').hide();
+        $('.filter-chips-wrapper').show();
         renderCards();
     } else if (v === 'list') {
         $('#listView').show();
         $('#cardsView').hide();
         $('#tableView').hide();
+        $('.filter-chips-wrapper').show();
         renderTable();
     } else if (v === 'table') {
         $('#tableView').show();
         $('#cardsView').hide();
         $('#listView').hide();
+        $('.filter-chips-wrapper').hide();
         renderFloorMap();
     }
 }
@@ -225,26 +217,10 @@ function closeFilterSheet() {
     document.body.style.overflow = '';
 }
 
-function resetAllFilters() {
-    activeFilter = 'all';
-    $('#statusChips .chip').removeClass('active');
-    $('#statusChips .chip[data-filter="all"]').addClass('active');
-    
-    $('#orderSearch').val('');
-    
-    const dp = document.querySelector("#orderDateRange")?._flatpickr;
-    if (dp) dp.clear();
-    
-    currentPage = 1;
-    applyFilters();
-    closeFilterSheet();
-}
-
 // ── Render table ───────────────────────────────────────────────────────────
 function renderTable() {
     const tbody = $('#ordersBody');
     const empty = $('#emptyState');
-
     const total = filteredOrders.length;
     const start = (currentPage - 1) * PAGE_SIZE;
     const page  = filteredOrders.slice(start, start + PAGE_SIZE);
@@ -263,7 +239,7 @@ function renderTable() {
         const pillCls = `status-pill sp-${status}`;
         const pMethod = (o.payment_method || 'cash').toLowerCase().replace('/', '').replace(' ', '');
         const payCls  = `status-pill status-${pMethod}`;
-        const oType   = normalizeOrderType(o.order_type || 'takeaway');
+        const oType   = normalizeOrderType(o.order_type);
         const typeCls = `otype-badge otype-${oType}`;
         const typeLabel = oType === 'dine-in' ? 'Dine-in' : oType === 'delivery' ? 'Delivery' : 'Takeaway';
         const tableCell = o.table_number
@@ -273,7 +249,7 @@ function renderTable() {
         const dateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
         const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
-        return `<tr data-id="${o.id}" onclick="openPanel(${o.id})">
+        return `<tr data-id="${o.id}" onclick="window.__spa.navigate('/orders/${o.id}')">
             <td><span class="${dotCls}" style="display:block;width:8px;height:8px;border-radius:50%;margin:auto"></span></td>
             <td><span class="order-num">${esc(o.order_number)}</span></td>
             <td>
@@ -289,8 +265,9 @@ function renderTable() {
             <td><span class="${pillCls}">${status}</span></td>
             <td class="text-end" onclick="event.stopPropagation()">
                 <div class="action-btn-group" style="justify-content:flex-end">
-                    <button class="act-btn view"   title="View / Edit"   onclick="openPanel(${o.id})"><i class="fa-regular fa-pen-to-square"></i></button>
-                    <button class="act-btn delete" title="Delete order"  onclick="openDeleteModal(${o.id},'${esc(o.order_number)}')"><i class="fa-regular fa-trash-can"></i></button>
+                    <button class="act-btn view" title="View Details" onclick="window.__spa.navigate('/orders/${o.id}')"><i class="fa-regular fa-eye"></i></button>
+                    ${status === 'open' ? `<button class="act-btn edit" title="Edit order" onclick="editOrder(${o.id})"><i class="fa-regular fa-pen-to-square"></i></button>` : ''}
+                    <button class="act-btn delete" title="Delete order" onclick="openDeleteModal(${o.id},'${esc(o.order_number)}')"><i class="fa-regular fa-trash-can"></i></button>
                 </div>
             </td>
         </tr>`;
@@ -299,15 +276,10 @@ function renderTable() {
     renderPagination(total);
 }
 
-// ── Pagination ─────────────────────────────────────────────────────────────
 function renderPagination(total) {
     const totalPages = Math.ceil(total / PAGE_SIZE);
-    const start = Math.min((currentPage - 1) * PAGE_SIZE + 1, total);
-    const end   = Math.min(currentPage * PAGE_SIZE, total);
-
     const btns = $('#paginBtns');
     btns.empty();
-
     if (totalPages <= 1) return;
 
     const prev = makeEl('button', 'pagin-btn', '<i class="fa-solid fa-chevron-left"></i>');
@@ -315,7 +287,6 @@ function renderPagination(total) {
     prev.onclick = () => { currentPage--; renderTable(); };
     btns.append(prev);
 
-    // Show max 5 page numbers
     const pages = buildPageRange(currentPage, totalPages);
     for (let i = 0; i < pages.length; i++) {
         const p = pages[i];
@@ -347,27 +318,26 @@ function buildPageRange(cur, total) {
 function renderCards() {
     const grid  = $('#ordersCardGrid');
     const empty = $('#emptyStateCards');
-
     const total = filteredOrders.length;
     const start = (currentPage - 1) * PAGE_SIZE;
     const page  = filteredOrders.slice(start, start + PAGE_SIZE);
 
     if (total === 0) {
         grid.empty();
+        grid.hide();
         empty.css('display', 'flex');
         renderCardPagination(0);
         return;
     }
     empty.hide();
+    grid.show();
 
     grid.html(page.map(o => {
         const status    = o.status || 'paid';
-        const oType     = normalizeOrderType(o.order_type || 'dine-in');
+        const oType     = normalizeOrderType(o.order_type);
         const typeLabel = oType.toUpperCase();
-        
         const d       = new Date(o.date_created);
         const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
-        
         const items   = o.items || [];
 
         const lineItemsHtml = items.map(item => {
@@ -376,12 +346,12 @@ function renderCards() {
             const name  = esc(item.product_name || item.name || 'Item');
             return `<div class="oc-line-item">
                 <span class="oc-line-name">${qty}x ${name}</span>
-                <span class="oc-line-price">$${fmtNum(price * qty)}</span>
+                <span class="oc-line-price">₹${fmtNum(price * qty)}</span>
             </div>`;
         }).join('');
 
         return `
-        <div class="order-card" data-status="${status}" data-id="${o.id}" onclick="openPanel(${o.id})">
+        <div class="order-card" data-status="${status}" data-id="${o.id}" onclick="window.__spa.navigate('/orders/${o.id}')">
           <div class="oc-body">
             <div class="oc-header">
               <div class="oc-id-block">
@@ -392,7 +362,6 @@ function renderCards() {
                 <span class="oc-status-badge oc-status-${status}">${status}</span>
               </div>
             </div>
-
             <div class="oc-time-row">
               <i class="fa-regular fa-clock"></i>
               <span>${timeStr}</span>
@@ -401,23 +370,22 @@ function renderCards() {
               <span class="oc-time-sep">•</span>
               <span class="oc-type-label">${typeLabel}</span>
             </div>
-
             <div class="oc-created-by">
               <i class="fa-regular fa-user"></i>
               <span>Served by <span class="oc-creator-name">${esc(o.served_by || 'Admin')}</span></span>
             </div>
-
             <div class="oc-line-items">${lineItemsHtml}</div>
-
             <hr class="oc-dashed-divider">
-
             <div class="oc-footer" onclick="event.stopPropagation()">
-              <button class="oc-del-btn" onclick="openDeleteModal(${o.id},'${esc(o.order_number)}')" title="Delete order">
-                <i class="fa-regular fa-trash-can"></i>
-              </button>
+              <div style="display:flex;gap:8px">
+                ${status === 'open' ? `<button class="oc-del-btn" onclick="editOrder(${o.id})" title="Edit order" style="color:#6366f1;border-color:rgba(99,102,241,.3)"><i class="fa-regular fa-pen-to-square"></i></button>` : ''}
+                <button class="oc-del-btn" onclick="openDeleteModal(${o.id},'${esc(o.order_number)}')" title="Delete order">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
               <div class="oc-total-block">
                 <div class="oc-total-label">TOTAL AMOUNT</div>
-                <div class="oc-total-val">$${fmtNum(o.total_amount)}</div>
+                <div class="oc-total-val">₹${fmtNum(o.total_amount)}</div>
               </div>
             </div>
           </div>
@@ -425,18 +393,6 @@ function renderCards() {
     }).join(''));
 
     renderCardPagination(total);
-
-    // Close all dropdowns on outside click
-    $(document).off('click.carddropdown').on('click.carddropdown', function() {
-        $('.oc-dropdown').removeClass('open');
-    });
-}
-
-function toggleCardMenu(btn) {
-    const dd = $(btn).find('.oc-dropdown');
-    const isOpen = dd.hasClass('open');
-    $('.oc-dropdown').removeClass('open'); // close all
-    if (!isOpen) dd.addClass('open');
 }
 
 function renderCardPagination(total) {
@@ -484,7 +440,6 @@ function renderFloorMap() {
                                       && new Date(o.date_created).toDateString() === new Date().toDateString())
                                    .map(o => o.table_number));
 
-    // Get max table number from orders or default 12
     const maxTable = Math.max(12, ...allOrders.filter(o => o.table_number).map(o => o.table_number));
     const grid = $('#tableGrid');
 
@@ -505,13 +460,11 @@ function renderFloorMap() {
     }).join(''));
 }
 
-// ── Table Tile Click ↔ Popup ───────────────────────────────────────────────────
 function filterByTable(n) {
     openTablePopup(n);
 }
 
 function openTablePopup(n) {
-    window._tblPopupTable = n;
     const openOrders = allOrders.filter(o => o.status === 'open' && Number(o.table_number) === n);
     const paidToday  = allOrders.filter(o => o.status === 'paid'
         && Number(o.table_number) === n
@@ -521,7 +474,6 @@ function openTablePopup(n) {
     const isBilled   = !isOccupied && paidToday.length > 0;
     const isFree     = !isOccupied && !isBilled;
 
-    // Set header
     $('#tblPopupName').text(`Table ${n}`);
     const icon = isOccupied ? '🍽️' : isBilled ? '🧾' : '🪑';
     const lbl  = isOccupied ? 'Occupied' : isBilled ? 'Billed Today' : 'Free';
@@ -530,7 +482,6 @@ function openTablePopup(n) {
     $('#tblPopupStatusLabel').html(`<span class="tbl-status-chip ${lblCls}">${lbl}</span>`);
 
     const body = $('#tblPopupBody');
-
     if (isFree) {
         body.html(`
             <div class="tbl-popup-empty">
@@ -554,7 +505,7 @@ function openTablePopup(n) {
             const d = new Date(o.date_created);
             const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
             return `
-                <div class="tbl-order-card" onclick="openPanel(${o.id}); closeTablePopup();">
+                <div class="tbl-order-card" onclick="window.__spa.navigate('/orders/${o.id}'); closeTablePopup();">
                     <div class="tbl-order-card-hdr">
                         <span class="tbl-order-num">#${esc(o.order_number)}</span>
                         <span class="status-pill sp-${st}">${st}</span>
@@ -571,7 +522,6 @@ function openTablePopup(n) {
                 </div>`;
         }).join(''));
     }
-
     $('#tblPopupBackdrop').addClass('open');
     $('#tblPopup').addClass('open');
     document.body.style.overflow = 'hidden';
@@ -581,20 +531,15 @@ function closeTablePopup() {
     $('#tblPopupBackdrop').removeClass('open');
     $('#tblPopup').removeClass('open');
     document.body.style.overflow = '';
-    window._tblPopupTable = null;
 }
 
 // ── New Order Modal ────────────────────────────────────────────────────────────
 function openNewOrderModal(preselectedTable) {
-    // Close table popup if open
     closeTablePopup();
-
-    // Reset form
     $('#newOrderCustomer').val('');
     $('.new-otype-btn').removeClass('active');
     $('.new-otype-btn[data-type="dine-in"]').addClass('active');
 
-    // Populate table dropdown
     const maxTable = Math.max(12, ...allOrders.filter(o => o.table_number).map(o => o.table_number));
     const occupiedTables = new Set(allOrders.filter(o => o.status === 'open' && o.table_number).map(o => o.table_number));
     const sel = $('#newOrderTable');
@@ -604,7 +549,6 @@ function openNewOrderModal(preselectedTable) {
         sel.append(`<option value="${i}" ${occ ? 'disabled' : ''}>Table ${i}${occ ? ' (Occupied)' : ''}</option>`);
     }
     if (preselectedTable) sel.val(preselectedTable);
-
     new bootstrap.Modal(document.getElementById('newOrderModal')).show();
 }
 
@@ -612,7 +556,6 @@ function selectNewOrderType(btn) {
     $('.new-otype-btn').removeClass('active');
     $(btn).addClass('active');
     const type = $(btn).data('type');
-    // Hide table row for non dine-in
     $('#newOrderTableRow').toggle(type === 'dine-in');
 }
 
@@ -631,15 +574,11 @@ function confirmNewOrder() {
 // ── Open Detail Panel ──────────────────────────────────────────────────────
 async function openPanel(orderId) {
     currentOrderId = orderId;
-
-    // Optimistic: find in local data first
     const localOrder = allOrders.find(o => o.id === orderId);
     if (localOrder && localOrder.items) {
         currentOrderData = structuredClone(localOrder);
         renderPanel(currentOrderData);
     }
-
-    // Always fetch full data (includes all items)
     $.ajax({
         url: `/orders/get-order-detail/${orderId}`,
         type: 'GET',
@@ -649,45 +588,35 @@ async function openPanel(orderId) {
             renderPanel(currentOrderData);
         },
         error: function() {
-            if (!localOrder) { showToast('Could not load order details', 'error'); return; }
+            if (!localOrder) showToast('Could not load order details', 'error');
         }
     });
-
     $('#detailPanel').addClass('open');
     $('#panelBackdrop').addClass('open');
 }
 
 function renderPanel(data) {
     const isOpen = (data.status || 'paid') === 'open';
-
-    // Header
     setText('dpOrderNum', data.order_number);
-
     const sb = $('#dpStatus');
     sb.text(data.status || 'paid');
     sb.prop('className', `dp-status-badge sp-${data.status || 'paid'}`);
 
     const tb = $('#dpType');
-    const oType = normalizeOrderType(data.order_type || 'takeaway');
+    const oType = normalizeOrderType(data.order_type);
     tb.text(data.table_number ? `Table ${data.table_number}` : ucfirst(oType));
     tb.prop('className', `dp-type-badge otype-${oType}`);
 
-    // Meta
     setText('dpTime',     data.date_created || '—');
     setText('dpCustomer', data.customer_name || 'Walk-in');
     setText('dpMethod',   data.payment_method || '—');
 
-    // Add item section
     $('#addItemSection').css('display', isOpen ? '' : 'none');
     $('#discountRow').css('display', isOpen ? 'flex' : 'none');
     $('#notesSection').css('display', isOpen ? '' : 'none');
 
-    // Notes
-    if (isOpen) {
-        $('#orderNotes').val(data.notes || '');
-    }
+    if (isOpen) $('#orderNotes').val(data.notes || '');
 
-    // Items
     const container = $('#dpItemsContainer');
     if (!data.items || data.items.length === 0) {
         container.html('<div style="padding:24px;text-align:center;color:var(--slate-400);font-size:.82rem">No items</div>');
@@ -710,12 +639,7 @@ function renderPanel(data) {
             </div>
         `).join(''));
     }
-
-    // Discount inputs
-    if (isOpen && data.discount > 0) {
-        $('#discountVal').val(data.discount);
-    }
-
+    if (isOpen && data.discount > 0) $('#discountVal').val(data.discount);
     recalcPanel();
     renderPanelActions(data);
 }
@@ -789,7 +713,6 @@ $(document).ready(() => {
         const q   = $(this).val().toLowerCase();
         const el  = $('#addItemResults');
         if (!q) { el.empty(); return; }
-
         const hits = allProducts.filter(p => p.name.toLowerCase().includes(q) ||
                                              p.category.toLowerCase().includes(q)).slice(0, 8);
         el.html(hits.length
@@ -820,7 +743,6 @@ function addProductToOrder(pid, pname, price) {
     showToast(`${pname} added`, 'success');
 }
 
-// ── Save edits ─────────────────────────────────────────────────────────────
 async function saveEdits() {
     if (!currentOrderData) return;
     const dv   = parseFloat($('#discountVal').val() || 0) || 0;
@@ -839,7 +761,6 @@ async function saveEdits() {
             quantity:     i.quantity
         }))
     };
-
     $.ajax({
         url: `/orders/update-order/${currentOrderId}`,
         type: 'PATCH',
@@ -856,10 +777,6 @@ async function saveEdits() {
 }
 
 // ── Checkout ───────────────────────────────────────────────────────────────
-/**
- * Open Checkout Modal
- * Can be called with an orderId (e.g. from card view) OR with no args (from detail panel)
- */
 async function openCheckoutModal(orderId) {
     if (orderId) {
         currentOrderId = orderId;
@@ -868,7 +785,6 @@ async function openCheckoutModal(orderId) {
             currentOrderData = structuredClone(localOrder);
             renderCheckoutModal();
         } else {
-            // Fetch if not in local or missing items
             $.ajax({
                 url: `/orders/get-order-detail/${orderId}`,
                 type: 'GET',
@@ -906,11 +822,9 @@ function renderCheckoutModal() {
             Total: ₹${fmtNum(total)}
         </span>`);
 
-    // Reset pay method selection
     $('.pay-method-btn').removeClass('active');
     $('.pay-method-btn[data-method="Cash"]').addClass('active');
     checkoutPayMethod = 'Cash';
-
     new bootstrap.Modal(document.getElementById('checkoutModal')).show();
 }
 
@@ -928,7 +842,7 @@ function initPayMethodBtns() {
 
 function confirmCheckout() {
     if (!currentOrderId) return;
-    saveEdits();   // persist any item edits first
+    saveEdits();
     $.ajax({
         url: `/orders/checkout-order/${currentOrderId}`,
         type: 'PATCH',
@@ -946,19 +860,14 @@ function confirmCheckout() {
     });
 }
 
-// ── KOT / Print ────────────────────────────────────────────────────────────
 function printKOT() {
     showToast('Kitchen Ticket (KOT) sent to printer 🍳', 'info');
 }
 
-
-
 function printOrder(id) {
     showToast('Printing receipt…', 'info');
-    // Extend: POST to  /orders/{id}/print
 }
 
-// ── Void ───────────────────────────────────────────────────────────────────
 function promptVoid(id) {
     pendingVoidId = id;
     pinBuffer = '';
@@ -978,24 +887,18 @@ function buildPinPad() {
 }
 
 function pinKey(k) {
-    if (k === '⌫') {
-        pinBuffer = pinBuffer.slice(0, -1);
-    } else if (pinBuffer.length < 4) {
-        pinBuffer += k;
-    }
+    if (k === '⌫') pinBuffer = pinBuffer.slice(0, -1);
+    else if (pinBuffer.length < 4) pinBuffer += k;
     updatePinDots();
     if (pinBuffer.length === 4) setTimeout(checkPin, 120);
 }
 
 function updatePinDots() {
     const dots = document.querySelectorAll('#pinDots span');
-    for (let i = 0; i < dots.length; i++) {
-        dots[i].classList.toggle('filled', i < pinBuffer.length);
-    }
+    for (let i = 0; i < dots.length; i++) dots[i].classList.toggle('filled', i < pinBuffer.length);
 }
 
 async function checkPin() {
-    // TODO: compare against settings.admin_pin from API
     const ADMIN_PIN = '1234';
     if (pinBuffer !== ADMIN_PIN) {
         $('#pinError').css('display', 'flex');
@@ -1019,7 +922,6 @@ async function checkPin() {
     pendingVoidId = null;
 }
 
-// ── Delete ─────────────────────────────────────────────────────────────────
 function openDeleteModal(id, num) {
     pendingDeleteId  = id;
     pendingDeleteNum = num;
@@ -1046,21 +948,11 @@ async function execDelete() {
     pendingDeleteId = null;
 }
 
-// ── Export ─────────────────────────────────────────────────────────────────
 function exportOrders() {
     const rows = [['Order#', 'Date', 'Table', 'Customer', 'Items', 'Total', 'Method', 'Status']];
     for (let i = 0; i < filteredOrders.length; i++) {
         const o = filteredOrders[i];
-        rows.push([
-            o.order_number,
-            o.date_created,
-            o.table_number || '',
-            o.customer_name || '',
-            o.item_count || '',
-            o.total_amount,
-            o.payment_method,
-            o.status || 'paid'
-        ]);
+        rows.push([o.order_number, o.date_created, o.table_number || '', o.customer_name || '', o.item_count || '', o.total_amount, o.payment_method, o.status || 'paid']);
     }
     const csv  = rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
     const link = document.createElement('a');
@@ -1070,10 +962,6 @@ function exportOrders() {
     showToast('CSV exported ✓', 'success');
 }
 
-// ── Toast ──────────────────────────────────────────────────────────────────
-// Redundant showToast removed; using global script.js variant
-
-// ── Utils ──────────────────────────────────────────────────────────────────
 function esc(str) {
     return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
@@ -1088,11 +976,15 @@ function ucfirst(s) {
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 function normalizeOrderType(type) {
-    return String(type || 'takeaway').trim().toLowerCase().replace(/[_\s]+/g, '-');
+    if (!type) return 'dine-in';
+    return String(type).trim().toLowerCase().replace(/[_\s]+/g, '-');
 }
 function makeEl(tag, cls, html) {
     const el = document.createElement(tag);
     if (cls) el.className = cls;
     el.innerHTML = html;
     return el;
+}
+function editOrder(orderId) {
+    window.__spa.navigate('/pos?edit_order_id=' + orderId);
 }

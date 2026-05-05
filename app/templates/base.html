@@ -23,6 +23,7 @@
     <div class="app-shell">
 
         <!-- ── Top App Bar ── -->
+        {% if active_page != 'order_details' %}
         <header class="top-app-bar">
             <div class="top-bar-left">
                 {% if active_page in ['settings_shop', 'settings_tax', 'settings_payments', 'settings_receipt',
@@ -41,6 +42,7 @@
                     {% elif active_page == 'pos' %}New Order
                     {% elif active_page == 'products' %}Products
                     {% elif active_page == 'orders' %}Orders
+                    {% elif active_page == 'order_details' %}Order Details
                     {% elif active_page == 'employees' %}Employees
                     {% elif active_page == 'settings' %}Settings
                     {% elif active_page == 'settings_shop' %}Shop Identity
@@ -62,6 +64,7 @@
                 </div>
             </div>
         </header>
+        {% endif %}
 
         <!-- ── Main Content ── -->
         <div class="main-content" id="spaContent">

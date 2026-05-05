@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/order_details.css') }}">
+{% endblock %}
+
+{% block content %}
+<main class="od-root">
+
+  <!-- ── Top Bar ── -->
+  <div class="od-topbar">
+    <a class="top-bar-back-btn" onclick="history.back()">
+      <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    <div class="od-topbar-center">
+      <span class="od-page-title">Order Details</span>
+    </div>
+    <div class="od-topbar-right">
+      <button class="od-icon-btn" style="border:none"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+    </div>
+  </div>
+
+  <!-- ── Scrollable Body ── -->
+  <div class="od-body">
+
+    <!-- Main Order Info Card -->
+    <div class="od-main-card">
+      <div class="od-main-card-top">
+        <div class="od-id-section">
+          <div class="od-label">ORDER ID</div>
+          <div class="od-id-val">#{{ order.order_number }}</div>
+        </div>
+        <div class="od-status-section">
+          <span class="od-status-badge {{ order.status or 'open' }}">
+            {{ order.status | upper if order.status else 'OPEN' }}
+          </span>
+        </div>
+      </div>
+      <div class="od-card-divider"></div>
+      <div class="od-main-card-bottom">
+        <div class="od-timestamp-item">
+          <i class="fa-regular fa-calendar"></i>
+          <span>Today, {{ order.date_created.strftime('%b %d, %Y') }}</span>
+        </div>
+        <div class="od-timestamp-item">
+          <i class="fa-regular fa-clock"></i>
+          <span>{{ order.date_created.strftime('%I:%M %p').lower() }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service & Location Cards -->
+    <div class="od-meta-row">
+      <div class="od-meta-card">
+        <div class="od-meta-icon service">
+          <i class="fa-solid fa-utensils"></i>
+        </div>
+        <div>
+          <div class="od-meta-label">SERVICE</div>
+          <div class="od-meta-val">{{ order.order_type | title if order.order_type else 'Dine-in' }}</div>
+        </div>
+      </div>
+      <div class="od-meta-card">
+        <div class="od-meta-icon location">
+          <i class="fa-solid fa-chair"></i>
+        </div>
+        <div>
+          <div class="od-meta-label">LOCATION</div>
+          <div class="od-meta-val">{{ 'Table ' ~ order.table_number if order.table_number else 'No Table' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Itemized Bill Card -->
+    <div class="od-bill-card">
+      <div class="od-bill-header">
+        <span class="od-bill-title">Ordered Items</span>
+        <button class="od-bill-icon-btn" onclick="printReceipt()" title="Print receipt">
+          <i class="fa-solid fa-receipt"></i>
+        </button>
+      </div>
+
+      <div class="od-bill-cols">
+        <span>ITEM</span>
+        <span>QTY</span>
+        <span class="text-end">PRICE</span>
+      </div>
+
+      <div class="od-items-list">
+        {% for item in order.items %}
+        <div class="od-item-row">
+          <span class="od-item-name">{{ item.product_name }}</span>
+          <span class="od-item-qty">{{ item.quantity }}</span>
+          <span class="od-item-price">₹{{ "%.2f"|format(item.price * item.quantity) }}</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Totals box -->
+      <div class="od-totals-box">
+        {% set subtotal = order.items | sum(attribute='price') if false else namespace(val=0) %}
+        {% for item in order.items %}{% set subtotal.val = subtotal.val + item.price * item.quantity %}{% endfor %}
+        {% set tax = subtotal.val * 0.05 %}
+        {% set total = subtotal.val + tax %}
+
+        <div class="od-total-row">
+          <span>Subtotal</span>
+          <span>₹{{ "%.2f"|format(subtotal.val) }}</span>
+        </div>
+        <div class="od-total-row">
+          <span>Tax (5%)</span>
+          <span>₹{{ "%.2f"|format(tax) }}</span>
+        </div>
+        <div class="od-divider"></div>
+        <div class="od-total-row od-total-final">
+          <span>Total Amount</span>
+          <span class="od-total-amount">₹{{ "%.2f"|format(order.total_amount) }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /od-body -->
+
+  <!-- ── Bottom CTA ── -->
+  <div class="od-footer">
+    {% if order.status == 'open' or not order.status %}
+      <button class="od-btn-secondary" onclick="openAddItemModal()">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Items</span>
+      </button>
+      <button class="od-btn-primary" onclick="proceedCheckout()">
+        <span>Checkout</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    {% elif order.status == 'paid' %}
+      <button class="od-btn-secondary" onclick="reopenOrder({{ order.id }})">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span>Reopen Order</span>
+      </button>
+      <button class="od-btn-primary" onclick="printReceipt()">
+        <i class="fa-solid fa-print"></i>
+        <span>Print Receipt</span>
+      </button>
+    {% else %}
+      <button class="od-btn-primary" onclick="reopenOrder({{ order.id }})" style="flex: 1">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span>Reopen Order</span>
+      </button>
+    {% endif %}
+  </div>
+
+</main>
+
+<!-- ════ CHECKOUT MODAL ════ -->
+<div class="modal fade" id="checkoutModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:380px">
+    <div class="modal-content od-modal">
+      <div class="modal-header od-modal-header">
+        <div class="modal-title"><i class="fa-solid fa-cash-register me-2"></i>Checkout</div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="od-checkout-summary" id="checkoutSummary"></div>
+        <div class="od-pay-label">Payment Method</div>
+        <div class="od-pay-grid">
+          <button class="od-pay-btn active" data-method="Cash" onclick="selectPaymentMethod('Cash')">
+            <div class="od-pay-btn-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+            <div class="od-pay-btn-content">
+              <span class="od-pay-btn-title">Cash</span>
+              <span class="od-pay-btn-subtitle">Physical currency</span>
+            </div>
+            <i class="fa-solid fa-circle-check od-pay-btn-check"></i>
+          </button>
+          
+          <button class="od-pay-btn" data-method="Card" onclick="selectPaymentMethod('Card')">
+            <div class="od-pay-btn-icon"><i class="fa-solid fa-credit-card"></i></div>
+            <div class="od-pay-btn-content">
+              <span class="od-pay-btn-title">Credit Card</span>
+              <span class="od-pay-btn-subtitle">Visa, Mastercard, Amex</span>
+            </div>
+            <i class="fa-solid fa-circle-check od-pay-btn-check"></i>
+          </button>
+          
+          <button class="od-pay-btn" data-method="UPI" onclick="selectPaymentMethod('UPI')">
+            <div class="od-pay-btn-icon"><i class="fa-brands fa-google-pay"></i></div>
+            <div class="od-pay-btn-content">
+              <span class="od-pay-btn-title">Digital Wallet / UPI</span>
+              <span class="od-pay-btn-subtitle">Instant scan & pay</span>
+            </div>
+            <i class="fa-solid fa-circle-check od-pay-btn-check"></i>
+          </button>
+        </div>
+
+        <!-- Dynamic Payment Details -->
+        <div class="od-pay-details-section" id="paymentDetailsArea">
+          <!-- Cash Details (Default) -->
+          <div id="cashDetails" class="pay-detail-block">
+            <span class="od-pay-details-label">Payment Details <label style="color: #888; font-size: 0.85rem; font-style: italic">(Optional)</label></span>
+            <div class="od-cash-input-wrap">
+              <span class="od-cash-input-label">Amount Received</span>
+              <div class="od-cash-row">
+                <span class="od-cash-symbol">₹</span>
+                <input type="number" id="cashReceived" class="od-cash-input" placeholder="0.00" oninput="calculateChange()">
+              </div>
+            </div>
+            <div class="od-change-box">
+              <span class="od-change-label">Change to Return</span>
+              <span class="od-change-val" id="changeAmount">₹0.00</span>
+            </div>
+          </div>
+
+          <!-- UPI Details -->
+          <div id="upiDetails" class="pay-detail-block" style="display:none">
+            <span class="od-pay-details-label">Scan to Pay</span>
+            <div class="od-upi-qr-wrap">
+              <div class="od-qr-placeholder">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=towntech@upi&pn=TownTech&am=0" id="upiQrCode" alt="QR Code">
+              </div>
+              <div class="od-upi-id">towntech@upi</div>
+            </div>
+          </div>
+          
+          <!-- Card Details -->
+          <div id="cardDetails" class="pay-detail-block" style="display:none">
+            <div style="text-align:center;padding:20px;color:#636e72;font-size:0.85rem">
+              <i class="fa-solid fa-circle-info me-1"></i> Use your card terminal to process the payment.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer od-modal-footer">
+        <button class="od-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+        <button class="od-btn-confirm" onclick="confirmCheckout()"><i class="fa-solid fa-check me-1"></i>Confirm Payment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ DELETE MODAL ════ -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content od-modal">
+      <div class="modal-body text-center" style="padding:32px 24px">
+        <div class="od-del-icon"><i class="fa-regular fa-trash-can"></i></div>
+        <div class="od-del-title">Delete Order?</div>
+        <div class="od-del-desc">This action cannot be undone.</div>
+      </div>
+      <div class="modal-footer od-modal-footer flex-column gap-2">
+        <button class="od-btn-danger w-100" id="confirmDeleteBtn">Delete Permanently</button>
+        <button class="od-btn-cancel w-100" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Hidden order data for JS -->
+<script>
+  window.ORDER_ID = {{ order.id }};
+  window.ORDER_TOTAL = {{ order.total_amount }};
+  window.ORDER_NUM = "{{ order.order_number }}";
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='js/order_details.js') }}"></script>
+{% endblock %}

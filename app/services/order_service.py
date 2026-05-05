@@ -11,7 +11,7 @@ class OrderService:
 
     def list_all_service(self):
         """Get all orders"""
-        return self.db.query(Order).order_by(Order.date_created.desc()).all()
+        return self.db.query(Order).filter(Order.status == "open").order_by(Order.date_created.desc()).all()
 
     def get_order_service(self, order_id: int):
         """Get order by ID"""
@@ -175,4 +175,4 @@ class OrderService:
             
         self.db.commit()
         self.db.refresh(order)
-        return order
+        return order

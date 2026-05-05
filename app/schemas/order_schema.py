@@ -43,6 +43,7 @@ class OrderUpdate(BaseModel):
     table_number: Optional[int] = None
     discount: Optional[float] = None
     notes: Optional[str] = None
+    order_type: Optional[str] = None
     items: Optional[List[OrderItemUpdate]] = None
 
     @field_validator("status")

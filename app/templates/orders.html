@@ -52,10 +52,15 @@
     <div class="orders-card-grid" id="ordersCardGrid">
       <!-- filled by JS -->
     </div>
-    <div id="emptyStateCards" class="empty-state" style="display:none">
-      <div class="empty-icon"><i class="fa-regular fa-receipt"></i></div>
-      <div class="empty-title">No orders found</div>
-      <div class="empty-sub">Try changing the filter or date range</div>
+    <div id="emptyStateCards" class="empty-state-container" style="display:none">
+      <div class="empty-state-card">
+        <div class="esc-icon-wrap">
+          <div class="esc-icon-bg"></div>
+          <i class="fa-solid fa-receipt esc-icon"></i>
+        </div>
+        <h3 class="esc-title">No Orders Found</h3>
+        <p class="esc-text">We couldn't find any orders matching your current filters. Try adjusting your filters.</p>
+      </div>
     </div>
   </div>
 
@@ -79,10 +84,18 @@
       </thead>
       <tbody id="ordersBody"></tbody>
     </table>
-    <div id="emptyState" class="empty-state" style="display:none">
-      <div class="empty-icon"><i class="fa-regular fa-receipt"></i></div>
-      <div class="empty-title">No orders found</div>
-      <div class="empty-sub">Try changing the filter or date range</div>
+    <div id="emptyState" class="empty-state-container" style="display:none">
+      <div class="empty-state-card">
+        <div class="esc-icon-wrap">
+          <div class="esc-icon-bg"></div>
+          <i class="fa-solid fa-receipt esc-icon"></i>
+        </div>
+        <h3 class="esc-title">No Results</h3>
+        <p class="esc-text">No orders were found for the selected criteria in the list view.</p>
+        <button class="esc-btn-secondary" onclick="resetAllFilters()">
+          <i class="fa-solid fa-filter-circle-xmark me-2"></i>Clear all filters
+        </button>
+      </div>
     </div>
   </div>
 
